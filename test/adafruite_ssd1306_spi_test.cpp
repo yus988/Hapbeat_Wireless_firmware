@@ -326,12 +326,12 @@ void testanimate(const uint8_t *bitmap, uint8_t w, uint8_t h) {
     icons[f][XPOS] = random(1 - LOGO_WIDTH, display.width());
     icons[f][YPOS] = -LOGO_HEIGHT;
     icons[f][DELTAY] = random(1, 6);
-    Serial.print(F("x: "));
-    Serial.print(icons[f][XPOS], DEC);
-    Serial.print(F(" y: "));
-    Serial.print(icons[f][YPOS], DEC);
-    Serial.print(F(" dy: "));
-    Serial.println(icons[f][DELTAY], DEC);
+    USBSerial.print(F("x: "));
+    USBSerial.print(icons[f][XPOS], DEC);
+    USBSerial.print(F(" y: "));
+    USBSerial.print(icons[f][YPOS], DEC);
+    USBSerial.print(F(" dy: "));
+    USBSerial.println(icons[f][DELTAY], DEC);
   }
 
   for (;;) {                 // Loop forever...
@@ -361,7 +361,7 @@ void testanimate(const uint8_t *bitmap, uint8_t w, uint8_t h) {
 }
 
 void setup() {
-  Serial.begin(115200);
+  USBSerial.begin(115200);
 
   pinMode(EN_OLED, OUTPUT);
   digitalWrite(EN_OLED, HIGH);
@@ -377,10 +377,10 @@ void setup() {
   // #define OLED_CS 27
   // #define OLED_RESET 33
   // #define EN_OLED 14
-  Serial.println(F("SSD1306 start"));
+  USBSerial.println(F("SSD1306 start"));
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if (!display.begin(SSD1306_SWITCHCAPVCC)) {
-    Serial.println(F("SSD1306 allocation failed"));
+    USBSerial.println(F("SSD1306 allocation failed"));
     for (;;)
       ;  // Don't proceed, loop forever
   }

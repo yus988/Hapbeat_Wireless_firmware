@@ -2,17 +2,20 @@
 
 #include <iostream>
 // ディスプレイ関連
+#include <FastLED.h>
 #include <Wire.h>
 // 自作ライブラリ
+#include <Adafruit_SSD1306.h>
 #include <BQ27220.h>
-#include <FastLED.h>
 #include <audioManager.h>
-#include <espnow_manager.h>
+#include <displayManager.h>
 
-#ifndef GENERAL
-  #include <Adafruit_SSD1306.h>
-  #include <displayManager.h>
+#ifdef ESPNOW
+  #include <espnow_manager.h>
+#elif MQTT
+  #include <MQTT_manager.h>
 #endif
+
 /////////////////////// define pins /////////////////
 #if defined(NECKLACE)
   // Audio pins
@@ -53,6 +56,7 @@
   #define VOLUME_THRESHOLD 60
 #endif
 
+// 
 #if defined(NECKLACE_V_1_3)
   // Audio pins
   #define I2S_BCLK_PIN 39
@@ -117,10 +121,21 @@
   #define V_REF 3.3              // アナログ基準電圧 (V)
   #define BATTERY_CAPACITY 3000
 
+// コールバック関数の定義
+void messageReceived(char *topic, byte *payload, unsigned int length) {
+  USBSerial.print("Message arrived in topic: ");
+  USBSerial.println(topic);
+
+  USBSerial.print("Message: ");
+  for (unsigned int i = 0; i < length; i++) {
+    USBSerial.print((char)payload[i]);
+  }
+  USBSerial.println();
+}
 #endif
 
-#if defined(NECKLACE) || defined(NECKLACE_V_1_3)
 //////////// Variables //////////////////////////////////////
+#if defined(NECKLACE) || defined(NECKLACE_V_1_3)
 // LED
 CRGB _leds[1];
 Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, MOSI_PIN, SCLK_PIN,
@@ -195,7 +210,6 @@ TaskHandle_t thp[3];
 void setFixGain(bool updateOLED = true) {
   // 15dBにあたるステップ数0--63をanalogWrite0--255に変換する
   analogWrite(AOUT_VIBBVOL_PIN, map(FIX_GAIN_STEP, 0, 63, 0, 255));
-  USBSerial.println(map(FIX_GAIN_STEP, 0, 63, 0, 255));
   if (updateOLED) {
     displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
                                audioManager::getWearerId(), FIX_GAIN_STEP);
@@ -204,7 +218,6 @@ void setFixGain(bool updateOLED = true) {
 
 // PAMの電圧を下げる
 void setAmpStepGain(int step, bool updateOLED = true) {
-  // USBSerial.println(_currAIN);
   int volume = map(_currAIN, 0, 4095, 0, 255);
   analogWrite(AOUT_VIBBVOL_PIN, volume);
   // ディスプレイにdB表示用のステップ数変換
@@ -489,17 +502,8 @@ void setup() {
   }
   FastLED.show();
 #endif
-  // flash memory 内のファイルを読み込み
   audioManager::readAllSoundFiles();
   audioManager::initAudioOut(I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DOUT_PIN);
-  // espnowの開始
-  espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
-  // #ifdef GENERAL
-  //   //
-  //   MAXをenableする前に、initAudioOutを実行してesp32からI2S信号を出す必要あり
-  //   // 出てないとMOSFETのゲート電圧がおかしくなり、焼ける
-  //   // ここで切るべきなのは、MOSFETへの電力供給
-  // #endif
 
   // 原因は不明だが、TaskUI=>TaskAudioの順にすると、GENERALではボタンを押すまで動作しない。
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 0, &thp[1], 0);
@@ -507,5 +511,14 @@ void setup() {
   xTaskCreatePinnedToCore(TaskCurrent, "TaskCurrent", 4096, NULL, 2, &thp[2],
                           1);
   // 4096
+
+  // 無線通信の開始
+#ifdef ESPNOW
+  espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
+#elif MQTT
+  MQTT_manager::initMQTTclient(messageReceived);
+#endif
 }
-void loop() {};
+void loop() {
+  // MQTT_manager::loopMQTTclient();
+};

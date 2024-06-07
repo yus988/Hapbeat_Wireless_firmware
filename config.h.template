@@ -1,0 +1,9 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// Wi-Fi設定
+inline const char* ssid = "YOUR_SSID";
+inline const char* password = "YOUR_PASSWORD";
+inline const char* mqttServer = "YOUR_MQTT_SERVER";
+
+#endif  // CONFIG_H
