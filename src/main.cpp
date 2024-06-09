@@ -56,7 +56,7 @@
   #define VOLUME_THRESHOLD 60
 #endif
 
-// 
+//
 #if defined(NECKLACE_V_1_3)
   // Audio pins
   #define I2S_BCLK_PIN 39
@@ -511,14 +511,11 @@ void setup() {
   xTaskCreatePinnedToCore(TaskCurrent, "TaskCurrent", 4096, NULL, 2, &thp[2],
                           1);
   // 4096
-
   // 無線通信の開始
 #ifdef ESPNOW
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 #elif MQTT
-  MQTT_manager::initMQTTclient(messageReceived);
+  MQTT_manager::initMQTTclient(audioManager::PlaySndFromMQTTcallback);
 #endif
 }
-void loop() {
-  // MQTT_manager::loopMQTTclient();
-};
+void loop() { MQTT_manager::loopMQTTclient(); };

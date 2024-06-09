@@ -7,8 +7,10 @@ namespace audioManager {
 void initParamsEEPROM();
 void readAllSoundFiles();
 void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN);
-void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
+void PlaySndOnDataRecv(const uint8_t* mac_addr, const uint8_t* data,
                        int data_len);
+void PlaySndFromMQTTcallback(char* topic, byte* payload, unsigned int length);
+
 void playAudioInLoop();
 void stopAudio(uint8_t stubId = 99);
 // get

@@ -5,17 +5,26 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 const char* clientIdPrefix = "Hapbeat_esp32_client-";
 
-// コールバック関数
-void callback(char* topic, byte* payload, unsigned int length) {
-  USBSerial.print("Message arrived in topic: ");
-  USBSerial.println(topic);
+// PubSubClientのコールバック関数を設定する変数
+void (*mqttCallback)(char*, byte*, unsigned int);
 
-  USBSerial.print("Message: ");
-  for (int i = 0; i < length; i++) {
-    USBSerial.print((char)payload[i]);
+void callback(char* topic, byte* payload, unsigned int length) {
+  if (mqttCallback) {
+    mqttCallback(topic, payload, length);
   }
-  USBSerial.println();
 }
+
+// // コールバック関数
+// void callback(char* topic, byte* payload, unsigned int length) {
+//   USBSerial.print("Message arrived in topic: ");
+//   USBSerial.println(topic);
+
+//   USBSerial.print("Message: ");
+//   for (int i = 0; i < length; i++) {
+//     USBSerial.print((char)payload[i]);
+//   }
+//   USBSerial.println();
+// }
 
 // ユニークなクライアントIDを生成する関数
 String getUniqueClientId() {
@@ -50,7 +59,9 @@ void reconnect() {
 }
 
 void initMQTTclient(void (*callback)(char*, byte*, unsigned int)) {
-  WiFi.begin("haselab_pi_G", "2human2human2");
+  mqttCallback = callback;
+
+  WiFi.begin(SSID, PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     USBSerial.println("Connecting to WiFi...");

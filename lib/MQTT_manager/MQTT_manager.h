@@ -12,6 +12,7 @@ void initMQTTclient(void (*callback)(char*, byte*, unsigned int));
 void callback(char* topic, byte* payload, unsigned int length);
 // ループ関数
 void loopMQTTclient();
+void reconnect();
 
 }  // namespace MQTT_manager
 

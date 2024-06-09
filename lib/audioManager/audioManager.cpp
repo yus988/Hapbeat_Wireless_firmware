@@ -19,9 +19,20 @@
 #define RAM_STORAGE 0
 #define FS_STORAGE 1
 
+namespace audioManager {
 bool isPlayAudio[] = {false, false, false, false};
 
-namespace audioManager {
+struct DataPacket {
+  uint8_t category;
+  uint8_t wearerId;
+  uint8_t devicePos;
+  uint8_t dataID;
+  uint8_t subID;
+  uint8_t lVol;
+  uint8_t rVol;
+  uint8_t isLoop;
+};
+
 int maxVol = 255;
 int samplingRate = 8000;
 // position identifier
@@ -246,6 +257,49 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       }
     }
   }
+}
+
+void PlaySndFromMQTTcallback(char* topic, byte* payload, unsigned int length) {
+  USBSerial.print("Message arrived in topic: ");
+  USBSerial.println(topic);
+
+  USBSerial.print("Message: ");
+  for (int i = 0; i < length; i++) {
+    USBSerial.print((char)payload[i]);
+  }
+  USBSerial.println();
+
+  // 文字列を整数に変換する処理
+  String payloadStr((char*)payload, length);
+  int values[8];
+  int i = 0;
+  int startIndex = 0;
+
+  for (int j = 0; j < payloadStr.length(); j++) {
+    if (payloadStr[j] == ',' || j == payloadStr.length() - 1) {
+      if (j == payloadStr.length() - 1) j++;
+      String valueStr = payloadStr.substring(startIndex, j);
+      values[i++] = valueStr.toInt();
+      startIndex = j + 1;
+    }
+  }
+
+  // データをESP-NOW形式に変換
+  DataPacket dataPacket;
+  dataPacket.category = values[0];
+  dataPacket.wearerId = values[1];
+  dataPacket.devicePos = values[2];
+  dataPacket.dataID = values[3];
+  dataPacket.subID = values[4];
+  dataPacket.lVol = values[5];
+  dataPacket.rVol = values[6];
+  dataPacket.isLoop = values[7];
+
+  // ダミーのMACアドレス（適宜設定）
+  uint8_t dummy_mac_addr[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00};
+
+  // ESP-NOWのコールバック関数を呼び出す
+  PlaySndOnDataRecv(dummy_mac_addr, (uint8_t*)&dataPacket, sizeof(dataPacket));
 }
 
 void playAudioInLoop() {
