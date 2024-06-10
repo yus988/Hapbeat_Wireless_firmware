@@ -173,6 +173,14 @@ float calculateCurrent(int adc_value) {
   float current = voltage / (INA_GAIN * SHUNT_RESISTANCE);
   return current;
 }
+
+void statusCallback(const char *status) {
+  _display.clearDisplay();
+  _display.setCursor(0, 0);
+  displayManager::printEfont(&_display, status, 0, 0);
+  _display.display();
+}
+
 #endif
 
 #if defined(GENERAL)
@@ -515,7 +523,7 @@ void setup() {
 #ifdef ESPNOW
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 #elif MQTT
-  MQTT_manager::initMQTTclient(audioManager::PlaySndFromMQTTcallback);
+  MQTT_manager::initMQTTclient(audioManager::PlaySndFromMQTTcallback, statusCallback);
 #endif
 }
 void loop() { MQTT_manager::loopMQTTclient(); };

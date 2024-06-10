@@ -4,11 +4,14 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include "../../config.h"  // プロジェクトのルートからインクルード
+#include <WiFiClientSecure.h>  // WiFiClientSecureをインクルード
 
 namespace MQTT_manager {
+extern bool mqttConnected;
 
 // 初期化関数
-void initMQTTclient(void (*callback)(char*, byte*, unsigned int));
+void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
+                    void (*statusCallback)(const char*));
 void callback(char* topic, byte* payload, unsigned int length);
 // ループ関数
 void loopMQTTclient();
