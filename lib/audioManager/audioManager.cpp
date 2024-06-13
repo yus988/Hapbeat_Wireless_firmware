@@ -79,29 +79,6 @@ void initParamsEEPROM() {
   }
 }
 
-// _stub 0 = 常用、stub 1 = 左右分ける場合の右、stub 2 = ループ用
-void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
-  // init audio
-  _i2s_out = new AudioOutputI2S();
-  _i2s_out->SetPinout(I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DOUT_PIN);
-  _i2s_out->SetGain(1.0);  // 出力ゲインを設定
-  for (int i = 0; i < STUB_NUM; i++) {
-    _wav_gen[i] = new AudioGeneratorWAV();
-  }
-  // _mixer に１回渡したら、あとは _stub => _mixer の順で色々渡す
-  _mixer = new AudioOutputMixer(32, _i2s_out);
-
-  for (int i = 0; i < STUB_NUM; i++) {
-    _stub[i] = _mixer->NewInput();
-    _stub[i]->SetRate(samplingRate);
-  }
-
-#ifdef GENERAL
-  // MOSFET直結のD級アンプにI2Sを入れる場合は、始めに再生することで
-  playAudio(0, 0);
-#endif
-}
-
 // ファイルの読み込み
 void readAllSoundFiles() {
   // LittleFSマウント確認
@@ -259,7 +236,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   }
 }
 
-void PlaySndFromMQTTcallback(char* topic, byte* payload, unsigned int length) {
+void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   USBSerial.print("Message arrived in topic: ");
   USBSerial.println(topic);
 
@@ -270,7 +247,7 @@ void PlaySndFromMQTTcallback(char* topic, byte* payload, unsigned int length) {
   USBSerial.println();
 
   // 文字列を整数に変換する処理
-  String payloadStr((char*)payload, length);
+  String payloadStr((char *)payload, length);
   int values[8];
   int i = 0;
   int startIndex = 0;
@@ -299,7 +276,7 @@ void PlaySndFromMQTTcallback(char* topic, byte* payload, unsigned int length) {
   uint8_t dummy_mac_addr[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00};
 
   // ESP-NOWのコールバック関数を呼び出す
-  PlaySndOnDataRecv(dummy_mac_addr, (uint8_t*)&dataPacket, sizeof(dataPacket));
+  PlaySndOnDataRecv(dummy_mac_addr, (uint8_t *)&dataPacket, sizeof(dataPacket));
 }
 
 void playAudioInLoop() {
@@ -322,6 +299,29 @@ void playAudioInLoop() {
       }
     }
   }
+}
+
+// _stub 0 = 常用、stub 1 = 左右分ける場合の右、stub 2 = ループ用
+void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
+  // init audio
+  _i2s_out = new AudioOutputI2S();
+  _i2s_out->SetPinout(I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DOUT_PIN);
+  _i2s_out->SetGain(1.0);  // 出力ゲインを設定
+  for (int i = 0; i < STUB_NUM; i++) {
+    _wav_gen[i] = new AudioGeneratorWAV();
+  }
+  // _mixer に１回渡したら、あとは _stub => _mixer の順で色々渡す
+  _mixer = new AudioOutputMixer(32, _i2s_out);
+
+  for (int i = 0; i < STUB_NUM; i++) {
+    _stub[i] = _mixer->NewInput();
+    _stub[i]->SetRate(samplingRate);
+  }
+
+#ifdef GENERAL
+  // MOSFET直結のD級アンプにI2Sを入れる場合は、始めに再生するすることで I2S clockを発生させる
+  playAudio(0, 0);
+#endif
 }
 
 // get

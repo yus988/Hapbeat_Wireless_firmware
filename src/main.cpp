@@ -212,7 +212,21 @@ uint8_t ledPowerConst = 3;
 #endif
 
 ////////////////////////////////// define tasks ////////////////////////////////
+#if defined(NECKLACE) || defined(NECKLACE_V_1_3)
 TaskHandle_t thp[3];
+#endif
+
+#ifdef GENERAL
+TaskHandle_t thp[2];
+#endif
+
+// 優先度は最低にする
+void TaskAudio(void *args) {
+  while (1) {
+    audioManager::playAudioInLoop();
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+  }
+}
 
 #if defined(NECKLACE) || defined(NECKLACE_V_1_3)
 void setFixGain(bool updateOLED = true) {
@@ -232,14 +246,6 @@ void setAmpStepGain(int step, bool updateOLED = true) {
   if (updateOLED) {
     displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
                                audioManager::getWearerId(), step);
-  }
-}
-
-// 優先度は最低にする
-void TaskAudio(void *args) {
-  while (1) {
-    audioManager::playAudioInLoop();
-    vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
 
@@ -388,10 +394,10 @@ void TaskUI(void *args) {
           // } else {
           //   wearId = 0;
           // }
-        } else if (i == 1) {
+        } else if (i == 2) {
           devicePos += 1;
           // audioManager::setDevicePos(devicePos);
-        } else if (i == 2) {
+        } else if (i == 1) {
           gainNum += 1;
           if (gainNum > MAX_GAIN_NUM) {
             gainNum = 0;
@@ -409,15 +415,25 @@ void TaskUI(void *args) {
         }
         FastLED.show();
         _isBtnPressed[i] = true;
-        vTaskDelay(50 / portTICK_PERIOD_MS);
       }
       if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) {
         _isBtnPressed[i] = false;
-        vTaskDelay(50 / portTICK_PERIOD_MS);
       }
     }
+    vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
+
+// 本来は電流測定用だが、MQTTループを回してみる
+void TaskCurrent(void *args) {
+  while (1) {
+    MQTT_manager::loopMQTTclient();
+    vTaskDelay(1 / portTICK_PERIOD_MS);
+  }
+}
+
+// MQTT受信用、General v2 からはネックレスと共用にできるはず
+void statusCallback(const char *status) { USBSerial.println(status); }
 
 #endif
 
@@ -518,12 +534,19 @@ void setup() {
   xTaskCreatePinnedToCore(TaskUI, "TaskUI", 4096, NULL, 2, &thp[0], 1);
   xTaskCreatePinnedToCore(TaskCurrent, "TaskCurrent", 4096, NULL, 2, &thp[2],
                           1);
+
   // 4096
   // 無線通信の開始
 #ifdef ESPNOW
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 #elif MQTT
-  MQTT_manager::initMQTTclient(audioManager::PlaySndFromMQTTcallback, statusCallback);
+  MQTT_manager::initMQTTclient(audioManager::PlaySndFromMQTTcallback,
+                               statusCallback);
 #endif
 }
-void loop() { MQTT_manager::loopMQTTclient(); };
+void loop() {
+// ネックレスはこれで動いていたが、Generalは駄目。原因不明
+#if defined(MQTT) && defined(NECKLACE_V_1_3)
+  MQTT_manager::loopMQTTclient();
+#endif
+};
