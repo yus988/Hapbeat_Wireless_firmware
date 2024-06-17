@@ -618,7 +618,7 @@ uint8_t BQ27220::readExtendedData(uint8_t classID, uint8_t offset) {
   computeBlockChecksum();  // Compute checksum going in
   uint8_t oldCsum = blockDataChecksum();
   /*for (int i=0; i<32; i++)
-          Serial.print(String(readBlockData(i)) + " ");*/
+          USBSerial.print(String(readBlockData(i)) + " ");*/
   retData = readBlockData(offset % 32);  // Read from offset (limit to 0-31)
 
   if (!_userConfigControl) exitConfig();

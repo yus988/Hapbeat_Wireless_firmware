@@ -1,0 +1,10 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// Wi-Fi設定
+#define SSID "YOUR_SSID"
+#define PASSWORD "YOUR_PASSWORD"
+#define MQTT_SERVER "YOUR_MQTT_SERVE"
+#define MQTT_PORT "port_number_int"
+
+#endif  // CONFIG_H

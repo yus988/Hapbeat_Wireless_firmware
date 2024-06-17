@@ -61,7 +61,7 @@ void readAllWavFiles() {
     id = file.name()[2] - '0';
     // 左右の弁別、先頭から4文字目がRの場合、1、それ以外（L or C）は0
     i = file.name()[3] != 'R' ? 0 : 1;
-    Serial.printf("FILE: %s, %d, %d, %d, %c, i: %d\n", file.name(), cat, pos,
+    USBSerial.printf("FILE: %s, %d, %d, %d, %c, i: %d\n", file.name(), cat, pos,
                   id, file.name()[3], i);
     audioDataSize[cat][pos][id][i] = file.size();
     audioData[cat][pos][id][i] = new uint8_t[audioDataSize[cat][pos][id][i]];
@@ -101,7 +101,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
   uint8_t isStereo = data[3];
   uint8_t L_Vol = data[4];
   uint8_t R_Vol = data[5];
-  Serial.printf("recieced: id %d, isStereo %d, Vol %d:%d, \n", id, isStereo,
+  USBSerial.printf("recieced: id %d, isStereo %d, Vol %d:%d, \n", id, isStereo,
                 L_Vol, R_Vol);
   // 表示チャンネルと受信チャンネルが合致した時に再生
   if (playChannel == cat) {
@@ -125,9 +125,9 @@ void init_esp_now() {
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   if (esp_now_init() == ESP_OK) {
-    Serial.println("ESPNow Init Success");
+    USBSerial.println("ESPNow Init Success");
   } else {
-    Serial.println("ESPNow Init Failed");
+    USBSerial.println("ESPNow Init Failed");
     ESP.restart();
   }
   // マルチキャスト用Slave登録
@@ -137,7 +137,7 @@ void init_esp_now() {
   }
   esp_err_t addStatus = esp_now_add_peer(&slave);
   if (addStatus == ESP_OK) {  // Pair success
-    Serial.println("Pair success");
+    USBSerial.println("Pair success");
   }
   // ESP-NOWコールバック登録
   esp_now_register_recv_cb(OnDataRecv);
@@ -194,8 +194,8 @@ void updateOLED(uint8_t ch, uint8_t gain) {
 /////////////// execution ////////////////////////////////////
 void setup() {
   // // デバッグ用ボタン
-  Serial.begin(115200);
-  Serial.println("init Hapbeat wireless reciever");
+  USBSerial.begin(115200);
+  USBSerial.println("init Hapbeat wireless reciever");
   // ピン設定
   pinMode(SW1_VOL_P, INPUT);
   pinMode(SW2_VOL_N, INPUT);
@@ -215,7 +215,7 @@ void setup() {
   // pinMode(EN_OLED, OUTPUT);
   // digitalWrite(EN_OLED, HIGH);
   // if (!display.begin(SSD1306_SWITCHCAPVCC)) {
-  //   Serial.println(F("SSD1306 allocation failed"));
+  //   USBSerial.println(F("SSD1306 allocation failed"));
   //   for (;;)
   //     ;  // Don't proceed, loop forever
   // }
@@ -226,7 +226,7 @@ void setup() {
 
   // LittleFSマウント確認
   if (!LittleFS.begin()) {
-    Serial.println("LittleFS Mount Failed");
+    USBSerial.println("LittleFS Mount Failed");
     return;
   }
   // espnowの開始
@@ -238,7 +238,7 @@ void setup() {
 void loop() {
 
   
-  //  Serial.print("Hapbeat");
+  //  USBSerial.print("Hapbeat");
   // ボタン操作。将来的に別のコアで動作させたい
   // チャンネル変更
   if (!digitalRead(SW3_SEL_P) && !isBtnPressed[0]) {
@@ -249,7 +249,7 @@ void loop() {
     //   playChannel = 0;
     // updateOLED(playChannel, gainNum);
     isBtnPressed[0] = true;
-    Serial.println("SELECTED");
+    USBSerial.println("SELECTED");
   }
   if (digitalRead(SW3_SEL_P) && isBtnPressed[0]) isBtnPressed[0] = false;
   // // ゲイン変更
@@ -261,7 +261,7 @@ void loop() {
   //     gainNum = 0;
   //   updateOLED(playChannel, gainNum);
   //   isBtnPressed[1] = true;
-  //   Serial.println("VOLUP");
+  //   USBSerial.println("VOLUP");
   // }
   // if (digitalRead(SW1_VOL_P) && isBtnPressed[1]) isBtnPressed[1] = false;
 
