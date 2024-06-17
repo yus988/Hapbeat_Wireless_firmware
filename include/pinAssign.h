@@ -102,8 +102,7 @@
   #define EN_MOTOR_PIN 47
   // analog amp
   #define EN_VIBAMP_PIN 26
-  #define AIN_VIBVOL_PIN 1
-  #define AOUT_VIBVOL_PIN 6
+  #define AOUT_VIBVOL_PIN 18
   // _display pins
   #define SCLK_PIN 45
   #define MOSI_PIN 46
@@ -115,7 +114,7 @@
   // Button pins
   #define SW1_VOL_P_PIN 13
   #define SW2_VOL_N_PIN 14
-  #define SW3_ENTER_PIN 0
+//   #define SW3_ENTER_PIN 0
   // LED
   #define LED_PIN 34
 

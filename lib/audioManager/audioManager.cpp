@@ -1,4 +1,5 @@
 #include <LittleFS.h>
+
 #include "FS.h"
 // オーディオ再生関連 ESP8266
 #include "AudioFileSourcePROGMEM.h"
@@ -6,13 +7,13 @@
 // EEPROM
 #include <EEPROM.h>
 // audio libraries
+#include <AudioGeneratorMP3.h>
+
 #include "AudioFileSourceLittleFS.h"
 #include "AudioGeneratorWAV.h"
 #include "AudioOutputI2S.h"
 #include "AudioOutputMixer.h"
 #include "driver/i2s.h"
-
-#include <AudioGeneratorMP3.h>
 
 #define STUB_NUM 4
 #define SOUND_FILE_NUM 50
@@ -319,7 +320,8 @@ void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
   }
 
 #ifdef GENERAL
-  // MOSFET直結のD級アンプにI2Sを入れる場合は、始めに再生するすることで I2S clockを発生させる
+  // MOSFET直結のD級アンプにI2Sを入れる場合は、始めに再生するすることで I2S
+  // clockを発生させる
   playAudio(0, 0);
 #endif
 }

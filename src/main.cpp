@@ -35,7 +35,11 @@ const int ADC_MAX = 4095;             // ADCの分解能
 const float V_REF = 3.3;              // アナログ基準電圧 (V)
 const int BATTERY_CAPACITY = 3000;    // バッテリー容量 (mAh)
 
+  #if defined(NECKLACE_V_1_3)
 TaskHandle_t thp[3];
+  #else
+TaskHandle_t thp[2];
+  #endif
 
 // LED
 CRGB _leds[1];
@@ -69,8 +73,8 @@ const char *_decibelTxt[] = {
     "14.8", "15.2", "15.6", "16.0", "16.4", "16.8", "17.2", "17.6",
     "18.0", "18.4", "18.8", "19.2", "19.6", "20.0", "20.4", "20.8",
     "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
-int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN, SW3_ENTER_PIN};
-bool _isBtnPressed[] = {false, false, false};
+int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN};
+bool _isBtnPressed[] = {false, false};
   #endif
 
 bool _isFixMode;
@@ -135,7 +139,6 @@ uint8_t ledPower = 0;
 uint8_t ledPowerCoef = 4;
 uint8_t ledPowerConst = 3;
 TaskHandle_t thp[2];
-
 #endif
 
 ////////////////////////////////// define tasks ////////////////////////////////
@@ -240,8 +243,10 @@ void TaskUI(void *args) {
           wearId += 1;
         } else if (i == 0 && wearId > 0) {
           wearId -= 1;
-        } else if (i == 3 && (playCategoryNum <
-                              sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]) - 1)) {
+        } else if (i == 3 &&
+                   (playCategoryNum <
+                    sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]) -
+                        1)) {
           playCategoryNum += 1;
         } else if (i == 2 && playCategoryNum > 0) {
           playCategoryNum -= 1;
@@ -291,13 +296,14 @@ void TaskUI(void *args) {
         uint8_t playCategoryNum = audioManager::getPlayCategory();
         uint8_t wearId = audioManager::getWearerId();
         audioManager::stopAudio();
-        if (i == 1 &&
+        if (i == 2 &&
             wearId < sizeof(_wearerIdTxt) / sizeof(_wearerIdTxt[0]) - 1) {
           wearId += 1;
         } else if (i == 0 && wearId > 0) {
           wearId -= 1;
-        } else if (i == 2) {
-          if (playCategoryNum < sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]) - 1) {
+        } else if (i == 1) {
+          if (playCategoryNum <
+              sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]) - 1) {
             playCategoryNum += 1;
           } else {
             playCategoryNum = 0;
@@ -308,7 +314,6 @@ void TaskUI(void *args) {
                                    _fixGainStep);
         audioManager::setPlayCategory(playCategoryNum);
         audioManager::setWearerId(wearId);
-        vTaskDelay(1 / portTICK_PERIOD_MS);
       }
       if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
     };
@@ -398,6 +403,10 @@ void setup() {
   pinMode(DETECT_ANALOG_IN_PIN, INPUT);
 #endif
 
+#if defined(NECKLACE) || defined(NECKLACE_V_1_3)
+  pinMode(AIN_VIBVOL_PIN, INPUT);
+#endif
+
 #if defined(NECKLACE) || defined(NECKLACE_V_1_3) || defined(GENERAL_V2)
   // ボタンピン設定
   for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
@@ -415,20 +424,20 @@ void setup() {
   int m_size = sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]);
   int w_size = sizeof(_wearerIdTxt) / sizeof(_wearerIdTxt[0]);
   int d_size = sizeof(_decibelTxt) / sizeof(_decibelTxt[0]);
-  displayManager::setTitle(_playCategoryTxt, m_size, _wearerIdTxt, w_size, _decibelTxt,
-                           d_size);
+  displayManager::setTitle(_playCategoryTxt, m_size, _wearerIdTxt, w_size,
+                           _decibelTxt, d_size);
   // vibAmp
   pinMode(EN_VIBAMP_PIN, OUTPUT);
   // digitalWrite(EN_VIBAMP_PIN, LOW);
   digitalWrite(EN_VIBAMP_PIN, HIGH);
-  pinMode(AIN_VIBVOL_PIN, INPUT);
   pinMode(AOUT_VIBVOL_PIN, OUTPUT);
-  analogWrite(AOUT_VIBVOL_PIN, 100);
-  // analogWrite(AOUT_VIBVOL_PIN, 200); // set vibration volume
+  // D級アンプのゲイン決定
   pinMode(EN_MOTOR_PIN, OUTPUT);
   digitalWrite(EN_MOTOR_PIN, HIGH);
-  displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
-                             audioManager::getWearerId(), 0);
+  // setFixGain内でupdateOLEDが呼ばれるので不要
+  // displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
+  //                            audioManager::getWearerId(), 0);
+  setFixGain();
   // set device position as NECK = 0
   audioManager::setDevicePos(0);
   // audioManager::setDevicePos(5);
