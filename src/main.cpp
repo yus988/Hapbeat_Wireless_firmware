@@ -164,12 +164,8 @@ void setAmpStepGain(int step, bool updateOLED = true) {
 void TaskCurrent(void *args) {
   int adc_value;
   float current;
-  const float current_thresholds[2] = {5.0, 5.5};  // 電流値の閾値 (A)
-  // シャットダウンサイクル数。大きいほど、長時間閾値越えを許容する。閾値に応じて変える
-  const int shutdownCycles[2] = {20, 4};
   int shutdownCounter[2] = {0, 0};
-  const int restoreCycles = 100;  // 復帰サイクル数
-  int restoreCounter = 0;         // カウンタの初期化
+  int restoreCounter = 0;  // カウンタの初期化
   uint8_t modifiedStep;
   while (1) {
     // ADC値の読み取り
@@ -226,7 +222,7 @@ void TaskUI(void *args) {
     _ampVolStep = map(_currAIN, 0, 4095, 0, 63);
     // uint8_t _ampVolStep = 0;
     if (!_isFixMode && !_disableVolumeControl &&
-        abs(_currAIN - _prevAIN) > VOLUME_THRESHOLD) {
+        abs(_currAIN - _prevAIN) > volumeThreshold) {
       setAmpStepGain(_ampVolStep);
     }
     _prevAIN = _currAIN;

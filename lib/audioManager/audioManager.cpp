@@ -1,5 +1,7 @@
 #include <LittleFS.h>
 
+#include <vector>
+
 #include "FS.h"
 // オーディオ再生関連 ESP8266
 #include "AudioFileSourcePROGMEM.h"
@@ -15,13 +17,21 @@
 #include "AudioOutputMixer.h"
 #include "driver/i2s.h"
 
-#define STUB_NUM 4
-#define SOUND_FILE_NUM 50
+#define STUB_NUM 6  // 同時に再生するファイルの最大数。LRで2つ必要
+#define SOUND_FILE_NUM 60
 #define RAM_STORAGE 0
 #define FS_STORAGE 1
+// 再生するカテゴリなどの最大数を定義（RAMは限られるので大きくしすぎないように）
+#define CATEGORY_NUM 2
+#define POSITION_NUM 1
+#define DATA_NUM 20
+#define SUB_DATA_NUM 6
+
+int samplingRate = 8000;
 
 namespace audioManager {
-bool isPlayAudio[] = {false, false, false, false};
+// bool isPlayAudio[] = {false, false, false, false};
+std::vector<bool> isPlayAudio(STUB_NUM, false);
 
 struct DataPacket {
   uint8_t category;
@@ -31,11 +41,10 @@ struct DataPacket {
   uint8_t subID;
   uint8_t lVol;
   uint8_t rVol;
-  uint8_t isLoop;
+  uint8_t playCmd;
 };
 
 int maxVol = 255;
-int samplingRate = 8000;
 // position identifier
 // 0:neck, 1:chest, 2:abdomen
 // 3:upperArm_L, 4:upperArm_R, 5:wrist_L, 6:wrist_R,
@@ -63,7 +72,7 @@ AudioOutputMixer *_mixer;
 AudioOutputMixerStub *_stub[STUB_NUM];
 
 // [cat][pos][dataID][_subID][isRight]
-uint8_t _audioDataIndex[2][1][20][6][2];
+uint8_t _audioDataIndex[CATEGORY_NUM][POSITION_NUM][DATA_NUM][SUB_DATA_NUM][2];
 size_t _audioDataSize[SOUND_FILE_NUM];
 uint8_t _dataID[STUB_NUM];
 uint8_t _subID[STUB_NUM];
@@ -157,9 +166,8 @@ void stopAudio(uint8_t stub = 99) {
 }
 
 void playAudio(uint8_t tStubNum, uint8_t tVol) {
-  int isLR = (tStubNum == 0 || tStubNum == 2) ? 0 : 1;
-  // pos と isRight = 0 は仮置き
-  uint8_t pos = 0;
+  int isLR = (tStubNum % 2 == 0) ? 0 : 1;
+  uint8_t pos = 0;  // pos = 0 は仮置き
   uint8_t idx = _audioDataIndex[_settings.playCategory][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
 
@@ -196,18 +204,20 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len) {
   USBSerial.printf(
       "received: _category %d, _wearerId %d, _devPos %d, _dataID %d, _subID "
-      "%d, Vol %d:%d, isLoop %d\n",
+      "%d, Vol %d:%d, playtype %d\n",
       data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
   // data = [_category, _wearerId, _devicePos, data_id, _subID, _L_Vol,
-  // _R_Vol, isLoop] 各種条件が合致した時のみ値を保持 wearerId = 0
+  // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持 wearerId = 0
   // の時は全受信
   if ((data[0] == _settings.playCategory || data[0] == 99) &&
       (data[1] == _settings.wearerId || data[1] == 99 ||
        _settings.wearerId == 0) &&
       (data[2] == _devicePos || data[2] == 99)) {
-    uint8_t isLoop = data[7];  // 0=oneshot, 1=loopStart, 2=stopAudio
+    // 0 = oneshot(0,1), 1=loopStart(2,3), 2=stopAudio, 3=2ndline(4,5)
+    // 括弧内はstub番号
+    uint8_t playCmd = data[7];
 
-    if (isLoop == 2) {
+    if (playCmd == 2) {
       for (int iStub = 2; iStub <= 3; ++iStub) {
         while (_wav_gen[iStub]->isRunning()) {
           stopAudio(iStub);
@@ -216,16 +226,24 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       }
       return;
     } else {
-      int startIdx = (isLoop == 0) ? 0 : 2;
-      int endIdx = (isLoop == 0) ? 2 : 4;
-
-      for (int i = startIdx; i < endIdx; ++i) {
+      int startIdx;
+      // 再生するstubを選択
+      switch (playCmd) {
+        case 0:
+          startIdx = 0;
+          break;
+        case 1:
+          startIdx = 2;
+          break;
+        case 3:
+          startIdx = 4;
+      }
+      for (int i = startIdx; i <= startIdx + 1; ++i) {
         _dataID[i] = data[3];
         _subID[i] = data[4];
         _volume[i] = data[5 + i % 2];
       }
-
-      uint8_t stub = (isLoop == 0) ? 0 : 2;
+      uint8_t stub = startIdx;
       stopAudio(stub);
       playAudio(stub, _volume[stub]);
       // ステレオ再生を左右のボリュームから判断
@@ -271,7 +289,7 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   dataPacket.subID = values[4];
   dataPacket.lVol = values[5];
   dataPacket.rVol = values[6];
-  dataPacket.isLoop = values[7];
+  dataPacket.playCmd = values[7];
 
   // ダミーのMACアドレス（適宜設定）
   uint8_t dummy_mac_addr[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00};
