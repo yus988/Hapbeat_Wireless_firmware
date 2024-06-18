@@ -48,7 +48,7 @@ void setupBQ27220(uint8_t PIN_SDA, uint8_t PIN_SCL, int bat_capacity) {
 
   // Uset lipo.setCapacity(BATTERY_CAPACITY) to set the design capacity
   // of your battery.
-  lipo.setCapacity(bat_capacity);
+  // lipo.setCapacity(bat_capacity);
 }
 
 void printBatteryStats() {

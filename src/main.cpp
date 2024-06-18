@@ -2,10 +2,10 @@
 
 #include <iostream>
 // ディスプレイ関連
+#include <Adafruit_SSD1306.h>
 #include <FastLED.h>
 #include <Wire.h>
 // 自作ライブラリ
-#include <Adafruit_SSD1306.h>
 #include <BQ27220.h>
 #include <audioManager.h>
 #include <displayManager.h>
@@ -16,134 +16,37 @@
   #include <MQTT_manager.h>
 #endif
 
-/////////////////////// define pins /////////////////
-#if defined(NECKLACE)
-  // Audio pins
-  #define I2S_BCLK_PIN 39
-  #define I2S_DOUT_PIN 40
-  #define I2S_LRCK_PIN 38
-  #define I2S_MLCK_PIN 41
-  #define EN_I2S_DAC 7
-  // ピン番号はv1_3で変更予定
-  #define EN_MOTOR_PIN 44
-  // analog amp
-  #define EN_VIBAMP_PIN 43
-  #define AIN_VIBVOL_PIN 1
-  #define AOUT_VIBBVOL_PIN 4
-  // _display pins
-  #define SCLK_PIN 17
-  #define MOSI_PIN 18
-  #define MISO_PIN 37
-  #define OLED_DC_PIN 16
-  #define OLED_RESET_PIN 15
-  #define CS_PIN 14
-  #define EN_OLED_PIN 47
-  // Button pins
-  #define SW1_VOL_P_PIN 13
-  #define SW2_VOL_N_PIN 12
-  #define SW3_SEL_P_PIN 2
-  #define SW4_SEL_N_PIN 34
-  #define SW5_ENTER_PIN 21
-  // LED
-  #define LED_PIN 3
-  // _display params
-  #define DISP_ROT 0
-  // #define DISP_ROT 90 // 上下逆
-  #define SCREEN_WIDTH 128  // OLED _display width, in pixels
-  #define SCREEN_HEIGHT 32  // OLED _display height, in pixels
+#include "adjustmentParams.h"
+#include "pinAssign.h"
 
-  #define FIX_GAIN_STEP 41
-  #define VOLUME_THRESHOLD 60
-#endif
-
-//
-#if defined(NECKLACE_V_1_3)
-  // Audio pins
-  #define I2S_BCLK_PIN 39
-  #define I2S_DOUT_PIN 40
-  #define I2S_LRCK_PIN 38
-  #define I2S_MLCK_PIN 41
-  #define EN_I2S_DAC 11
-  // ピン番号はv1_3で変更予定
-  #define EN_MOTOR_PIN 9
-  // analog amp
-  #define EN_VIBAMP_PIN 10
-  #define AIN_VIBVOL_PIN 1
-  #define AOUT_VIBBVOL_PIN 6
-  // _display pins
-  #define SCLK_PIN 17
-  #define MOSI_PIN 18
-  #define MISO_PIN 37
-  #define OLED_DC_PIN 16
-  #define OLED_RESET_PIN 15
-  #define CS_PIN 14
-  #define EN_OLED_PIN 21
-  // Button pins
-  #define SW1_VOL_P_PIN 26
-  #define SW2_VOL_N_PIN 47
-  // 基板上はこちらが正しいが、旧版に合わせるため逆にする
-  // #define SW3_SEL_P_PIN 33
-  // #define SW4_SEL_N_PIN 34
-  #define SW3_SEL_P_PIN 34
-  #define SW4_SEL_N_PIN 33
-  //
-  #define SW5_ENTER_PIN 48
-  // #define SW5_ENTER_PIN 0
-
-  // LED
-  #define LED_PIN 8
+/////////////////////////// 変数および汎用関数の宣言
+/////////////////////////////////////////
+#if defined(NECKLACE) || defined(NECKLACE_V_1_3) || defined(GENERAL_V2)
 // _display params
-
-  #define COLOR_FIX_MODE CRGB(10, 10, 10)
-  #define COLOR_VOLUME_MODE CRGB(0, 0, 10)
-  #define COLOR_DANGER_MODE CRGB(10, 0, 0)
-
-  #define DISP_ROT 0
-  // #define DISP_ROT 90 // 上下逆
-  #define SCREEN_WIDTH 128  // OLED _display width, in pixels
-  #define SCREEN_HEIGHT 32  // OLED _display height, in pixels
-
-  #define FIX_GAIN_STEP 41
-  #define VOLUME_THRESHOLD 100
-
-  // update from v1_2
-  #define BQ27x_PIN 2
-  #define SDA_PIN 3
-  #define SCL_PIN 4
-  #define BAT_CURRENT_PIN 5
-  #define R5_BATVOL_PIN 7
-  #define DETECT_ANALOG_IN_PIN 45
+const int DISP_ROT = 0;
+// const int DISP_ROT = 90; // 上下逆
+const int SCREEN_WIDTH = 128;  // OLED _display width, in pixels
+const int SCREEN_HEIGHT = 32;  // OLED _display height, in pixels
 
 // 定数の定義
-  #define SHUNT_RESISTANCE 0.01  // シャント抵抗 (オーム)
-  #define INA_GAIN 50.0          // INA180A2IDBVRのゲイン (V/V)
-  #define ADC_MAX 4095           // ADCの分解能
-  #define V_REF 3.3              // アナログ基準電圧 (V)
-  #define BATTERY_CAPACITY 3000
+const float SHUNT_RESISTANCE = 0.01;  // シャント抵抗 (オーム)
+const float INA_GAIN = 50.0;          // INA180A2IDBVRのゲイン (V/V)
+const int ADC_MAX = 4095;             // ADCの分解能
+const float V_REF = 3.3;              // アナログ基準電圧 (V)
+const int BATTERY_CAPACITY = 3000;    // バッテリー容量 (mAh)
 
-// コールバック関数の定義
-void messageReceived(char *topic, byte *payload, unsigned int length) {
-  USBSerial.print("Message arrived in topic: ");
-  USBSerial.println(topic);
+  #if defined(NECKLACE_V_1_3)
+TaskHandle_t thp[3];
+  #else
+TaskHandle_t thp[2];
+  #endif
 
-  USBSerial.print("Message: ");
-  for (unsigned int i = 0; i < length; i++) {
-    USBSerial.print((char)payload[i]);
-  }
-  USBSerial.println();
-}
-#endif
-
-//////////// Variables //////////////////////////////////////
-#if defined(NECKLACE) || defined(NECKLACE_V_1_3)
 // LED
 CRGB _leds[1];
 Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, MOSI_PIN, SCLK_PIN,
                           OLED_DC_PIN, OLED_RESET_PIN, CS_PIN);
-// 表示させる文字を入力
-// const char *_menuTxt[] = {"テニス", "野球", "バスケ"};
-const char *_menuTxt[] = {"ゲーム", "動画", "hoge"};
-const char *_wearerIdTxt[] = {"ALL", "競技", "会場", "4", "5", "6"};
+
+  #if defined(NECKLACE) || defined(NECKLACE_V_1_3)
 // see pam8003 datasheet p.7
 const char *_decibelTxt[] = {
     "-75",  "-40",  "-34",  "-28",  "-22",  "-16",  "-10",  "-7.5",
@@ -157,14 +60,33 @@ const char *_decibelTxt[] = {
 int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN, SW3_SEL_P_PIN, SW4_SEL_N_PIN,
                  SW5_ENTER_PIN};
 bool _isBtnPressed[] = {false, false, false, false, false};
+  #endif
 
+  #if defined(GENERAL_V2)
+// see pam8003 datasheet p.7
+const char *_decibelTxt[] = {
+    "-75",  "-40",  "-34",  "-28",  "-22",  "-16",  "-10",  "-7.5",
+    "-5",   "-2.5", "0",    "1.5",  "3.0",  "4.0",  "4.4",  "4.8",
+    "5.2",  "5.6",  "6.0",  "6.4",  "6.8",  "7.2",  "7.6",  "8.0",
+    "8.4",  "8.8",  "9.2",  "9.6",  "10.0", "10.4", "10.8", "11.2",
+    "11.6", "12.0", "12.4", "12.8", "13.2", "13.6", "14.0", "14.4",
+    "14.8", "15.2", "15.6", "16.0", "16.4", "16.8", "17.2", "17.6",
+    "18.0", "18.4", "18.8", "19.2", "19.6", "20.0", "20.4", "20.8",
+    "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
+int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN};
+bool _isBtnPressed[] = {false, false};
+  #endif
+
+bool _isFixMode;
+
+  #if defined(NECKLACE) || defined(NECKLACE_V_1_3)
 // volume related variables
 int _prevAIN = 0;
 int _currAIN = 0;
-bool _isFixMode;
 bool _disableVolumeControl = false;
 uint8_t _ampVolStep;
-
+  #endif
+  #if defined(NECKLACE_V_1_3)
 // 電流を計算するための関数
 float calculateCurrent(int adc_value) {
   // ADCの値を電圧に変換
@@ -173,6 +95,7 @@ float calculateCurrent(int adc_value) {
   float current = voltage / (INA_GAIN * SHUNT_RESISTANCE);
   return current;
 }
+  #endif
 
 void statusCallback(const char *status) {
   _display.clearDisplay();
@@ -181,24 +104,30 @@ void statusCallback(const char *status) {
   _display.display();
 }
 
+// コールバック関数の定義
+void messageReceived(char *topic, byte *payload, unsigned int length) {
+  USBSerial.print("Message arrived in topic: ");
+  USBSerial.println(topic);
+  USBSerial.print("Message: ");
+  for (unsigned int i = 0; i < length; i++) {
+    USBSerial.print((char)payload[i]);
+  }
+  USBSerial.println();
+}
+
+// 所定の値に固定する。
+void setFixGain(bool updateOLED = true) {
+  // 15dBにあたるステップ数0--63をanalogWrite0--255に変換する
+  analogWrite(AOUT_VIBVOL_PIN, map(_fixGainStep, 0, 63, 0, 255));
+  if (updateOLED) {
+    displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
+                               audioManager::getWearerId(), _fixGainStep);
+  }
+}
 #endif
 
 #if defined(GENERAL)
-  // pins related to audio
-  #define I2S_BCLK_PIN 39
-  #define I2S_DOUT_PIN 40
-  #define I2S_LRCK_PIN 42
-  #define SD_MODE_PIN 16  // for MAX98357A
-  #define G_SEL_A_PIN 33
-  #define G_SEL_B_PIN 34
-  // Button pins
-  #define SW1_PIN 4
-  #define SW2_PIN 21
-  #define SW3_PIN 48
-  // LED
-  #define LED_PIN 45
   #define MAX_GAIN_NUM 3
-
 CRGB _leds[4];
 int _SW_PIN[] = {SW1_PIN, SW2_PIN, SW3_PIN};
 bool _isBtnPressed[] = {false, false, false};  // control state of being pressed
@@ -209,17 +138,10 @@ uint8_t _wearerId = 0;
 uint8_t ledPower = 0;
 uint8_t ledPowerCoef = 4;
 uint8_t ledPowerConst = 3;
-#endif
-
-////////////////////////////////// define tasks ////////////////////////////////
-#if defined(NECKLACE) || defined(NECKLACE_V_1_3)
-TaskHandle_t thp[3];
-#endif
-
-#ifdef GENERAL
 TaskHandle_t thp[2];
 #endif
 
+////////////////////////////////// define tasks ////////////////////////////////
 // 優先度は最低にする
 void TaskAudio(void *args) {
   while (1) {
@@ -229,35 +151,21 @@ void TaskAudio(void *args) {
 }
 
 #if defined(NECKLACE) || defined(NECKLACE_V_1_3)
-void setFixGain(bool updateOLED = true) {
-  // 15dBにあたるステップ数0--63をanalogWrite0--255に変換する
-  analogWrite(AOUT_VIBBVOL_PIN, map(FIX_GAIN_STEP, 0, 63, 0, 255));
-  if (updateOLED) {
-    displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
-                               audioManager::getWearerId(), FIX_GAIN_STEP);
-  }
-}
-
 // PAMの電圧を下げる
 void setAmpStepGain(int step, bool updateOLED = true) {
   int volume = map(_currAIN, 0, 4095, 0, 255);
-  analogWrite(AOUT_VIBBVOL_PIN, volume);
+  analogWrite(AOUT_VIBVOL_PIN, volume);
   // ディスプレイにdB表示用のステップ数変換
   if (updateOLED) {
     displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
                                audioManager::getWearerId(), step);
   }
 }
-
 void TaskCurrent(void *args) {
   int adc_value;
   float current;
-  const float current_thresholds[2] = {5.0, 5.5};  // 電流値の閾値 (A)
-  // シャットダウンサイクル数。大きいほど、長時間閾値越えを許容する。閾値に応じて変える
-  const int shutdownCycles[2] = {20, 4};
   int shutdownCounter[2] = {0, 0};
-  const int restoreCycles = 100;  // 復帰サイクル数
-  int restoreCounter = 0;         // カウンタの初期化
+  int restoreCounter = 0;  // カウンタの初期化
   uint8_t modifiedStep;
   while (1) {
     // ADC値の読み取り
@@ -274,7 +182,7 @@ void TaskCurrent(void *args) {
         // 電流値が閾値を超えた場合にアンプをミュート
         digitalWrite(EN_VIBAMP_PIN, LOW);
         _disableVolumeControl = true;  // 音量操作を無効化
-        _leds[0] = COLOR_DANGER_MODE;
+        _leds[0] = _colorDangerMode;
         FastLED.show();
         restoreCounter = 0;  // カウンタリセット
       }
@@ -284,10 +192,10 @@ void TaskCurrent(void *args) {
         digitalWrite(EN_VIBAMP_PIN, HIGH);
         if (_isFixMode) {
           setFixGain(false);
-          _leds[0] = COLOR_FIX_MODE;
+          _leds[0] = _colorFixMode;
         } else {
           setAmpStepGain(_ampVolStep, false);
-          _leds[0] = COLOR_VOLUME_MODE;
+          _leds[0] = _colorVolumeMode;
         }
         FastLED.show();
         shutdownCounter[0] = 0;  // カウンタリセット
@@ -314,7 +222,7 @@ void TaskUI(void *args) {
     _ampVolStep = map(_currAIN, 0, 4095, 0, 63);
     // uint8_t _ampVolStep = 0;
     if (!_isFixMode && !_disableVolumeControl &&
-        abs(_currAIN - _prevAIN) > VOLUME_THRESHOLD) {
+        abs(_currAIN - _prevAIN) > volumeThreshold) {
       setAmpStepGain(_ampVolStep);
     }
     _prevAIN = _currAIN;
@@ -331,22 +239,24 @@ void TaskUI(void *args) {
           wearId += 1;
         } else if (i == 0 && wearId > 0) {
           wearId -= 1;
-        } else if (i == 3 && (playCategoryNum <
-                              sizeof(_menuTxt) / sizeof(_menuTxt[0]) - 1)) {
+        } else if (i == 3 &&
+                   (playCategoryNum <
+                    sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]) -
+                        1)) {
           playCategoryNum += 1;
         } else if (i == 2 && playCategoryNum > 0) {
           playCategoryNum -= 1;
         } else if (i == 4) {
           if (_isFixMode) {
             _isFixMode = false;
-            _leds[0] = COLOR_VOLUME_MODE;
+            _leds[0] = _colorVolumeMode;
             ;
             if (!_disableVolumeControl) {
               setAmpStepGain(_ampVolStep);
             }
           } else {
             _isFixMode = true;
-            _leds[0] = COLOR_FIX_MODE;
+            _leds[0] = _colorFixMode;
             ;
             setFixGain();
           }
@@ -355,7 +265,7 @@ void TaskUI(void *args) {
         }
         _isBtnPressed[i] = true;
         if (i != 4) {
-          int tstep = (_isFixMode) ? FIX_GAIN_STEP : _ampVolStep;
+          int tstep = (_isFixMode) ? _fixGainStep : _ampVolStep;
           displayManager::updateOLED(&_display, playCategoryNum, wearId, tstep);
           audioManager::setPlayCategory(playCategoryNum);
           audioManager::setWearerId(wearId);
@@ -365,6 +275,44 @@ void TaskUI(void *args) {
       if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
     };
 
+    // loop delay
+    vTaskDelay(50 / portTICK_PERIOD_MS);
+  }
+}
+#endif
+
+#if defined(GENERAL_V2)
+void TaskUI(void *args) {
+  while (1) {
+    // デバッグ用、電池残量表示
+    // BQ27220_Cmd::printBatteryStats();
+    // ボタン操作
+    for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
+      if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
+        uint8_t playCategoryNum = audioManager::getPlayCategory();
+        uint8_t wearId = audioManager::getWearerId();
+        audioManager::stopAudio();
+        if (i == 2 &&
+            wearId < sizeof(_wearerIdTxt) / sizeof(_wearerIdTxt[0]) - 1) {
+          wearId += 1;
+        } else if (i == 0 && wearId > 0) {
+          wearId -= 1;
+        } else if (i == 1) {
+          if (playCategoryNum <
+              sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]) - 1) {
+            playCategoryNum += 1;
+          } else {
+            playCategoryNum = 0;
+          }
+        }
+        _isBtnPressed[i] = true;
+        displayManager::updateOLED(&_display, playCategoryNum, wearId,
+                                   _fixGainStep);
+        audioManager::setPlayCategory(playCategoryNum);
+        audioManager::setWearerId(wearId);
+      }
+      if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
+    };
     // loop delay
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
@@ -445,54 +393,60 @@ void setup() {
   audioManager::initParamsEEPROM();
   vTaskDelay(5 / portTICK_PERIOD_MS);
 
+#if defined(NECKLACE_V_1_3)
+  // battery current sensing pins
+  pinMode(BAT_CURRENT_PIN, INPUT);
+  pinMode(DETECT_ANALOG_IN_PIN, INPUT);
+#endif
+
 #if defined(NECKLACE) || defined(NECKLACE_V_1_3)
+  pinMode(AIN_VIBVOL_PIN, INPUT);
+#endif
+
+#if defined(NECKLACE) || defined(NECKLACE_V_1_3) || defined(GENERAL_V2)
   // ボタンピン設定
   for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
     pinMode(_SW_PIN[i], INPUT);
   };
   // Show LED
   FastLED.addLeds<NEOPIXEL, LED_PIN>(_leds, 1);
-  // data read pins
-  pinMode(BAT_CURRENT_PIN, INPUT);
-  pinMode(DETECT_ANALOG_IN_PIN, INPUT);
   // init I2S DAC
-  pinMode(EN_I2S_DAC, OUTPUT);
-  // digitalWrite(EN_I2S_DAC, LOW);
-  digitalWrite(EN_I2S_DAC, HIGH);
+  pinMode(EN_I2S_DAC_PIN, OUTPUT);
+  digitalWrite(EN_I2S_DAC_PIN, HIGH);
   // init _display
   pinMode(EN_OLED_PIN, OUTPUT);
   digitalWrite(EN_OLED_PIN, HIGH);
   displayManager::initOLED(&_display, DISP_ROT);
-  int m_size = sizeof(_menuTxt) / sizeof(_menuTxt[0]);
+  int m_size = sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]);
   int w_size = sizeof(_wearerIdTxt) / sizeof(_wearerIdTxt[0]);
   int d_size = sizeof(_decibelTxt) / sizeof(_decibelTxt[0]);
-  displayManager::setTitle(_menuTxt, m_size, _wearerIdTxt, w_size, _decibelTxt,
-                           d_size);
+  displayManager::setTitle(_playCategoryTxt, m_size, _wearerIdTxt, w_size,
+                           _decibelTxt, d_size);
   // vibAmp
   pinMode(EN_VIBAMP_PIN, OUTPUT);
   // digitalWrite(EN_VIBAMP_PIN, LOW);
   digitalWrite(EN_VIBAMP_PIN, HIGH);
-  pinMode(AIN_VIBVOL_PIN, INPUT);
-  pinMode(AOUT_VIBBVOL_PIN, OUTPUT);
-  analogWrite(AOUT_VIBBVOL_PIN, 100);
-  // analogWrite(AOUT_VIBBVOL_PIN, 200); // set vibration volume
+  pinMode(AOUT_VIBVOL_PIN, OUTPUT);
+  // D級アンプのゲイン決定
   pinMode(EN_MOTOR_PIN, OUTPUT);
   digitalWrite(EN_MOTOR_PIN, HIGH);
-  displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
-                             audioManager::getWearerId(), 0);
+  // setFixGain内でupdateOLEDが呼ばれるので不要
+  // displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
+  //                            audioManager::getWearerId(), 0);
+  setFixGain();
   // set device position as NECK = 0
   audioManager::setDevicePos(0);
   // audioManager::setDevicePos(5);
   _isFixMode = audioManager::getIsFixMode();
   if (_isFixMode) {
-    _leds[0] = COLOR_FIX_MODE;
+    _leds[0] = _colorFixMode;
   } else {
-    _leds[0] = COLOR_VOLUME_MODE;
+    _leds[0] = _colorVolumeMode;
   }
   FastLED.show();
 #endif
 
-#ifdef NECKLACE_V_1_3
+#if defined(NECKLACE_V_1_3) || defined(GENERAL_V2)
   BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
 #endif
 
@@ -526,15 +480,18 @@ void setup() {
   }
   FastLED.show();
 #endif
+
   audioManager::readAllSoundFiles();
   audioManager::initAudioOut(I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DOUT_PIN);
 
   // 原因は不明だが、TaskUI=>TaskAudioの順にすると、GENERALではボタンを押すまで動作しない。
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 0, &thp[1], 0);
   xTaskCreatePinnedToCore(TaskUI, "TaskUI", 4096, NULL, 2, &thp[0], 1);
+
+#if defined(NECKLACE_V_1_3)
   xTaskCreatePinnedToCore(TaskCurrent, "TaskCurrent", 4096, NULL, 2, &thp[2],
                           1);
-
+#endif
   // 4096
   // 無線通信の開始
 #ifdef ESPNOW

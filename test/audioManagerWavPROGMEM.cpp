@@ -167,16 +167,16 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len) {
   USBSerial.printf(
       "recieved: _category %d, _wearerId %d, _devPos %d, _dataID %d, _subID "
-      "%d, Vol %d:%d, isLoop %d\n",
+      "%d, Vol %d:%d, playCmd %d\n",
       data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
   // data = [_category, _wearerId, _devicePos, data_id, _subID, _L_Vol,
-  // _R_Vol, isLoop] 各種条件が合致した時のみ値を保持 wearerId = 0 の時は全受信
+  // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持 wearerId = 0 の時は全受信
   if ((data[0] == _data.playCategory || data[0] == 99) &&
       (data[1] == _data.wearerId || data[1] == 99 || _data.wearerId == 0) &&
       (data[2] == _devicePos || data[2] == 99)) {
-    uint8_t isLoop = data[7];  // 0=oneshot, 1=loopStart, 2=stopAudio
+    uint8_t playCmd = data[7];  // 0=oneshot, 1=loopStart, 2=stopAudio
 
-    if (isLoop == 2) {
+    if (playCmd == 2) {
       for (int iStub = 2; iStub <= 3; ++iStub) {
         while (_wav_gen[iStub]->isRunning()) {
           stopAudio(iStub);
@@ -187,8 +187,8 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       // isPlayAudio[3] = false;
       return;
     } else {
-      int startIdx = (isLoop == 0) ? 0 : 2;
-      int endIdx = (isLoop == 0) ? 2 : 4;
+      int startIdx = (playCmd == 0) ? 0 : 2;
+      int endIdx = (playCmd == 0) ? 2 : 4;
 
       for (int i = startIdx; i < endIdx; ++i) {
         _dataID[i] = data[3];
@@ -196,7 +196,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
         _volume[i] = data[5 + i % 2];
       }
 
-      uint8_t stub = (isLoop == 0) ? 0 : 2;
+      uint8_t stub = (playCmd == 0) ? 0 : 2;
       stopAudio(stub);
       playAudio(stub, _volume[stub]);
       // ステレオ再生を左右のボリュームから判断

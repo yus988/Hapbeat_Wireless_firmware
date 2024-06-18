@@ -1,3 +1,5 @@
+// 非公開情報はこのファイルの形式でconfig.hファイルをルートディレクトリに作成し、定義してください。
+
 #ifndef CONFIG_H
 #define CONFIG_H
 

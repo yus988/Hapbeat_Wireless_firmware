@@ -21,7 +21,7 @@
   #define I2S_DOUT_PIN 40
   #define I2S_LRCK_PIN 38
   #define I2S_MLCK_PIN 41
-  #define EN_I2S_DAC 7
+  #define EN_I2S_DAC_PIN 7
   // GSELは無いのでダミー。後々setGainを修正
   #define G_SEL_A_PIN 9
   #define G_SEL_B_PIN 10
@@ -30,7 +30,7 @@
   // analog amp
   #define EN_VIBAMP_PIN 43
   #define AIN_VIBVOL_PIN 1
-  #define AOUT_VIBBVOL_PIN 4
+  #define AOUT_VIBVOL_PIN 4
   // Display pins
   #define SCLK_PIN 17
   #define MOSI_PIN 18
@@ -182,7 +182,7 @@ void TaskUI(void *args) {
   if (currAIN != prevAIN) {
     // USBSerial.println(currAIN);
     int volume = map(currAIN, 0, 4095, 0, 255);
-    analogWrite(AOUT_VIBBVOL_PIN, volume);
+    analogWrite(AOUT_VIBVOL_PIN, volume);
   }
   prevAIN = currAIN;
   delay(50);
@@ -279,9 +279,9 @@ void setup() {
   FastLED.show();
 
   // init I2S DAC
-  pinMode(EN_I2S_DAC, OUTPUT);
-  // digitalWrite(EN_I2S_DAC, LOW);
-  digitalWrite(EN_I2S_DAC, HIGH);
+  pinMode(EN_I2S_DAC_PIN, OUTPUT);
+  // digitalWrite(EN_I2S_DAC_PIN, LOW);
+  digitalWrite(EN_I2S_DAC_PIN, HIGH);
   // init display
   pinMode(EN_OLED_PIN, OUTPUT);
   digitalWrite(EN_OLED_PIN, HIGH);
@@ -294,9 +294,9 @@ void setup() {
   // digitalWrite(EN_VIBAMP_PIN, LOW);
   digitalWrite(EN_VIBAMP_PIN, HIGH);
   pinMode(AIN_VIBVOL_PIN, INPUT);
-  pinMode(AOUT_VIBBVOL_PIN, OUTPUT);
-  analogWrite(AOUT_VIBBVOL_PIN, 100);
-  // analogWrite(AOUT_VIBBVOL_PIN, 200); // set vibration volume
+  pinMode(AOUT_VIBVOL_PIN, OUTPUT);
+  analogWrite(AOUT_VIBVOL_PIN, 100);
+  // analogWrite(AOUT_VIBVOL_PIN, 200); // set vibration volume
   pinMode(EN_MOTOR_PIN, OUTPUT);
   digitalWrite(EN_MOTOR_PIN, HIGH);
   displayManager::updateOLED(&display, audioManager::getPlayCategory(),
