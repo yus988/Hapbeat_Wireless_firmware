@@ -48,15 +48,7 @@ Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, MOSI_PIN, SCLK_PIN,
 
   #if defined(NECKLACE) || defined(NECKLACE_V_1_3)
 // see pam8003 datasheet p.7
-const char *_decibelTxt[] = {
-    "-75",  "-40",  "-34",  "-28",  "-22",  "-16",  "-10",  "-7.5",
-    "-5",   "-2.5", "0",    "1.5",  "3.0",  "4.0",  "4.4",  "4.8",
-    "5.2",  "5.6",  "6.0",  "6.4",  "6.8",  "7.2",  "7.6",  "8.0",
-    "8.4",  "8.8",  "9.2",  "9.6",  "10.0", "10.4", "10.8", "11.2",
-    "11.6", "12.0", "12.4", "12.8", "13.2", "13.6", "14.0", "14.4",
-    "14.8", "15.2", "15.6", "16.0", "16.4", "16.8", "17.2", "17.6",
-    "18.0", "18.4", "18.8", "19.2", "19.6", "20.0", "20.4", "20.8",
-    "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
+
 int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN, SW3_SEL_P_PIN, SW4_SEL_N_PIN,
                  SW5_ENTER_PIN};
 bool _isBtnPressed[] = {false, false, false, false, false};
@@ -64,15 +56,7 @@ bool _isBtnPressed[] = {false, false, false, false, false};
 
   #if defined(GENERAL_V2)
 // see pam8003 datasheet p.7
-const char *_decibelTxt[] = {
-    "-75",  "-40",  "-34",  "-28",  "-22",  "-16",  "-10",  "-7.5",
-    "-5",   "-2.5", "0",    "1.5",  "3.0",  "4.0",  "4.4",  "4.8",
-    "5.2",  "5.6",  "6.0",  "6.4",  "6.8",  "7.2",  "7.6",  "8.0",
-    "8.4",  "8.8",  "9.2",  "9.6",  "10.0", "10.4", "10.8", "11.2",
-    "11.6", "12.0", "12.4", "12.8", "13.2", "13.6", "14.0", "14.4",
-    "14.8", "15.2", "15.6", "16.0", "16.4", "16.8", "17.2", "17.6",
-    "18.0", "18.4", "18.8", "19.2", "19.6", "20.0", "20.4", "20.8",
-    "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
+
 int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN};
 bool _isBtnPressed[] = {false, false};
   #endif
@@ -118,10 +102,13 @@ void messageReceived(char *topic, byte *payload, unsigned int length) {
 // 所定の値に固定する。
 void setFixGain(bool updateOLED = true) {
   // 15dBにあたるステップ数0--63をanalogWrite0--255に変換する
-  analogWrite(AOUT_VIBVOL_PIN, map(_fixGainStep, 0, 63, 0, 255));
+  analogWrite(
+      AOUT_VIBVOL_PIN,
+      map(_fixGainStep[audioManager::getPlayCategory()], 0, 63, 0, 255));
   if (updateOLED) {
     displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
-                               audioManager::getWearerId(), _fixGainStep);
+                               audioManager::getWearerId(),
+                               _fixGainStep[audioManager::getPlayCategory()]);
   }
 }
 #endif
@@ -257,7 +244,6 @@ void TaskUI(void *args) {
           } else {
             _isFixMode = true;
             _leds[0] = _colorFixMode;
-            ;
             setFixGain();
           }
           FastLED.show();
@@ -265,7 +251,9 @@ void TaskUI(void *args) {
         }
         _isBtnPressed[i] = true;
         if (i != 4) {
-          int tstep = (_isFixMode) ? _fixGainStep : _ampVolStep;
+          int tstep = (_isFixMode)
+                          ? _fixGainStep[playCategoryNum]
+                          : _ampVolStep;
           displayManager::updateOLED(&_display, playCategoryNum, wearId, tstep);
           audioManager::setPlayCategory(playCategoryNum);
           audioManager::setWearerId(wearId);
