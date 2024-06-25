@@ -251,9 +251,8 @@ void TaskUI(void *args) {
         }
         _isBtnPressed[i] = true;
         if (i != 4) {
-          int tstep = (_isFixMode)
-                          ? _fixGainStep[playCategoryNum]
-                          : _ampVolStep;
+          int tstep =
+              (_isFixMode) ? _fixGainStep[playCategoryNum] : _ampVolStep;
           displayManager::updateOLED(&_display, playCategoryNum, wearId, tstep);
           audioManager::setPlayCategory(playCategoryNum);
           audioManager::setWearerId(wearId);
@@ -294,8 +293,9 @@ void TaskUI(void *args) {
           }
         }
         _isBtnPressed[i] = true;
-        displayManager::updateOLED(&_display, playCategoryNum, wearId,
-                                   _fixGainStep);
+        displayManager::updateOLED(
+            &_display, playCategoryNum, wearId,
+            _fixGainStep[audioManager::getPlayCategory()]);
         audioManager::setPlayCategory(playCategoryNum);
         audioManager::setWearerId(wearId);
       }
@@ -389,6 +389,12 @@ void setup() {
 
 #if defined(NECKLACE) || defined(NECKLACE_V_1_3)
   pinMode(AIN_VIBVOL_PIN, INPUT);
+  // set device position as NECK = 0
+  audioManager::setDevicePos(0);
+#endif
+
+#if defined(GENERAL) || defined(GENERAL_V2)
+  audioManager::setDevicePos(5);
 #endif
 
 #if defined(NECKLACE) || defined(NECKLACE_V_1_3) || defined(GENERAL_V2)
@@ -422,9 +428,7 @@ void setup() {
   // displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
   //                            audioManager::getWearerId(), 0);
   setFixGain();
-  // set device position as NECK = 0
-  audioManager::setDevicePos(0);
-  // audioManager::setDevicePos(5);
+
   _isFixMode = audioManager::getIsFixMode();
   if (_isFixMode) {
     _leds[0] = _colorFixMode;

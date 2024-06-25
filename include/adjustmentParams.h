@@ -52,7 +52,7 @@ const int restoreCycles = 100;  // 復帰サイクル数
 #endif
 
 #if defined(GENERAL_V2)
-const int _fixGainStep = 41;
+const int _fixGainStep[] = {41, 28, 0};  // 各 playCategory に対応
 const char *_playCategoryTxt[] = {"ゲーム", "動画", "hoge"};
 const char *_wearerIdTxt[] = {"ALL", "競技", "会場", "4", "5", "6"};
 const CRGB _colorFixMode = CRGB(10, 10, 10);

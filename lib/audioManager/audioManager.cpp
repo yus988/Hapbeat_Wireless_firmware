@@ -27,7 +27,9 @@
 #define DATA_NUM 20
 #define SUB_DATA_NUM 6
 
-int samplingRate = 8000;
+// int samplingRate = 8000;
+int samplingRate = 16000;
+
 
 namespace audioManager {
 // bool isPlayAudio[] = {false, false, false, false};
