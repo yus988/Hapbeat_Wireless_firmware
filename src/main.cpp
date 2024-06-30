@@ -295,7 +295,7 @@ void TaskUI(void *args) {
         _isBtnPressed[i] = true;
         displayManager::updateOLED(
             &_display, playCategoryNum, wearId,
-            _fixGainStep[audioManager::getPlayCategory()]);
+            _fixGainStep[playCategoryNum]);
         audioManager::setPlayCategory(playCategoryNum);
         audioManager::setWearerId(wearId);
       }

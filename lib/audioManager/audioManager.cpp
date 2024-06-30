@@ -30,7 +30,6 @@
 // int samplingRate = 8000;
 int samplingRate = 16000;
 
-
 namespace audioManager {
 // bool isPlayAudio[] = {false, false, false, false};
 std::vector<bool> isPlayAudio(STUB_NUM, false);
@@ -72,6 +71,9 @@ uint8_t _audioStorageType[SOUND_FILE_NUM];  // データの格納場所を示す
 AudioOutputI2S *_i2s_out;
 AudioOutputMixer *_mixer;
 AudioOutputMixerStub *_stub[STUB_NUM];
+
+// グローバル変数またはクラスメンバとして以前のオーディオソースを保持する配列を宣言
+AudioFileSource *_previousSources[STUB_NUM] = { nullptr };
 
 // [cat][pos][dataID][_subID][isRight]
 uint8_t _audioDataIndex[CATEGORY_NUM][POSITION_NUM][DATA_NUM][SUB_DATA_NUM][2];
@@ -177,30 +179,39 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   if (_wav_gen[tStubNum]->isRunning()) {
     _wav_gen[tStubNum]->stop();
   }
+
+  // 以前のオーディオソースが存在すれば削除
+  if (_previousSources[tStubNum] != nullptr) {
+    delete _previousSources[tStubNum];
+    _previousSources[tStubNum] = nullptr;
+  }
+
+  AudioFileSource *src = nullptr;
   if (_audioStorageType[idx] == RAM_STORAGE) {
-    AudioFileSourcePROGMEM *src =
-        new AudioFileSourcePROGMEM(_audioRAM[idx], _audioDataSize[idx]);
+    src = new AudioFileSourcePROGMEM(_audioRAM[idx], _audioDataSize[idx]);
     if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
       USBSerial.println("Failed to start WAV generator with RAM data");
       delete src;
+      return;
     }
   } else {
-    AudioFileSourceLittleFS *src =
-        new AudioFileSourceLittleFS(_audioFileNames[idx].c_str());
+    src = new AudioFileSourceLittleFS(_audioFileNames[idx].c_str());
     if (!src->isOpen()) {
-      USBSerial.printf("Failed to open file: %s\n",
-                       _audioFileNames[idx].c_str());
+      USBSerial.printf("Failed to open file: %s\n", _audioFileNames[idx].c_str());
       delete src;
       return;
     }
     if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
       USBSerial.println("Failed to start WAV generator with FS data");
       delete src;
+      return;
     }
   }
-  USBSerial.println(_audioStorageType[idx]);
+  // 新しいオーディオソースを保存
+  _previousSources[tStubNum] = src;
   isPlayAudio[tStubNum] = true;
 }
+
 
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len) {
@@ -208,6 +219,10 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       "received: _category %d, _wearerId %d, _devPos %d, _dataID %d, _subID "
       "%d, Vol %d:%d, playtype %d\n",
       data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
+
+
+    USBSerial.print("Free heap: ");
+    USBSerial.println(ESP.getFreeHeap());
   // data = [_category, _wearerId, _devicePos, data_id, _subID, _L_Vol,
   // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持 wearerId = 0
   // の時は全受信
