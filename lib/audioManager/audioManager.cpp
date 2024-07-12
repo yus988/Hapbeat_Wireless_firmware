@@ -354,11 +354,6 @@ void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
     _stub[i]->SetRate(samplingRate);
   }
 
-#ifdef GENERAL
-  // MOSFET直結のD級アンプにI2Sを入れる場合は、始めに再生するすることで I2S
-  // clockを発生させる
-  playAudio(0, 0);
-#endif
 }
 
 // get
@@ -382,29 +377,7 @@ void setGain(uint8_t val, uint8_t G_SEL_A = 99, uint8_t G_SEL_B = 99) {
   _gainNum = val;
   USBSerial.printf("_gainNum: ");
   USBSerial.println(val);
-#ifdef GENERAL
-  // using RS2255XN and MAX98357
-  switch (val) {
-    case 0:  // 6dB
-      digitalWrite(G_SEL_B, LOW);
-      digitalWrite(G_SEL_A, LOW);
-      break;
-    case 1:  // 9dB
-      digitalWrite(G_SEL_B, LOW);
-      digitalWrite(G_SEL_A, HIGH);
-      break;
-    case 2:  // 12dB
-      digitalWrite(G_SEL_B, HIGH);
-      digitalWrite(G_SEL_A, LOW);
-      break;
-    case 3:  // 15dB
-      digitalWrite(G_SEL_B, HIGH);
-      digitalWrite(G_SEL_A, HIGH);
-      break;
-    default:
-      break;
-  }
-#endif
+
 }
 void setDevicePos(uint8_t value) { _devicePos = value; };
 void setIsFixMode(bool value) {

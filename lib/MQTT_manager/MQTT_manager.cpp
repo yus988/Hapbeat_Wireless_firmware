@@ -135,7 +135,7 @@ void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
   mqttCallback = callback;
   statusCallback = statusCb;
 
-  WiFi.begin(SSID, PASSWORD);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     USBSerial.println("Connecting to WiFi...");

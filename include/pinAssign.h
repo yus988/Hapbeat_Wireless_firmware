@@ -76,22 +76,6 @@
   #define DETECT_ANALOG_IN_PIN 45
 #endif
 
-#if defined(GENERAL)
-  // pins related to audio
-  #define I2S_BCLK_PIN 39
-  #define I2S_DOUT_PIN 40
-  #define I2S_LRCK_PIN 42
-  #define SD_MODE_PIN 16  // for MAX98357A
-  #define G_SEL_A_PIN 33
-  #define G_SEL_B_PIN 34
-  // Button pins
-  #define SW1_PIN 4
-  #define SW2_PIN 21
-  #define SW3_PIN 48
-  // LED
-  #define LED_PIN 45
-#endif
-
 #if defined(GENERAL_V2)
   // Audio pins
   #define I2S_BCLK_PIN 39
@@ -117,7 +101,6 @@
 //   #define SW3_ENTER_PIN 0
   // LED
   #define LED_PIN 34
-
   // current sensing
   #define BQ27x_PIN 37
   #define SDA_PIN 35
