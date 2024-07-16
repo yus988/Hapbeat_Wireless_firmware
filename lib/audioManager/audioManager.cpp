@@ -227,8 +227,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持 wearerId = 0
   // の時は全受信
   if ((data[0] == _settings.playCategory || data[0] == 99) &&
-      (data[1] == _settings.wearerId || data[1] == 99 ||
-       _settings.wearerId == 0) &&
+      (data[1] == _settings.wearerId || data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
     // 0 = oneshot(0,1), 1=loopStart(2,3), 2=stopAudio, 3=2ndline(4,5)
     // 括弧内はstub番号
