@@ -9,9 +9,9 @@
 namespace MQTT_manager {
 extern bool mqttConnected;
 
-void initMQTTclient(void (*statusCallback)(const char*));
+void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
+                    void (*statusCb)(const char*)) ;
 void loopMQTTclient();
-
 }  // namespace MQTT_manager
 
 #endif  // MQTT_MANAGER_H
