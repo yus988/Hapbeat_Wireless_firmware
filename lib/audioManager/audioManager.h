@@ -12,6 +12,8 @@ void PlaySndOnDataRecv(const uint8_t* mac_addr, const uint8_t* data,
 void PlaySndFromMQTTcallback(char* topic, byte* payload, unsigned int length);
 
 void playAudioInLoop();
+void playAudio(uint8_t tStubNum, uint8_t tVol);
+
 void stopAudio(uint8_t stubId = 99);
 // get
 uint8_t getPlayCategory();

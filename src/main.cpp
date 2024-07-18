@@ -19,9 +19,7 @@
 #include "adjustmentParams.h"
 #include "pinAssign.h"
 
-/////////////////////////// 変数および汎用関数の宣言
-/////////////////////////////////////////
-#if defined(NECKLACE) || defined(NECKLACE_V_1_3) || defined(GENERAL_V2)
+//////////////// variables  /////////////////////////////
 // _display params
 const int DISP_ROT = 0;
 // const int DISP_ROT = 90; // 上下逆
@@ -35,42 +33,26 @@ const int ADC_MAX = 4095;             // ADCの分解能
 const float V_REF = 3.3;              // アナログ基準電圧 (V)
 const int BATTERY_CAPACITY = 3000;    // バッテリー容量 (mAh)
 
-  #if defined(NECKLACE_V_1_3)
-TaskHandle_t thp[3];
-  #else
-TaskHandle_t thp[2];
-  #endif
+TaskHandle_t thp[3];  // 環境によって必要タスク数が変わるので注意
+bool _isFixMode;
 
 // LED
 CRGB _leds[1];
 Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, MOSI_PIN, SCLK_PIN,
                           OLED_DC_PIN, OLED_RESET_PIN, CS_PIN);
 
-  #if defined(NECKLACE) || defined(NECKLACE_V_1_3)
+#if defined(NECKLACE_V_1_3)
 // see pam8003 datasheet p.7
-
 int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN, SW3_SEL_P_PIN, SW4_SEL_N_PIN,
                  SW5_ENTER_PIN};
 bool _isBtnPressed[] = {false, false, false, false, false};
-  #endif
 
-  #if defined(GENERAL_V2)
-// see pam8003 datasheet p.7
-
-int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN};
-bool _isBtnPressed[] = {false, false};
-  #endif
-
-bool _isFixMode;
-
-  #if defined(NECKLACE) || defined(NECKLACE_V_1_3)
 // volume related variables
 int _prevAIN = 0;
 int _currAIN = 0;
 bool _disableVolumeControl = false;
 uint8_t _ampVolStep;
-  #endif
-  #if defined(NECKLACE_V_1_3)
+
 // 電流を計算するための関数
 float calculateCurrent(int adc_value) {
   // ADCの値を電圧に変換
@@ -79,7 +61,16 @@ float calculateCurrent(int adc_value) {
   float current = voltage / (INA_GAIN * SHUNT_RESISTANCE);
   return current;
 }
-  #endif
+#endif
+
+#if defined(GENERAL_V2)
+// see pam8003 datasheet p.7
+
+int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN};
+bool _isBtnPressed[] = {false, false};
+#endif
+
+//////////////// general functions  /////////////////////////////
 
 void statusCallback(const char *status) {
   _display.clearDisplay();
@@ -111,20 +102,24 @@ void setFixGain(bool updateOLED = true) {
                                _fixGainStep[audioManager::getPlayCategory()]);
   }
 }
-#endif
-
-
 
 ////////////////////////////////// define tasks ////////////////////////////////
-// 優先度は最低にする
 void TaskAudio(void *args) {
   while (1) {
     audioManager::playAudioInLoop();
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    delay(50);
   }
 }
 
-#if defined(NECKLACE) || defined(NECKLACE_V_1_3)
+void TaskMQTT(void *args) {
+  while (1) {
+    MQTT_manager::loopMQTTclient();
+    // 15秒未満なら遅延許容度の兼ね合い。パラメータにしても良いかも。
+    delay(200);
+  }
+}
+
+#if defined(NECKLACE_V_1_3)
 // PAMの電圧を下げる
 void setAmpStepGain(int step, bool updateOLED = true) {
   int volume = map(_currAIN, 0, 4095, 0, 255);
@@ -256,6 +251,35 @@ void TaskUI(void *args) {
 #endif
 
 #if defined(GENERAL_V2)
+  // ゆくゆくはアプリケーションに応じてTaskUIをファイル別に分ける。
+  #ifdef COLOR_SENSOR
+void TaskUI(void *args) {
+  while (1) {
+    // デバッグ用、電池残量表示
+    // BQ27220_Cmd::printBatteryStats();
+    // ボタン操作
+    for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
+      if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
+        // uint8_t playCategoryNum = audioManager::getPlayCategory();
+        // uint8_t wearId = audioManager::getWearerId();
+        if (i == 1) {
+          USBSerial.println("Button 1");
+          audioManager::playAudio(0, 30);
+        } else if (i == 0) {
+          USBSerial.println("Button 0");
+          audioManager::stopAudio();
+        }
+        _isBtnPressed[i] = true;
+        // displayManager::updateOLED(&_display, playCategoryNum, wearId,
+        //                            _fixGainStep[playCategoryNum]);
+      }
+      if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
+    };
+    // loop delay
+    delay(100);
+  }
+}
+  #else
 void TaskUI(void *args) {
   while (1) {
     // デバッグ用、電池残量表示
@@ -280,9 +304,8 @@ void TaskUI(void *args) {
           }
         }
         _isBtnPressed[i] = true;
-        displayManager::updateOLED(
-            &_display, playCategoryNum, wearId,
-            _fixGainStep[playCategoryNum]);
+        displayManager::updateOLED(&_display, playCategoryNum, wearId,
+                                   _fixGainStep[playCategoryNum]);
         audioManager::setPlayCategory(playCategoryNum);
         audioManager::setWearerId(wearId);
       }
@@ -292,8 +315,9 @@ void TaskUI(void *args) {
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
-#endif
+  #endif
 
+#endif
 
 /////////////// execution ////////////////////////////////////
 void setup() {
@@ -301,25 +325,7 @@ void setup() {
   USBSerial.begin(115200);
   USBSerial.println("init Hapbeat wireless reciever");
   audioManager::initParamsEEPROM();
-  vTaskDelay(5 / portTICK_PERIOD_MS);
-
-#if defined(NECKLACE_V_1_3)
-  // battery current sensing pins
-  pinMode(BAT_CURRENT_PIN, INPUT);
-  pinMode(DETECT_ANALOG_IN_PIN, INPUT);
-#endif
-
-#if defined(NECKLACE) || defined(NECKLACE_V_1_3)
-  pinMode(AIN_VIBVOL_PIN, INPUT);
-  // set device position as NECK = 0
-  audioManager::setDevicePos(0);
-#endif
-
-#if defined(GENERAL_V2)
-  audioManager::setDevicePos(5);
-#endif
-
-#if defined(NECKLACE) || defined(NECKLACE_V_1_3) || defined(GENERAL_V2)
+  delay(5);
   // ボタンピン設定
   for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
     pinMode(_SW_PIN[i], INPUT);
@@ -358,36 +364,45 @@ void setup() {
     _leds[0] = _colorVolumeMode;
   }
   FastLED.show();
-#endif
-
-#if defined(NECKLACE_V_1_3) || defined(GENERAL_V2)
-  BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
-#endif
-
-
-  audioManager::readAllSoundFiles();
-  audioManager::initAudioOut(I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DOUT_PIN);
-
-  // 原因は不明だが、TaskUI=>TaskAudioの順にすると、GENERALではボタンを押すまで動作しない。
-  xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 0, &thp[1], 0);
-  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 4096, NULL, 2, &thp[0], 1);
 
 #if defined(NECKLACE_V_1_3)
+  // battery current sensing pins
+  pinMode(BAT_CURRENT_PIN, INPUT);
+  pinMode(DETECT_ANALOG_IN_PIN, INPUT);
+  pinMode(AIN_VIBVOL_PIN, INPUT);
+  // set device position as NECK = 0
+  audioManager::setDevicePos(0);
   xTaskCreatePinnedToCore(TaskCurrent, "TaskCurrent", 4096, NULL, 2, &thp[2],
                           1);
 #endif
-  // 4096
-  // 無線通信の開始
+
+#if defined(GENERAL_V2)
+  audioManager::setDevicePos(5);
+#endif
+
 #ifdef ESPNOW
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 #elif MQTT
   MQTT_manager::initMQTTclient(audioManager::PlaySndFromMQTTcallback,
                                statusCallback);
+  xTaskCreatePinnedToCore(TaskMQTT, "TaskMQTT", 8192, NULL, 22, &thp[2], 1);
 #endif
+  xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 20, &thp[1], 1);
+  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
+  BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
+  audioManager::readAllSoundFiles();
+  audioManager::initAudioOut(I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DOUT_PIN);
 }
 void loop() {
-// ネックレスはこれで動いていたが、Generalは駄目。原因不明
-#if defined(MQTT)
-  MQTT_manager::loopMQTTclient();
-#endif
+  // delay(1);
+  // MQTT_manager::loopMQTTclient();
 };
+
+// 優先度は 低 0-24 高
+// BaseType_t xTaskCreatePinnedToCore(TaskFunction_t pvTaskCode,
+//                                    const char *constpcName,
+//                                    const uint32_t usStackDepth,
+//                                    void *constpvParameters,
+//                                    UBaseType_t uxPriority,
+//                                    TaskHandle_t *constpvCreatedTask,
+//                                    const BaseType_t xCoreID)

@@ -17,7 +17,7 @@
 #include "AudioOutputMixer.h"
 #include "driver/i2s.h"
 
-#define STUB_NUM 6  // 同時に再生するファイルの最大数。LRで2つ必要
+#define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
 #define SOUND_FILE_NUM 60
 #define RAM_STORAGE 0
 #define FS_STORAGE 1
@@ -31,7 +31,6 @@
 int samplingRate = 16000;
 
 namespace audioManager {
-// bool isPlayAudio[] = {false, false, false, false};
 std::vector<bool> isPlayAudio(STUB_NUM, false);
 
 struct DataPacket {
@@ -73,7 +72,7 @@ AudioOutputMixer *_mixer;
 AudioOutputMixerStub *_stub[STUB_NUM];
 
 // グローバル変数またはクラスメンバとして以前のオーディオソースを保持する配列を宣言
-AudioFileSource *_previousSources[STUB_NUM] = { nullptr };
+AudioFileSource *_previousSources[STUB_NUM] = {nullptr};
 
 // [cat][pos][dataID][_subID][isRight]
 uint8_t _audioDataIndex[CATEGORY_NUM][POSITION_NUM][DATA_NUM][SUB_DATA_NUM][2];
@@ -180,7 +179,7 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
     _wav_gen[tStubNum]->stop();
   }
 
-  // 以前のオーディオソースが存在すれば削除
+  // 以前のオーディオソースが存在すれば削除（ヒープメモリ解放のため必須）
   if (_previousSources[tStubNum] != nullptr) {
     delete _previousSources[tStubNum];
     _previousSources[tStubNum] = nullptr;
@@ -197,7 +196,8 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   } else {
     src = new AudioFileSourceLittleFS(_audioFileNames[idx].c_str());
     if (!src->isOpen()) {
-      USBSerial.printf("Failed to open file: %s\n", _audioFileNames[idx].c_str());
+      USBSerial.printf("Failed to open file: %s\n",
+                       _audioFileNames[idx].c_str());
       delete src;
       return;
     }
@@ -210,8 +210,8 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   // 新しいオーディオソースを保存
   _previousSources[tStubNum] = src;
   isPlayAudio[tStubNum] = true;
+  USBSerial.printf("Succeed to play with stub: %d\n", tStubNum);
 }
-
 
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len) {
@@ -220,15 +220,15 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       "%d, Vol %d:%d, playtype %d\n",
       data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
 
+  // USBSerial.print("Free heap: ");
+  // USBSerial.println(ESP.getFreeHeap());
 
-    USBSerial.print("Free heap: ");
-    USBSerial.println(ESP.getFreeHeap());
   // data = [_category, _wearerId, _devicePos, data_id, _subID, _L_Vol,
-  // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持 wearerId = 0
-  // の時は全受信
+  // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持
   if ((data[0] == _settings.playCategory || data[0] == 99) &&
       (data[1] == _settings.wearerId || data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
+    USBSerial.println("prepare to playAudio");
     // 0 = oneshot(0,1), 1=loopStart(2,3), 2=stopAudio, 3=2ndline(4,5)
     // 括弧内はstub番号
     uint8_t playCmd = data[7];
@@ -254,6 +254,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
         case 3:
           startIdx = 4;
       }
+      // 再生するデータを選択
       for (int i = startIdx; i <= startIdx + 1; ++i) {
         _dataID[i] = data[3];
         _subID[i] = data[4];
@@ -272,6 +273,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
 }
 
 void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
+  USBSerial.println();
   USBSerial.print("Message arrived in topic: ");
   USBSerial.println(topic);
 
@@ -317,6 +319,9 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
 void playAudioInLoop() {
   for (int iStub = 0; iStub < STUB_NUM; iStub++) {
     if (isPlayAudio[iStub]) {
+      USBSerial.printf("playing stub: ");
+      USBSerial.println(iStub);
+
       if ((iStub == 2 && _wav_gen[2]->isRunning()) ||
           (iStub == 3 && _wav_gen[3]->isRunning())) {  // loop _stub case
         if (_wav_gen[iStub]->isRunning()) {
@@ -352,7 +357,6 @@ void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
     _stub[i] = _mixer->NewInput();
     _stub[i]->SetRate(samplingRate);
   }
-
 }
 
 // get
@@ -376,7 +380,6 @@ void setGain(uint8_t val, uint8_t G_SEL_A = 99, uint8_t G_SEL_B = 99) {
   _gainNum = val;
   USBSerial.printf("_gainNum: ");
   USBSerial.println(val);
-
 }
 void setDevicePos(uint8_t value) { _devicePos = value; };
 void setIsFixMode(bool value) {

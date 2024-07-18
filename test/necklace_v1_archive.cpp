@@ -41,6 +41,138 @@ const char *gainTxt[4] = {"1", "2", "3", "4"};
 int SW_PIN[5] = {SW0_VOL_P_PIN, SW1_VOL_N_PIN, SW2_SEL_P_PIN, SW3_SEL_N_PIN,
                  SW4_ENTER_PIN};
 bool isBtnPressed[5] = {false, false, false, false, false};
+
+
+// PAMの電圧を下げる
+void setAmpStepGain(int step, bool updateOLED = true) {
+  int volume = map(_currAIN, 0, 4095, 0, 255);
+  analogWrite(AOUT_VIBVOL_PIN, volume);
+  // ディスプレイにdB表示用のステップ数変換
+  if (updateOLED) {
+    displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
+                               audioManager::getWearerId(), step);
+  }
+}
+void TaskCurrent(void *args) {
+  int adc_value;
+  float current;
+  int shutdownCounter[2] = {0, 0};
+  int restoreCounter = 0;  // カウンタの初期化
+  uint8_t modifiedStep;
+  while (1) {
+    // ADC値の読み取り
+    adc_value = analogRead(BAT_CURRENT_PIN);
+    // 電流値の計算
+    current = calculateCurrent(adc_value);
+    if (current > current_thresholds[0]) {
+      shutdownCounter[0]++;
+      if (current > current_thresholds[1]) {
+        shutdownCounter[1]++;
+      }
+      if (shutdownCounter[0] >= shutdownCycles[0] ||
+          shutdownCounter[1] >= shutdownCycles[1]) {
+        // 電流値が閾値を超えた場合にアンプをミュート
+        digitalWrite(EN_VIBAMP_PIN, LOW);
+        _disableVolumeControl = true;  // 音量操作を無効化
+        _leds[0] = _colorDangerMode;
+        FastLED.show();
+        restoreCounter = 0;  // カウンタリセット
+      }
+    } else {
+      if (restoreCounter >= restoreCycles) {
+        _disableVolumeControl = false;  // 音量操作を有効化
+        digitalWrite(EN_VIBAMP_PIN, HIGH);
+        if (_isFixMode) {
+          setFixGain(false);
+          _leds[0] = _colorFixMode;
+        } else {
+          setAmpStepGain(_ampVolStep, false);
+          _leds[0] = _colorVolumeMode;
+        }
+        FastLED.show();
+        shutdownCounter[0] = 0;  // カウンタリセット
+        shutdownCounter[1] = 1;
+      } else {
+        restoreCounter++;  // カウンタ増加
+      }
+    }
+    // 電流値をシリアルモニタに出力
+    // USBSerial.printf("Measured Current: %.6f A\n", current);
+    // 100ms待機
+    vTaskDelay(1 / portTICK_PERIOD_MS);
+  }
+}
+
+void TaskUI(void *args) {
+  if (_isFixMode) {
+    setFixGain();
+  }
+  while (1) {
+    // BQ27220_Cmd::printBatteryStats();
+    // control pam8003 volume
+    _currAIN = analogRead(AIN_VIBVOL_PIN);
+    _ampVolStep = map(_currAIN, 0, 4095, 0, 63);
+    // uint8_t _ampVolStep = 0;
+    if (!_isFixMode && !_disableVolumeControl &&
+        abs(_currAIN - _prevAIN) > volumeThreshold) {
+      setAmpStepGain(_ampVolStep);
+    }
+    _prevAIN = _currAIN;
+
+    // ボタン操作
+    for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
+      if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
+        uint8_t playCategoryNum = audioManager::getPlayCategory();
+        uint8_t wearId = audioManager::getWearerId();
+        audioManager::stopAudio();
+        // 各ボタン毎の操作 0,1 = 上下, 2,3 = 左右, 4 = 右下
+        if (i == 1 &&
+            wearId < sizeof(_wearerIdTxt) / sizeof(_wearerIdTxt[0]) - 1) {
+          wearId += 1;
+        } else if (i == 0 && wearId > 0) {
+          wearId -= 1;
+        } else if (i == 3 &&
+                   (playCategoryNum <
+                    sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]) -
+                        1)) {
+          playCategoryNum += 1;
+        } else if (i == 2 && playCategoryNum > 0) {
+          playCategoryNum -= 1;
+        } else if (i == 4) {
+          if (_isFixMode) {
+            _isFixMode = false;
+            _leds[0] = _colorVolumeMode;
+            ;
+            if (!_disableVolumeControl) {
+              setAmpStepGain(_ampVolStep);
+            }
+          } else {
+            _isFixMode = true;
+            _leds[0] = _colorFixMode;
+            setFixGain();
+          }
+          FastLED.show();
+          audioManager::setIsFixMode(_isFixMode);
+        }
+        _isBtnPressed[i] = true;
+        if (i != 4) {
+          int tstep =
+              (_isFixMode) ? _fixGainStep[playCategoryNum] : _ampVolStep;
+          displayManager::updateOLED(&_display, playCategoryNum, wearId, tstep);
+          audioManager::setPlayCategory(playCategoryNum);
+          audioManager::setWearerId(wearId);
+        }
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+      }
+      if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
+    };
+
+    // loop delay
+    vTaskDelay(50 / portTICK_PERIOD_MS);
+  }
+}
+
+
 #endif
 
 void setup() {
