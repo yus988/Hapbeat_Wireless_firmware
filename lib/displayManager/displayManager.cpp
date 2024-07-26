@@ -1,6 +1,7 @@
 #include <Adafruit_SSD1306.h>
 #include <efont.h>
 #include <efontEnableJaMini.h>
+
 namespace displayManager {
 const char *menuTxt[99];
 const char *wearerTxt[99];

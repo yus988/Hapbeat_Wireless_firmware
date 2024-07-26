@@ -6,10 +6,10 @@
 #include <Adafruit_SSD1306.h>
 
 #if defined(NECKLACE)
-const int _fixGainStep = 41;
-const char *_playCategoryTxt[] = {"ゲーム", "動画", "hoge"};
-const char *_wearerIdTxt[] = {"ALL", "競技", "会場", "4", "5", "6"};
-const char *_decibelTxt[] = {
+const int FIX_GAIN_STEP = 41;
+const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
+const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
+const char *DECIBEL_TXT[] = {
     "-75",  "-40",  "-34",  "-28",  "-22",  "-16",  "-10",  "-7.5",
     "-5",   "-2.5", "0",    "1.5",  "3.0",  "4.0",  "4.4",  "4.8",
     "5.2",  "5.6",  "6.0",  "6.4",  "6.8",  "7.2",  "7.6",  "8.0",
@@ -22,13 +22,13 @@ const char *_decibelTxt[] = {
 
 #if defined(NECKLACE_V_1_3)
 const int volumeThreshold = 100;
-const char *_playCategoryTxt[] = {"ゲーム", "動画", "hoge"};
-const int _fixGainStep[] = {41, 28, 0};  // 各 playCategory に対応
-const char *_wearerIdTxt[] = {"ALL", "競技", "会場", "4", "5", "6"};
-const CRGB _colorFixMode = CRGB(10, 10, 10);
-const CRGB _colorVolumeMode = CRGB(0, 0, 10);
-const CRGB _colorDangerMode = CRGB(10, 0, 0);
-const char *_decibelTxt[] = {
+const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
+const int FIX_GAIN_STEP[] = {41, 28, 0};  // 各 playCategory に対応
+const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
+const CRGB COLOR_FIX_MODE = CRGB(10, 10, 10);
+const CRGB COLOR_VOL_MODE = CRGB(0, 0, 10);
+const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
+const char *DECIBEL_TXT[] = {
     "-75",  "-40",  "-34",  "-28",  "-22",  "-16",  "-10",  "-7.5",
     "-5",   "-2.5", "0",    "1.5",  "3.0",  "4.0",  "4.4",  "4.8",
     "5.2",  "5.6",  "6.0",  "6.4",  "6.8",  "7.2",  "7.6",  "8.0",
@@ -52,14 +52,17 @@ const int restoreCycles = 100;  // 復帰サイクル数
 #endif
 
 #if defined(GENERAL_V2)
-const int _fixGainStep[] = {41, 28, 0};  // 各 playCategory に対応
-const char *_playCategoryTxt[] = {"ゲーム", "動画", "hoge"};
-const char *_wearerIdTxt[] = {"ALL", "競技", "会場", "4", "5", "6"};
-const CRGB _colorFixMode = CRGB(10, 10, 10);
-const CRGB _colorVolumeMode = CRGB(0, 0, 10);
-const CRGB _colorDangerMode = CRGB(10, 0, 0);
+const int FIX_GAIN_STEP[] = {41, 28, 0};  // 各 playCategory に対応
+const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
+const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
+const CRGB COLOR_FIX_MODE = CRGB(10, 10, 10);
+const CRGB COLOR_VOL_MODE = CRGB(0, 0, 10);
+const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
+const int LIMITED_IDS[] = {0, 1};
+const char *LIMIT_ENABLE_MSG[] = {
+    "全て再生", "制限モード"};  // 0: isLimitEnable = false, 1: true
 
-const char *_decibelTxt[] = {
+const char *DECIBEL_TXT[] = {
     "-75",  "-40",  "-34",  "-28",  "-22",  "-16",  "-10",  "-7.5",
     "-5",   "-2.5", "0",    "1.5",  "3.0",  "4.0",  "4.4",  "4.8",
     "5.2",  "5.6",  "6.0",  "6.4",  "6.8",  "7.2",  "7.6",  "8.0",

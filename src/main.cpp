@@ -95,11 +95,11 @@ void setFixGain(bool updateOLED = true) {
   // 15dBにあたるステップ数0--63をanalogWrite0--255に変換する
   analogWrite(
       AOUT_VIBVOL_PIN,
-      map(_fixGainStep[audioManager::getPlayCategory()], 0, 63, 0, 255));
+      map(FIX_GAIN_STEP[audioManager::getPlayCategory()], 0, 63, 0, 255));
   if (updateOLED) {
     displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
                                audioManager::getWearerId(),
-                               _fixGainStep[audioManager::getPlayCategory()]);
+                               FIX_GAIN_STEP[audioManager::getPlayCategory()]);
   }
 }
 
@@ -151,7 +151,7 @@ void TaskCurrent(void *args) {
         // 電流値が閾値を超えた場合にアンプをミュート
         digitalWrite(EN_VIBAMP_PIN, LOW);
         _disableVolumeControl = true;  // 音量操作を無効化
-        _leds[0] = _colorDangerMode;
+        _leds[0] = COLOR_DANGER_MODE;
         FastLED.show();
         restoreCounter = 0;  // カウンタリセット
       }
@@ -161,10 +161,10 @@ void TaskCurrent(void *args) {
         digitalWrite(EN_VIBAMP_PIN, HIGH);
         if (_isFixMode) {
           setFixGain(false);
-          _leds[0] = _colorFixMode;
+          _leds[0] = COLOR_FIX_MODE;
         } else {
           setAmpStepGain(_ampVolStep, false);
-          _leds[0] = _colorVolumeMode;
+          _leds[0] = COLOR_VOL_MODE;
         }
         FastLED.show();
         shutdownCounter[0] = 0;  // カウンタリセット
@@ -204,13 +204,13 @@ void TaskUI(void *args) {
         audioManager::stopAudio();
         // 各ボタン毎の操作 0,1 = 上下, 2,3 = 左右, 4 = 右下
         if (i == 1 &&
-            wearId < sizeof(_wearerIdTxt) / sizeof(_wearerIdTxt[0]) - 1) {
+            wearId < sizeof(WEARER_ID_TXT) / sizeof(WEARER_ID_TXT[0]) - 1) {
           wearId += 1;
         } else if (i == 0 && wearId > 0) {
           wearId -= 1;
         } else if (i == 3 &&
                    (playCategoryNum <
-                    sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]) -
+                    sizeof(PLAY_CATEGORY_TXT) / sizeof(PLAY_CATEGORY_TXT[0]) -
                         1)) {
           playCategoryNum += 1;
         } else if (i == 2 && playCategoryNum > 0) {
@@ -218,14 +218,14 @@ void TaskUI(void *args) {
         } else if (i == 4) {
           if (_isFixMode) {
             _isFixMode = false;
-            _leds[0] = _colorVolumeMode;
+            _leds[0] = COLOR_VOL_MODE;
             ;
             if (!_disableVolumeControl) {
               setAmpStepGain(_ampVolStep);
             }
           } else {
             _isFixMode = true;
-            _leds[0] = _colorFixMode;
+            _leds[0] = COLOR_FIX_MODE;
             setFixGain();
           }
           FastLED.show();
@@ -234,7 +234,7 @@ void TaskUI(void *args) {
         _isBtnPressed[i] = true;
         if (i != 4) {
           int tstep =
-              (_isFixMode) ? _fixGainStep[playCategoryNum] : _ampVolStep;
+              (_isFixMode) ? FIX_GAIN_STEP[playCategoryNum] : _ampVolStep;
           displayManager::updateOLED(&_display, playCategoryNum, wearId, tstep);
           audioManager::setPlayCategory(playCategoryNum);
           audioManager::setWearerId(wearId);
@@ -263,15 +263,35 @@ void TaskUI(void *args) {
         // uint8_t playCategoryNum = audioManager::getPlayCategory();
         // uint8_t wearId = audioManager::getWearerId();
         if (i == 1) {
+          bool isLimitEnable = audioManager::getIsLimitEnable();
           USBSerial.println("Button 1");
-          audioManager::playAudio(0, 30);
+          USBSerial.print("Limit Enabled Status before toggle: ");
+          USBSerial.println(isLimitEnable ? "true" : "false");
+
+          if (isLimitEnable) {
+            audioManager::setIsLimitEnable(false);
+          }else{
+            audioManager::setIsLimitEnable(true);
+          }
+
+          USBSerial.print("Limit Enabled Status after toggle: ");
+          USBSerial.println(audioManager::getIsLimitEnable() ? "true"
+                                                             : "false");
+
+          int msgIdx = (isLimitEnable) ? 0 : 1;
+          if (LIMIT_ENABLE_MSG[msgIdx] != nullptr) {
+            statusCallback(LIMIT_ENABLE_MSG[msgIdx]);
+          } else {
+            USBSerial.println("Error: Message pointer is null");
+          }
+          // audioManager::playAudio(0, 30);
         } else if (i == 0) {
           USBSerial.println("Button 0");
           audioManager::stopAudio();
         }
         _isBtnPressed[i] = true;
         // displayManager::updateOLED(&_display, playCategoryNum, wearId,
-        //                            _fixGainStep[playCategoryNum]);
+        //                            FIX_GAIN_STEP[playCategoryNum]);
       }
       if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
     };
@@ -291,13 +311,13 @@ void TaskUI(void *args) {
         uint8_t wearId = audioManager::getWearerId();
         audioManager::stopAudio();
         if (i == 2 &&
-            wearId < sizeof(_wearerIdTxt) / sizeof(_wearerIdTxt[0]) - 1) {
+            wearId < sizeof(WEARER_ID_TXT) / sizeof(WEARER_ID_TXT[0]) - 1) {
           wearId += 1;
         } else if (i == 0 && wearId > 0) {
           wearId -= 1;
         } else if (i == 1) {
           if (playCategoryNum <
-              sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]) - 1) {
+              sizeof(PLAY_CATEGORY_TXT) / sizeof(PLAY_CATEGORY_TXT[0]) - 1) {
             playCategoryNum += 1;
           } else {
             playCategoryNum = 0;
@@ -305,7 +325,7 @@ void TaskUI(void *args) {
         }
         _isBtnPressed[i] = true;
         displayManager::updateOLED(&_display, playCategoryNum, wearId,
-                                   _fixGainStep[playCategoryNum]);
+                                   FIX_GAIN_STEP[playCategoryNum]);
         audioManager::setPlayCategory(playCategoryNum);
         audioManager::setWearerId(wearId);
       }
@@ -339,11 +359,11 @@ void setup() {
   pinMode(EN_OLED_PIN, OUTPUT);
   digitalWrite(EN_OLED_PIN, HIGH);
   displayManager::initOLED(&_display, DISP_ROT);
-  int m_size = sizeof(_playCategoryTxt) / sizeof(_playCategoryTxt[0]);
-  int w_size = sizeof(_wearerIdTxt) / sizeof(_wearerIdTxt[0]);
-  int d_size = sizeof(_decibelTxt) / sizeof(_decibelTxt[0]);
-  displayManager::setTitle(_playCategoryTxt, m_size, _wearerIdTxt, w_size,
-                           _decibelTxt, d_size);
+  int m_size = sizeof(PLAY_CATEGORY_TXT) / sizeof(PLAY_CATEGORY_TXT[0]);
+  int w_size = sizeof(WEARER_ID_TXT) / sizeof(WEARER_ID_TXT[0]);
+  int d_size = sizeof(DECIBEL_TXT) / sizeof(DECIBEL_TXT[0]);
+  displayManager::setTitle(PLAY_CATEGORY_TXT, m_size, WEARER_ID_TXT, w_size,
+                           DECIBEL_TXT, d_size);
   // vibAmp
   pinMode(EN_VIBAMP_PIN, OUTPUT);
   // digitalWrite(EN_VIBAMP_PIN, LOW);
@@ -359,9 +379,9 @@ void setup() {
 
   _isFixMode = audioManager::getIsFixMode();
   if (_isFixMode) {
-    _leds[0] = _colorFixMode;
+    _leds[0] = COLOR_FIX_MODE;
   } else {
-    _leds[0] = _colorVolumeMode;
+    _leds[0] = COLOR_VOL_MODE;
   }
   FastLED.show();
 
@@ -386,9 +406,11 @@ void setup() {
   MQTT_manager::initMQTTclient(audioManager::PlaySndFromMQTTcallback,
                                statusCallback);
   xTaskCreatePinnedToCore(TaskMQTT, "TaskMQTT", 8192, NULL, 22, &thp[2], 1);
+  audioManager::setLimitIds(LIMITED_IDS,
+                            sizeof(LIMITED_IDS) / sizeof(LIMITED_IDS[0]));
 #endif
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 20, &thp[1], 1);
-  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
+  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 0);
   BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
   audioManager::readAllSoundFiles();
   audioManager::initAudioOut(I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DOUT_PIN);

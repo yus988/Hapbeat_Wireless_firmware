@@ -1,5 +1,6 @@
 #include <LittleFS.h>
 
+#include <algorithm>  // std::findを使用するために必要
 #include <vector>
 
 #include "FS.h"
@@ -51,12 +52,14 @@ int maxVol = 255;
 // 7:thigh_L, 8:thigh_R, 9:calf_L, 10:calf_R
 uint8_t _devicePos;  // 装着場所の指定
 uint8_t _gainNum;    //
-struct Data {
+// EEPROM内に保存するデバイスコンフィグを格納
+struct ConfigData {
   uint8_t playCategory;
   uint8_t wearerId;  // 装着者のID。99でブロードキャスト
   bool isFixMode;
+  bool isLimitEnable;
 };
-Data _settings;
+ConfigData _settings;
 
 // MAX98357 gain select
 uint8_t sel_A_pin;
@@ -81,14 +84,20 @@ uint8_t _dataID[STUB_NUM];
 uint8_t _subID[STUB_NUM];
 uint8_t _volume[STUB_NUM];
 
+// モード選択の対象にするIDを格納
+int _limitIDs[10];        // 最大10個のIDを格納する配列
+size_t _numLimitIDs = 0;  // 現在格納されているIDの数
+
 void initParamsEEPROM() {
-  EEPROM.begin(8);
+  size_t eepromSize = sizeof(ConfigData);
+  EEPROM.begin(eepromSize);
   EEPROM.get(0, _settings);
   if (_settings.wearerId == 0xFF || _settings.playCategory == 0xFF ||
       _settings.isFixMode == 0xFF) {
     _settings.playCategory = 0;
     _settings.wearerId = 0;
     _settings.isFixMode = true;
+    _settings.isLimitEnable = false;
   }
 }
 
@@ -210,7 +219,7 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   // 新しいオーディオソースを保存
   _previousSources[tStubNum] = src;
   isPlayAudio[tStubNum] = true;
-  USBSerial.printf("Succeed to play with stub: %d\n", tStubNum);
+  // USBSerial.printf("Succeed to play with stub: %d\n", tStubNum);
 }
 
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
@@ -228,7 +237,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   if ((data[0] == _settings.playCategory || data[0] == 99) &&
       (data[1] == _settings.wearerId || data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
-    USBSerial.println("prepare to playAudio");
+    // USBSerial.println("prepare to playAudio");
     // 0 = oneshot(0,1), 1=loopStart(2,3), 2=stopAudio, 3=2ndline(4,5)
     // 括弧内はstub番号
     uint8_t playCmd = data[7];
@@ -272,6 +281,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   }
 }
 
+// MQTT接続にESPNOWのコールバックを実行するためのリレー関数
 void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   USBSerial.println();
   USBSerial.print("Message arrived in topic: ");
@@ -282,6 +292,8 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
     USBSerial.print((char)payload[i]);
   }
   USBSerial.println();
+
+  // モードに応じて再生の可否を決定
 
   // 文字列を整数に変換する処理
   String payloadStr((char *)payload, length);
@@ -309,6 +321,13 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   dataPacket.rVol = values[6];
   dataPacket.playCmd = values[7];
 
+  // 制限されたIDがあるか確認
+  for (size_t i = 0; i < _numLimitIDs; ++i) {
+    if (_settings.isLimitEnable == true && _limitIDs[i] == dataPacket.dataID) {
+      USBSerial.println("ID is restricted, aborting action.");
+      return;  // 制限されたIDが見つかった場合、ここで処理を中断
+    }
+  }
   // ダミーのMACアドレス（適宜設定）
   uint8_t dummy_mac_addr[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00};
 
@@ -319,9 +338,8 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
 void playAudioInLoop() {
   for (int iStub = 0; iStub < STUB_NUM; iStub++) {
     if (isPlayAudio[iStub]) {
-      USBSerial.printf("playing stub: ");
-      USBSerial.println(iStub);
-
+      // USBSerial.printf("playing stub: ");
+      // USBSerial.println(iStub);
       if ((iStub == 2 && _wav_gen[2]->isRunning()) ||
           (iStub == 3 && _wav_gen[3]->isRunning())) {  // loop _stub case
         if (_wav_gen[iStub]->isRunning()) {
@@ -365,15 +383,17 @@ uint8_t getPlayCategory() { return _settings.playCategory; }
 uint8_t getWearerId() { return _settings.wearerId; }
 uint8_t getDevicePos() { return _devicePos; }
 bool getIsFixMode() { return _settings.isFixMode; }
+bool getIsLimitEnable() { return _settings.isLimitEnable; }
+
 //  set
 void setPlayCategory(uint8_t value) {
   _settings.playCategory = value;
-  EEPROM.put(offsetof(Data, playCategory), _settings.playCategory);
+  EEPROM.put(offsetof(ConfigData, playCategory), _settings.playCategory);
   EEPROM.commit();
 }
 void setWearerId(uint8_t value) {
   _settings.wearerId = value;
-  EEPROM.put(offsetof(Data, wearerId), _settings.wearerId);
+  EEPROM.put(offsetof(ConfigData, wearerId), _settings.wearerId);
   EEPROM.commit();
 };
 void setGain(uint8_t val, uint8_t G_SEL_A = 99, uint8_t G_SEL_B = 99) {
@@ -384,7 +404,20 @@ void setGain(uint8_t val, uint8_t G_SEL_A = 99, uint8_t G_SEL_B = 99) {
 void setDevicePos(uint8_t value) { _devicePos = value; };
 void setIsFixMode(bool value) {
   _settings.isFixMode = value;
-  EEPROM.put(offsetof(Data, isFixMode), _settings.isFixMode);
+  EEPROM.put(offsetof(ConfigData, isFixMode), _settings.isFixMode);
   EEPROM.commit();
 };
+// 有効/無効に切り替えるIDを設定
+void setLimitIds(const int limitIDs[], size_t size) {
+  _numLimitIDs = (size > 10) ? 10 : size;  // 最大数を超えないように制限
+  for (size_t i = 0; i < _numLimitIDs; ++i) {
+    _limitIDs[i] = limitIDs[i];
+  }
+}
+void setIsLimitEnable(bool value) {
+  _settings.isLimitEnable = value;
+  EEPROM.put(offsetof(ConfigData, isLimitEnable), _settings.isLimitEnable);
+  EEPROM.commit();
+};
+
 }  // namespace audioManager
