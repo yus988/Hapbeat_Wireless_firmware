@@ -4,7 +4,7 @@ namespace MQTT_manager {
 bool mqttConnected = false;
 WiFiClientSecure espClient;
 MQTTClient client;
-int QoS_Val = 1; // 0, 1, 2
+int QoS_Val = 1;  // 0, 1, 2
 const char* clientIdPrefix = "Hapbeat_esp32_client-";
 void (*mqttCallback)(char*, byte*, unsigned int);
 void (*statusCallback)(const char*);
@@ -27,29 +27,29 @@ String getUniqueClientId() {
 void reconnect() {
   while (!client.connected()) {
     String clientId = getUniqueClientId();
-    USBSerial.print("Attempting MQTT connection with client ID: ");
-    USBSerial.println(clientId);
+    String connectionAttemptMsg = "Attempting MQTT connection with client ID: " + clientId;
     if (statusCallback) {
-      statusCallback("Attempting MQTT connection...");
+      statusCallback(connectionAttemptMsg.c_str());
     }
 
-    // Set the last parameter to false to use clean session
     if (client.connect(clientId.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) {
-      USBSerial.println("connected");
       mqttConnected = true;
       if (statusCallback) {
         statusCallback("connected success");
       }
       client.subscribe(MQTT_TOPIC, QoS_Val);
-      USBSerial.print("Subscribed to topic: ");
-      USBSerial.println(MQTT_TOPIC);
-    } else {
-      USBSerial.print("failed, rc=");
-      USBSerial.println(client.lastError());
-      USBSerial.println(" try again in 5 seconds");
-      mqttConnected = false;
+      String subscribedMsg = "Subscribed topic: " + String(MQTT_TOPIC);
       if (statusCallback) {
-        statusCallback("connect failed");
+        statusCallback(subscribedMsg.c_str());
+      }
+    } else {
+      String failMsg = "failed, rc=" + String(client.lastError());
+      if (statusCallback) {
+        statusCallback(failMsg.c_str());
+      }
+      String retryMsg = "try again in 5 seconds";
+      if (statusCallback) {
+        statusCallback(retryMsg.c_str());
       }
       delay(5000);
     }
@@ -70,7 +70,7 @@ void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
   espClient.setCACert(ca_cert);
 
   client.begin(MQTT_SERVER, MQTT_PORT, espClient);
-  client.setCleanSession(true); // false で新しいセッションとして接続
+  client.setCleanSession(true);  // false で新しいセッションとして接続
   client.onMessage(messageReceived);
   reconnect();
 }

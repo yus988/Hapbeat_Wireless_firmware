@@ -111,6 +111,7 @@ void TaskAudio(void *args) {
   }
 }
 
+  // xTaskCreatePinnedToCore だと何故か安定しない
 void TaskMQTT(void *args) {
   while (1) {
     MQTT_manager::loopMQTTclient();
@@ -270,7 +271,7 @@ void TaskUI(void *args) {
 
           if (isLimitEnable) {
             audioManager::setIsLimitEnable(false);
-          }else{
+          } else {
             audioManager::setIsLimitEnable(true);
           }
 
@@ -403,21 +404,23 @@ void setup() {
 #ifdef ESPNOW
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 #elif MQTT
-  MQTT_manager::initMQTTclient(audioManager::PlaySndFromMQTTcallback,
-                               statusCallback);
-  xTaskCreatePinnedToCore(TaskMQTT, "TaskMQTT", 8192, NULL, 22, &thp[2], 1);
   audioManager::setLimitIds(LIMITED_IDS,
                             sizeof(LIMITED_IDS) / sizeof(LIMITED_IDS[0]));
+  MQTT_manager::initMQTTclient(audioManager::PlaySndFromMQTTcallback,
+                               statusCallback);
 #endif
-  xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 20, &thp[1], 1);
-  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 0);
+  xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 2048, NULL, 20, &thp[1], 1);
+  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
   BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
   audioManager::readAllSoundFiles();
   audioManager::initAudioOut(I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DOUT_PIN);
 }
 void loop() {
-  // delay(1);
-  // MQTT_manager::loopMQTTclient();
+#ifdef MQTT
+  // xTaskCreatePinnedToCore だと何故か安定しない
+  MQTT_manager::loopMQTTclient();
+  delay(200);
+#endif
 };
 
 // 優先度は 低 0-24 高
