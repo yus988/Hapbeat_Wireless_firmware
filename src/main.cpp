@@ -104,21 +104,31 @@ void setFixGain(bool updateOLED = true) {
 }
 
 ////////////////////////////////// define tasks ////////////////////////////////
+#ifdef ESPNOW
 void TaskAudio(void *args) {
   while (1) {
     audioManager::playAudioInLoop();
     delay(50);
   }
 }
-
-  // xTaskCreatePinnedToCore だと何故か安定しない
-void TaskMQTT(void *args) {
+#elif MQTT
+void TaskAudio(void *args) {
+  // MQTT_manager::getIsWiFiConnected()
   while (1) {
-    MQTT_manager::loopMQTTclient();
-    // 15秒未満なら遅延許容度の兼ね合い。パラメータにしても良いかも。
-    delay(200);
+    audioManager::playAudioInLoop();
+    delay(50);
   }
 }
+#endif
+
+// xTaskCreatePinnedToCore だと何故か安定しない
+// void TaskMQTT(void *args) {
+//   while (1) {
+//     MQTT_manager::loopMQTTclient();
+//     // 15秒未満なら遅延許容度の兼ね合い。パラメータにしても良いかも。
+//     delay(200);
+//   }
+// }
 
 #if defined(NECKLACE_V_1_3)
 // PAMの電圧を下げる
@@ -256,47 +266,50 @@ void TaskUI(void *args) {
   #ifdef COLOR_SENSOR
 void TaskUI(void *args) {
   while (1) {
-    // デバッグ用、電池残量表示
-    // BQ27220_Cmd::printBatteryStats();
-    // ボタン操作
-    for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
-      if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
-        // uint8_t playCategoryNum = audioManager::getPlayCategory();
-        // uint8_t wearId = audioManager::getWearerId();
-        if (i == 1) {
-          bool isLimitEnable = audioManager::getIsLimitEnable();
-          USBSerial.println("Button 1");
-          USBSerial.print("Limit Enabled Status before toggle: ");
-          USBSerial.println(isLimitEnable ? "true" : "false");
+    if (MQTT_manager::getIsWiFiConnected()) {
+      // デバッグ用、電池残量表示
+      BQ27220_Cmd::printBatteryStats();
+      // ボタン操作
+      for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
+        if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
+          // uint8_t playCategoryNum = audioManager::getPlayCategory();
+          // uint8_t wearId = audioManager::getWearerId();
+          if (i == 1) {
+            bool isLimitEnable = audioManager::getIsLimitEnable();
+            USBSerial.println("Button 1");
+            USBSerial.print("Limit Enabled Status before toggle: ");
+            USBSerial.println(isLimitEnable ? "true" : "false");
 
-          if (isLimitEnable) {
-            audioManager::setIsLimitEnable(false);
-          } else {
-            audioManager::setIsLimitEnable(true);
+            if (isLimitEnable) {
+              audioManager::setIsLimitEnable(false);
+            } else {
+              audioManager::setIsLimitEnable(true);
+            }
+
+            USBSerial.print("Limit Enabled Status after toggle: ");
+            USBSerial.println(audioManager::getIsLimitEnable() ? "true"
+                                                               : "false");
+
+            int msgIdx = (isLimitEnable) ? 0 : 1;
+            if (LIMIT_ENABLE_MSG[msgIdx] != nullptr) {
+              statusCallback(LIMIT_ENABLE_MSG[msgIdx]);
+            } else {
+              USBSerial.println("Error: Message pointer is null");
+            }
+            // audioManager::playAudio(0, 30);
+          } else if (i == 0) {
+            USBSerial.println("Button 0");
+            audioManager::stopAudio();
           }
-
-          USBSerial.print("Limit Enabled Status after toggle: ");
-          USBSerial.println(audioManager::getIsLimitEnable() ? "true"
-                                                             : "false");
-
-          int msgIdx = (isLimitEnable) ? 0 : 1;
-          if (LIMIT_ENABLE_MSG[msgIdx] != nullptr) {
-            statusCallback(LIMIT_ENABLE_MSG[msgIdx]);
-          } else {
-            USBSerial.println("Error: Message pointer is null");
-          }
-          // audioManager::playAudio(0, 30);
-        } else if (i == 0) {
-          USBSerial.println("Button 0");
-          audioManager::stopAudio();
+          _isBtnPressed[i] = true;
+          // displayManager::updateOLED(&_display, playCategoryNum, wearId,
+          //                            FIX_GAIN_STEP[playCategoryNum]);
         }
-        _isBtnPressed[i] = true;
-        // displayManager::updateOLED(&_display, playCategoryNum, wearId,
-        //                            FIX_GAIN_STEP[playCategoryNum]);
-      }
-      if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
-    };
-    // loop delay
+        if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i])
+          _isBtnPressed[i] = false;
+      };
+      // loop delay
+    }
     delay(100);
   }
 }
@@ -409,11 +422,16 @@ void setup() {
   MQTT_manager::initMQTTclient(audioManager::PlaySndFromMQTTcallback,
                                statusCallback);
 #endif
-  xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 2048, NULL, 20, &thp[1], 1);
-  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
-  BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
+
+  while (!MQTT_manager::getIsWiFiConnected()) {
+    USBSerial.println("waiting for WiFi connection...");
+    delay(500);  // 少し待って再試行
+  };
   audioManager::readAllSoundFiles();
   audioManager::initAudioOut(I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DOUT_PIN);
+  BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
+  xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 2048, NULL, 20, &thp[1], 1);
+  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
 }
 void loop() {
 #ifdef MQTT

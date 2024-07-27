@@ -27,7 +27,8 @@ String getUniqueClientId() {
 void reconnect() {
   while (!client.connected()) {
     String clientId = getUniqueClientId();
-    String connectionAttemptMsg = "Attempting MQTT connection with client ID: " + clientId;
+    String connectionAttemptMsg =
+        "Attempting MQTT connection with client ID: " + clientId;
     if (statusCallback) {
       statusCallback(connectionAttemptMsg.c_str());
     }
@@ -82,5 +83,8 @@ void loopMQTTclient() {
     client.loop();
   }
 }
+
+// wifiの情報を返す
+bool getIsWiFiConnected() { return WiFi.status() == WL_CONNECTED; }
 
 }  // namespace MQTT_manager

@@ -9,10 +9,14 @@
 
 // MQTT設定
 #define MQTT_SERVER "MQTT_SERVE"
-#define MQTT_PORT "PORT_NUMBER_INT" // MQTT over TLS/SSL ポート
+#define MQTT_PORT "PORT_NUMBER_INT" // MQTT over TLS/SSL port
 #define MQTT_USERNAME "MQTT_USERNAME"
 #define MQTT_PASSWORD "MQTT_PASSWORD"
 #define MQTT_TOPIC "MQTT_TOPIC"
-#define MQTT_CERTIFICATE "MQTT_CERTIFICATE"
+#define MQTT_CERTIFICATE                                               \
+  "-----BEGIN CERTIFICATE-----\n"                                      \
+  "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n" \
+  ...
+  "-----END CERTIFICATE-----"
 
 #endif  // CONFIG_H
