@@ -1,4 +1,5 @@
 #include "MQTT_manager.h"
+#include "WiFi.h"
 
 namespace MQTT_manager {
 bool mqttConnected = false;
@@ -68,6 +69,10 @@ void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
     statusCallback("Connecting to WiFi...");
   }
   statusCallback("WiFi connected!");
+
+  // モデムスリープモードを有効に設定
+  WiFi.setSleep(true);
+
   espClient.setCACert(ca_cert);
   client.begin(MQTT_SERVER, MQTT_PORT, espClient);
   client.setCleanSession(true);  // false で新しいセッションとして接続

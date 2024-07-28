@@ -86,12 +86,17 @@ void showStatusText(const char *status) {
   _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
 
-void showBatteryStatus(const char *soc, const char *voltage) {
+void showBatteryStatus() {
+  std::string socStr = std::to_string(lipo.soc());  // 数値を文字列に変換
+  std::string voltageStr =
+      std::to_string(lipo.voltage());           // 数値を文字列に変換
   _display.ssd1306_command(SSD1306_DISPLAYON);  // ディスプレイを点灯させる
+  _display.clearDisplay();
   uint8_t posX = 12;
   uint8_t posY = 8;
-  std::string text = std::string(soc) + "%" + " : " + std::string(voltage) +
-                     "V";  // C++のstd::stringを使用して文字列を結合
+  std::string text = std::string(socStr) + "%" + " : " +
+                     std::string(voltageStr) +
+                     "mV";  // C++のstd::stringを使用して文字列を結合
   _display.setCursor(posX, posY);  // カーソルを設定
   displayManager::printEfont(&_display, text.c_str(), posX,
                              posY);  // 文字列と座標を指定して表示
@@ -118,9 +123,7 @@ void enableSleepMode() {
   _display.ssd1306_command(SSD1306_DISPLAYOFF);
   fill_solid(_leds, 1, CRGB::Black);  // すべてのLEDを黒色に設定。
   FastLED.show();                     // LEDの色の変更を適用。
-  // digitalWrite(EN_I2S_DAC_PIN, LOW);
   // digitalWrite(EN_VIBAMP_PIN, LOW);
-  // digitalWrite(EN_MOTOR_PIN, LOW);
 }
 
 //////////////////////// コールバック関数の定義 ////////////////////////
@@ -136,10 +139,8 @@ void messageReceived(char *topic, byte *payload, unsigned int length) {
 
 void MQTTcallback(char *topic, byte *payload, unsigned int length) {
   // 各種ICをON
-  // digitalWrite(EN_MOTOR_PIN, HIGH);
-  // digitalWrite(EN_I2S_DAC_PIN, HIGH);
   // digitalWrite(EN_VIBAMP_PIN, HIGH);
-  delay(10);
+  // delay(10);
   audioManager::PlaySndFromMQTTcallback(topic, payload, length);
 }
 
@@ -312,7 +313,7 @@ void TaskUI(void *args) {
     if (MQTT_manager::getIsWiFiConnected()) {
       // デバッグ用、電池残量表示
       // BQ27220_Cmd::printBatteryStats();
-      // showBatteryStatus((char *)lipo.soc(), (char *)lipo.voltage());
+      // showBatteryStatus();
       // ボタン操作
       for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
         if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
@@ -473,6 +474,9 @@ void setup() {
   BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 2048, NULL, 20, &thp[1], 1);
   xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
+
+  // showBatteryStatus();
+  attachInterrupt(digitalPinToInterrupt(BQ27x_PIN), showBatteryStatus, FALLING);
 }
 void loop() {
 #ifdef MQTT
