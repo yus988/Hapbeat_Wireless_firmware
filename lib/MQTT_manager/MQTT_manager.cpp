@@ -28,7 +28,7 @@ void reconnect() {
   while (!client.connected()) {
     String clientId = getUniqueClientId();
     String connectionAttemptMsg =
-        "Attempting MQTT connection with client ID: " + clientId;
+        "Attempting MQTT connection: " + String(WiFi.macAddress());
     if (statusCallback) {
       statusCallback(connectionAttemptMsg.c_str());
     }
@@ -65,11 +65,10 @@ void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    USBSerial.println("Connecting to WiFi...");
+    statusCallback("Connecting to WiFi...");
   }
-  USBSerial.println("Connected to WiFi");
+  statusCallback("WiFi connected!");
   espClient.setCACert(ca_cert);
-
   client.begin(MQTT_SERVER, MQTT_PORT, espClient);
   client.setCleanSession(true);  // false で新しいセッションとして接続
   client.onMessage(messageReceived);

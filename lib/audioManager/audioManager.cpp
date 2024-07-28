@@ -1,8 +1,8 @@
+
+#include "audioManager.h"
+#include <string>
 #include <LittleFS.h>
-
-#include <algorithm>  // std::findを使用するために必要
 #include <vector>
-
 #include "FS.h"
 // オーディオ再生関連 ESP8266
 #include "AudioFileSourcePROGMEM.h"
@@ -16,23 +16,19 @@
 #include "AudioGeneratorWAV.h"
 #include "AudioOutputI2S.h"
 #include "AudioOutputMixer.h"
-#include "driver/i2s.h"
-
-#define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
-#define SOUND_FILE_NUM 60
-#define RAM_STORAGE 0
-#define FS_STORAGE 1
-// 再生するカテゴリなどの最大数を定義（RAMは限られるので大きくしすぎないように）
-#define CATEGORY_NUM 2
-#define POSITION_NUM 1
-#define DATA_NUM 20
-#define SUB_DATA_NUM 6
-
-// int samplingRate = 8000;
-int samplingRate = 16000;
 
 namespace audioManager {
+
+struct MessageData {
+  uint8_t id;
+  const char *message;
+  MessageData(uint8_t i, const char *m) : id(i), message(m) {}
+};
+std::vector<MessageData> messages;  // 実際のインスタンス化
+
 std::vector<bool> isPlayAudio(STUB_NUM, false);
+// ディスプレイに表示するコールバック関数
+void (*statusCallback)(const char *);
 
 struct DataPacket {
   uint8_t category;
@@ -163,7 +159,7 @@ void readAllSoundFiles() {
 }
 
 // 引数無しの場合は全てのstubを停止
-void stopAudio(uint8_t stub = 99) {
+void stopAudio(uint8_t stub) {
   if (stub == 99) {
     for (int iStub = 0; iStub < STUB_NUM; iStub++) {
       _wav_gen[iStub]->stop();
@@ -283,6 +279,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
 
 // MQTT接続にESPNOWのコールバックを実行するためのリレー関数
 void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
+
   USBSerial.println();
   USBSerial.print("Message arrived in topic: ");
   USBSerial.println(topic);
@@ -292,8 +289,6 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
     USBSerial.print((char)payload[i]);
   }
   USBSerial.println();
-
-  // モードに応じて再生の可否を決定
 
   // 文字列を整数に変換する処理
   String payloadStr((char *)payload, length);
@@ -328,6 +323,15 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
       return;  // 制限されたIDが見つかった場合、ここで処理を中断
     }
   }
+
+  // dataPacket.dataIDに対応するMessageDataオブジェクトを検索
+  for (int i = 0; i < messages.size(); ++i) {
+    if (messages[i].id == dataPacket.dataID) {
+      statusCallback(messages[i].message);
+      break;  // 対応するメッセージを見つけたらループを抜ける
+    }
+  }
+
   // ダミーのMACアドレス（適宜設定）
   uint8_t dummy_mac_addr[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00};
 
@@ -373,7 +377,7 @@ void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
 
   for (int i = 0; i < STUB_NUM; i++) {
     _stub[i] = _mixer->NewInput();
-    _stub[i]->SetRate(samplingRate);
+    _stub[i]->SetRate(SAMPLING_RATE);
   }
 }
 
@@ -419,5 +423,13 @@ void setIsLimitEnable(bool value) {
   EEPROM.put(offsetof(ConfigData, isLimitEnable), _settings.isLimitEnable);
   EEPROM.commit();
 };
+
+void setMessageData(const char *msg, uint8_t id) {
+  messages.push_back(
+      MessageData(id, msg));  // MessageData のコンストラクタを明示的に呼び出す
+}
+void setStatusCallback(void (*statusCb)(const char *)) {
+  statusCallback = statusCb;
+}
 
 }  // namespace audioManager

@@ -71,8 +71,28 @@ const char *DECIBEL_TXT[] = {
     "14.8", "15.2", "15.6", "16.0", "16.4", "16.8", "17.2", "17.6",
     "18.0", "18.4", "18.8", "19.2", "19.6", "20.0", "20.4", "20.8",
     "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
+const int BAT_NOTIFY_THD = 5;  // 残量低下を通知する閾値（％）
+const unsigned int DISPLAY_TIMEOUT = 5000; //ディスプレイを消灯するまでの時間（msec）
 
-const int BAT_NOTIFY_THD = 5; // 残量低下を通知する閾値（％）
+// 各通知と音源のIDを紐づけ（メッセージの判別などに使用）
+struct ID_definitions {
+  uint8_t blue;
+  uint8_t yellow;
+  uint8_t red;
+  uint8_t lowBattery;    // 電池残量減少
+  uint8_t disconnected;  // 通信切断
+};
+const ID_definitions ID_MSG = {
+    .blue = 0, .yellow = 1, .red = 2, .lowBattery = 3, .disconnected = 4};
+
+// ディスプレイに表示させるメッセージを管理
+struct MessageData {
+  uint8_t id;
+  const char *message;
+};
+// メッセージとIDの初期化
+const MessageData DISP_MSG[] = {{ID_MSG.blue, "blue"}, {ID_MSG.yellow, "yellow"}, {ID_MSG.red, "red"}};
+
 #endif
 
 #endif
