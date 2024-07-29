@@ -76,8 +76,7 @@ bool _isBtnPressed[] = {false, false};
 
 void vibrationNotify() {
   digitalWrite(EN_VIBAMP_PIN, HIGH);
-  delay(10);
-  audioManager::setDataID(2, ID_MSG.lowBattery);
+  audioManager::setDataID(2, ID_MSG.notify);
   audioManager::stopAudio(2);
   audioManager::playAudio(2, 30);
 }
@@ -91,8 +90,8 @@ void showStatusText(const char *status) {
   _display.setCursor(0, 0);
   if (status == "connection failed") {
     vibrationNotify();
-    displayManager::printEfont(&_display, "WiFiへの接続を確認してください", 0,
-                               8);
+    displayManager::printEfont(&_display, "WiFiへの接続を\n確認してください", 0,
+                               0);
   } else {
     displayManager::printEfont(&_display, status, 0, 0);
   }
@@ -174,7 +173,6 @@ void messageReceived(char *topic, byte *payload, unsigned int length) {
 void MQTTcallback(char *topic, byte *payload, unsigned int length) {
   // 各種ICをON
   digitalWrite(EN_VIBAMP_PIN, HIGH);
-  // delay(10);
   audioManager::PlaySndFromMQTTcallback(topic, payload, length);
 }
 
@@ -330,7 +328,7 @@ void TaskUI(void *args) {
 #if defined(GENERAL_V2)
   // ゆくゆくはアプリケーションに応じてTaskUIをファイル別に分ける。
   #ifdef COLOR_SENSOR
-  // color_sensor 用タスク
+// color_sensor 用タスク
 void TaskUI(void *args) {
   while (1) {
     // 所定の時間後に消灯。ただし音声再生中は実行しない
@@ -368,6 +366,9 @@ void TaskUI(void *args) {
             // audioManager::playAudio(0, 30);
           } else if (i == 0) {
             USBSerial.println("Button 0");
+            if (audioManager::getIsPlaying() == false) {
+              showBatteryStatus();
+            }
             audioManager::stopAudio();
           }
           _leds[0] = _currentColor;

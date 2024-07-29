@@ -78,11 +78,10 @@ struct ID_definitions {
   uint8_t blue;
   uint8_t yellow;
   uint8_t red;
-  uint8_t lowBattery;    // 電池残量減少
-  uint8_t disconnected;  // 通信切断
+  uint8_t notify;    // 電池残量減少
 };
 const ID_definitions ID_MSG = {
-    .blue = 0, .yellow = 1, .red = 2, .lowBattery = 3, .disconnected = 3};
+    .blue = 0, .yellow = 1, .red = 2, .notify = 4};
 
 // ディスプレイに表示させるメッセージを管理
 struct MessageData {

@@ -33,7 +33,7 @@ void reconnect() {
   while (!client.connected()) {
     String clientId = getUniqueClientId();
     String connectionAttemptMsg =
-        "Connecting to \nMQTT / trial: " + String(attemptCount);
+        "Connecting to \nMQTT trial: " + String(attemptCount);
     if (statusCallback) {
       statusCallback(connectionAttemptMsg.c_str());
     }
@@ -41,7 +41,7 @@ void reconnect() {
     if (client.connect(clientId.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) {
       mqttConnected = true;
       if (statusCallback) {
-        statusCallback("connected success");
+        statusCallback("connected \nsuccess");
       }
       client.subscribe(MQTT_TOPIC, QoS_Val);
       String subscribedMsg = "Subscribed topic: " + String(MQTT_TOPIC);
@@ -50,14 +50,12 @@ void reconnect() {
       }
     } else {
       String failMsg = "failed, rc=" + String(client.lastError());
-      String retryMsg = "try again in 5 seconds";
-      if (statusCallback) {
-        statusCallback(retryMsg.c_str());
-      }
+      String retryMsg = "try again in 1 seconds";
     }
     delay(1000);
     if (attemptCount >= attemptTimes) {  // 10回試行したが接続できなかった場合
       statusCallback("connection failed");
+      delay(3000);
       return;  // 接続失敗を報告して関数から抜ける
     }
     attemptCount++;  // 試行回数をインクリメント
@@ -73,7 +71,7 @@ void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
   int attemptCount = 0;  // 試行回数をカウントする変数
 
   while (WiFi.status() != WL_CONNECTED) {
-    String message = "Connecting to WiFi trial: " + String(attemptCount);
+    String message = "Connecting to \nWiFi trial: " + String(attemptCount);
     statusCallback(message.c_str());  //
     // 現在の試行回数を含めてステータスを報告
     // statusCallback("Connecting to WiFi");  //
@@ -81,7 +79,7 @@ void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
     delay(1000);
     if (attemptCount >= 10) {  // 10回試行したが接続できなかった場合
       statusCallback("connection failed");
-      return;  // 接続失敗を報告して関数から抜ける
+      break;  // 接続失敗を報告して関数から抜ける
     }
     attemptCount++;  // 試行回数をインクリメント
   }
