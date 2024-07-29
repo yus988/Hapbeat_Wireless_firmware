@@ -4,7 +4,6 @@
 #define ADJ_PARAMS_H
 
 #include <Adafruit_SSD1306.h>
-
 #if defined(NECKLACE)
 const int FIX_GAIN_STEP = 41;
 const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
@@ -46,17 +45,14 @@ const char *DECIBEL_TXT[] = {
 const float current_thresholds[2] = {5.2, 5.5};  // 電流値の閾値 (A)
 const int shutdownCycles[2] = {100, 40};
 // シャットダウンサイクル数。大きいほど、長時間閾値越えを許容する。閾値に応じて変える
-
 const int restoreCycles = 100;  // 復帰サイクル数
-
 #endif
-
 #if defined(GENERAL_V2)
 const int FIX_GAIN_STEP[] = {41, 28, 0};  // 各 playCategory に対応 0--63
 const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
 const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
-const CRGB COLOR_FIX_MODE = CRGB(10, 10, 10);
-const CRGB COLOR_VOL_MODE = CRGB(0, 0, 10);
+const CRGB COLOR_FIX_MODE = CRGB(0, 0, 2); // 無制限
+const CRGB COLOR_VOL_MODE = CRGB(2, 0, 0); // 制限
 const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
 const int LIMITED_IDS[] = {0, 1};
 const char *LIMIT_ENABLE_MSG[] = {

@@ -134,7 +134,6 @@ void showBatteryStatus() {
     displayManager::printEfont(&_display, text.c_str(), posX,
                                posY);  // 文字列と座標を指定して表示
   };
-
   _display.display();             // ディスプレイに表示
   _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
@@ -156,8 +155,8 @@ void setFixGain(bool updateOLED = true) {
 void enableSleepMode() {
   // DISPLAY_TIMEOUT 秒が経過した場合、ディスプレイとLEDを消灯
   _display.ssd1306_command(SSD1306_DISPLAYOFF);
-  fill_solid(_leds, 1, CRGB::Black);  // すべてのLEDを黒色に設定。
-  FastLED.show();                     // LEDの色の変更を適用。
+  // fill_solid(_leds, 1, CRGB::Black);  // すべてのLEDを黒色に設定。
+  // FastLED.show();                     // LEDの色の変更を適用。
   digitalWrite(EN_VIBAMP_PIN, LOW);
 }
 
@@ -196,15 +195,6 @@ void TaskAudio(void *args) {
   }
 }
 #endif
-
-// xTaskCreatePinnedToCore だと何故か安定しない
-// void TaskMQTT(void *args) {
-//   while (1) {
-//     MQTT_manager::loopMQTTclient();
-//     // 15秒未満なら遅延許容度の兼ね合い。パラメータにしても良いかも。
-//     delay(200);
-//   }
-// }
 
 #if defined(NECKLACE_V_1_3)
 // PAMの電圧を下げる
@@ -340,6 +330,7 @@ void TaskUI(void *args) {
 #if defined(GENERAL_V2)
   // ゆくゆくはアプリケーションに応じてTaskUIをファイル別に分ける。
   #ifdef COLOR_SENSOR
+  // color_sensor 用タスク
 void TaskUI(void *args) {
   while (1) {
     // 所定の時間後に消灯。ただし音声再生中は実行しない
@@ -373,8 +364,7 @@ void TaskUI(void *args) {
             } else {
               USBSerial.println("Error: Message pointer is null");
             }
-
-            vibrationNotify();
+            // vibrationNotify();
             // audioManager::playAudio(0, 30);
           } else if (i == 0) {
             USBSerial.println("Button 0");
