@@ -74,6 +74,13 @@ bool _isBtnPressed[] = {false, false};
 
 //////////////// general functions  /////////////////////////////
 
+void vibrationNotify() {
+  digitalWrite(EN_VIBAMP_PIN, HIGH);
+  delay(10);
+  audioManager::setDataId(2, ID_MSG.lowBattery);
+  audioManager::playAudio(2, 30);
+}
+
 // 現状はstatus=表示する文字列となっているが、
 // 細かく設定したいなら、statusに応じて文とスタイルを別途定義すればよい。
 // コールバック関数の引数を変えると変更箇所が多くなるので非推奨。
@@ -81,7 +88,13 @@ void showStatusText(const char *status) {
   _display.ssd1306_command(SSD1306_DISPLAYON);
   _display.clearDisplay();
   _display.setCursor(0, 0);
-  displayManager::printEfont(&_display, status, 0, 0);
+  if (status == "connection failed") {
+    vibrationNotify();
+    displayManager::printEfont(&_display, "WiFiへの接続を確認してください", 0,
+                               8);
+  } else {
+    displayManager::printEfont(&_display, status, 0, 0);
+  }
   _display.display();
   _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
@@ -111,10 +124,18 @@ void showBatteryStatus() {
                      std::string(voltageStr) +
                      "mV";  // C++のstd::stringを使用して文字列を結合
   _display.setCursor(posX, posY);  // カーソルを設定
-  displayManager::printEfont(&_display, text.c_str(), posX,
-                             posY);  // 文字列と座標を指定して表示
-  _display.display();                // ディスプレイに表示
-  _lastDisplayUpdate = millis();     // 画面更新時刻をリセット
+
+  // 電池残量が所定の値以下になったら振動再生
+  if (lipo.voltage() < BAT_NOTIFY_VOL || lipo.soc() < BAT_NOTIFY_SOC) {
+    vibrationNotify();
+    displayManager::printEfont(&_display, "充電してください", posX, posY);
+  } else {
+    displayManager::printEfont(&_display, text.c_str(), posX,
+                               posY);  // 文字列と座標を指定して表示
+  };
+
+  _display.display();             // ディスプレイに表示
+  _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
 
 // 所定の値に固定する。
@@ -136,7 +157,7 @@ void enableSleepMode() {
   _display.ssd1306_command(SSD1306_DISPLAYOFF);
   fill_solid(_leds, 1, CRGB::Black);  // すべてのLEDを黒色に設定。
   FastLED.show();                     // LEDの色の変更を適用。
-  // digitalWrite(EN_VIBAMP_PIN, LOW);
+  digitalWrite(EN_VIBAMP_PIN, LOW);
 }
 
 //////////////////////// コールバック関数の定義 ////////////////////////
@@ -152,7 +173,7 @@ void messageReceived(char *topic, byte *payload, unsigned int length) {
 
 void MQTTcallback(char *topic, byte *payload, unsigned int length) {
   // 各種ICをON
-  // digitalWrite(EN_VIBAMP_PIN, HIGH);
+  digitalWrite(EN_VIBAMP_PIN, HIGH);
   // delay(10);
   audioManager::PlaySndFromMQTTcallback(topic, payload, length);
 }
@@ -320,13 +341,15 @@ void TaskUI(void *args) {
   #ifdef COLOR_SENSOR
 void TaskUI(void *args) {
   while (1) {
-    if (millis() - _lastDisplayUpdate > DISPLAY_TIMEOUT) {
-      // enableSleepMode();
+    // 所定の時間後に消灯。ただし音声再生中は実行しない
+    if (millis() - _lastDisplayUpdate > DISPLAY_TIMEOUT &&
+        audioManager::getIsPlaying() == false) {
+      enableSleepMode();
     }
     if (MQTT_manager::getIsWiFiConnected()) {
       // デバッグ用、電池残量表示
       // BQ27220_Cmd::printBatteryStats();
-      showBatteryStatus();
+      // showBatteryStatus();
       // ボタン操作
       for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
         if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
@@ -334,6 +357,7 @@ void TaskUI(void *args) {
           _display.ssd1306_command(SSD1306_DISPLAYON);
           _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
           if (i == 1) {
+            // モード切替
             bool isLimitEnable = audioManager::getIsLimitEnable();
             if (isLimitEnable) {
               audioManager::setIsLimitEnable(false);
@@ -348,7 +372,9 @@ void TaskUI(void *args) {
             } else {
               USBSerial.println("Error: Message pointer is null");
             }
-            audioManager::playAudio(0, 30);
+
+            vibrationNotify();
+            // audioManager::playAudio(0, 30);
           } else if (i == 0) {
             USBSerial.println("Button 0");
             audioManager::stopAudio();
@@ -363,7 +389,7 @@ void TaskUI(void *args) {
       };
       // loop delay
     }
-    delay(1000);
+    delay(200);
   }
 }
   #else
@@ -444,6 +470,7 @@ void setup() {
   FastLED.show();
 
 #if defined(NECKLACE_V_1_3)
+
   // battery current sensing pins
   pinMode(BAT_CURRENT_PIN, INPUT);
   pinMode(DETECT_ANALOG_IN_PIN, INPUT);
@@ -459,15 +486,17 @@ void setup() {
 #endif
 
 #ifdef ESPNOW
+  setFixGain();  // 実行しないと VibAmpVolume = 0 のままなので必須
+
   // ここはタスク依存
   int m_size = sizeof(PLAY_CATEGORY_TXT) / sizeof(PLAY_CATEGORY_TXT[0]);
   int w_size = sizeof(WEARER_ID_TXT) / sizeof(WEARER_ID_TXT[0]);
   int d_size = sizeof(DECIBEL_TXT) / sizeof(DECIBEL_TXT[0]);
   displayManager::setTitle(PLAY_CATEGORY_TXT, m_size, WEARER_ID_TXT, w_size,
                            DECIBEL_TXT, d_size);
-  setFixGain();
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 #elif MQTT
+  setFixGain(false);  // 実行しないと VibAmpVolume = 0 のままなので必須
   audioManager::setLimitIds(LIMITED_IDS,
                             sizeof(LIMITED_IDS) / sizeof(LIMITED_IDS[0]));
   audioManager::setStatusCallback(showStatusText);

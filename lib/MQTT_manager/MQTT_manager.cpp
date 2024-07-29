@@ -1,7 +1,10 @@
 #include "MQTT_manager.h"
+
 #include "WiFi.h"
 
 namespace MQTT_manager {
+
+int attemptTimes = 5;
 bool mqttConnected = false;
 WiFiClientSecure espClient;
 MQTTClient client;
@@ -26,10 +29,11 @@ String getUniqueClientId() {
 }
 
 void reconnect() {
+  int attemptCount = 0;  // 試行回数をカウントする変数
   while (!client.connected()) {
     String clientId = getUniqueClientId();
     String connectionAttemptMsg =
-        "Attempting MQTT connection: " + String(WiFi.macAddress());
+        "Connecting to \nMQTT / trial: " + String(attemptCount);
     if (statusCallback) {
       statusCallback(connectionAttemptMsg.c_str());
     }
@@ -46,15 +50,17 @@ void reconnect() {
       }
     } else {
       String failMsg = "failed, rc=" + String(client.lastError());
-      if (statusCallback) {
-        statusCallback(failMsg.c_str());
-      }
       String retryMsg = "try again in 5 seconds";
       if (statusCallback) {
         statusCallback(retryMsg.c_str());
       }
-      delay(5000);
     }
+    delay(1000);
+    if (attemptCount >= attemptTimes) {  // 10回試行したが接続できなかった場合
+      statusCallback("connection failed");
+      return;  // 接続失敗を報告して関数から抜ける
+    }
+    attemptCount++;  // 試行回数をインクリメント
   }
 }
 
@@ -64,9 +70,20 @@ void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
   statusCallback = statusCb;
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  int attemptCount = 0;  // 試行回数をカウントする変数
+
   while (WiFi.status() != WL_CONNECTED) {
+    String message = "Connecting to WiFi trial: " + String(attemptCount);
+    statusCallback(message.c_str());  //
+    // 現在の試行回数を含めてステータスを報告
+    // statusCallback("Connecting to WiFi");  //
+    // 現在の試行回数を含めてステータスを報告
     delay(1000);
-    statusCallback("Connecting to WiFi...");
+    if (attemptCount >= 10) {  // 10回試行したが接続できなかった場合
+      statusCallback("connection failed");
+      return;  // 接続失敗を報告して関数から抜ける
+    }
+    attemptCount++;  // 試行回数をインクリメント
   }
   statusCallback("WiFi connected!");
 

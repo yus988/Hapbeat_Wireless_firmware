@@ -1,8 +1,10 @@
 #ifndef AUDIO_MANAGER_H
 #define AUDIO_MANAGER_H
 #include <Arduino.h>
-#include "driver/i2s.h"
+
 #include <vector>
+
+#include "driver/i2s.h"
 
 #define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
 #define SOUND_FILE_NUM 60
@@ -36,8 +38,10 @@ uint8_t getWearerId();
 uint8_t getDevicePos();
 bool getIsFixMode();
 bool getIsLimitEnable();
+bool getIsPlaying();
 // set
-void setStatusCallback(void (*statusCb)(const char *)); 
+void setDataId(uint8_t stubNum, uint8_t dataId);
+void setStatusCallback(void (*statusCb)(const char *));
 void setGain(uint8_t G_SEL_A, uint8_t G_SEL_B, uint8_t val);
 void setPlayCategory(uint8_t value);
 void setWearerId(uint8_t value);

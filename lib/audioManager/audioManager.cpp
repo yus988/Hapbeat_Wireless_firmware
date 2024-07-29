@@ -1,8 +1,11 @@
 
 #include "audioManager.h"
-#include <string>
+
 #include <LittleFS.h>
+
+#include <string>
 #include <vector>
+
 #include "FS.h"
 // オーディオ再生関連 ESP8266
 #include "AudioFileSourcePROGMEM.h"
@@ -233,7 +236,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   if ((data[0] == _settings.playCategory || data[0] == 99) &&
       (data[1] == _settings.wearerId || data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
-    // USBSerial.println("prepare to playAudio");
+    USBSerial.println("prepare to playAudio");
     // 0 = oneshot(0,1), 1=loopStart(2,3), 2=stopAudio, 3=2ndline(4,5)
     // 括弧内はstub番号
     uint8_t playCmd = data[7];
@@ -279,7 +282,6 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
 
 // MQTT接続にESPNOWのコールバックを実行するためのリレー関数
 void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
-
   USBSerial.println();
   USBSerial.print("Message arrived in topic: ");
   USBSerial.println(topic);
@@ -388,8 +390,19 @@ uint8_t getWearerId() { return _settings.wearerId; }
 uint8_t getDevicePos() { return _devicePos; }
 bool getIsFixMode() { return _settings.isFixMode; }
 bool getIsLimitEnable() { return _settings.isLimitEnable; }
+bool getIsPlaying() {
+  for (int i = 0; i < STUB_NUM; i++) {
+    if (isPlayAudio[i]) {
+      return true;  // 1つでもtrueがあればtrueを返す
+    }
+  }
+  return false;  // 全てfalseの場合はfalseを返す
+}
 
 //  set
+// stubNum: 0 = oneshot, 2 = loop
+void setDataId(uint8_t stubNum, uint8_t dataId) { _dataID[stubNum] = dataId; }
+
 void setPlayCategory(uint8_t value) {
   _settings.playCategory = value;
   EEPROM.put(offsetof(ConfigData, playCategory), _settings.playCategory);
