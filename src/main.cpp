@@ -86,6 +86,19 @@ void showStatusText(const char *status) {
   _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
 
+// 描画場所など指定したい場合はこれを使う
+void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
+                        bool isClearDisplay) {
+  _display.ssd1306_command(SSD1306_DISPLAYON);
+  if (isClearDisplay) {
+    _display.clearDisplay();
+  }
+  _display.setCursor(posX, posY);
+  displayManager::printEfont(&_display, text, posX, posY);
+  _display.display();
+  _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
+}
+
 void showBatteryStatus() {
   std::string socStr = std::to_string(lipo.soc());  // 数値を文字列に変換
   std::string voltageStr =
@@ -313,7 +326,7 @@ void TaskUI(void *args) {
     if (MQTT_manager::getIsWiFiConnected()) {
       // デバッグ用、電池残量表示
       // BQ27220_Cmd::printBatteryStats();
-      // showBatteryStatus();
+      showBatteryStatus();
       // ボタン操作
       for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
         if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
@@ -331,7 +344,7 @@ void TaskUI(void *args) {
             }
             int msgIdx = (isLimitEnable) ? 0 : 1;
             if (LIMIT_ENABLE_MSG[msgIdx] != nullptr) {
-              showStatusText(LIMIT_ENABLE_MSG[msgIdx]);
+              showTextWithParams(LIMIT_ENABLE_MSG[msgIdx], 8, 12, true);
             } else {
               USBSerial.println("Error: Message pointer is null");
             }
@@ -350,7 +363,7 @@ void TaskUI(void *args) {
       };
       // loop delay
     }
-    delay(100);
+    delay(1000);
   }
 }
   #else
@@ -464,7 +477,6 @@ void setup() {
   };
   MQTT_manager::initMQTTclient(MQTTcallback, showStatusText);
 #endif
-
   while (!MQTT_manager::getIsWiFiConnected()) {
     USBSerial.println("waiting for WiFi connection...");
     delay(500);  // 少し待って再試行
@@ -474,7 +486,6 @@ void setup() {
   BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 2048, NULL, 20, &thp[1], 1);
   xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
-
   // showBatteryStatus();
   attachInterrupt(digitalPinToInterrupt(BQ27x_PIN), showBatteryStatus, FALLING);
 }
