@@ -181,6 +181,7 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   uint8_t pos = 0;  // pos = 0 は仮置き
   uint8_t idx = _audioDataIndex[_settings.playCategory][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
+  _volume[tStubNum] = tVol;
 
   _stub[tStubNum]->SetGain((float)tVol / maxVol);
   if (_wav_gen[tStubNum]->isRunning()) {
@@ -218,7 +219,7 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   // 新しいオーディオソースを保存
   _previousSources[tStubNum] = src;
   isPlayAudio[tStubNum] = true;
-  // USBSerial.printf("Succeed to play with stub: %d\n", tStubNum);
+  USBSerial.printf("Succeed to play with stub: %d\n", tStubNum);
 }
 
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
@@ -401,7 +402,10 @@ bool getIsPlaying() {
 
 //  set
 // stubNum: 0 = oneshot, 2 = loop
-void setDataId(uint8_t stubNum, uint8_t dataId) { _dataID[stubNum] = dataId; }
+void setDataID(uint8_t stubNum, uint8_t dataID, uint8_t subID) {
+  _dataID[stubNum] = dataID;
+  _subID[stubNum] = subID;
+}
 
 void setPlayCategory(uint8_t value) {
   _settings.playCategory = value;

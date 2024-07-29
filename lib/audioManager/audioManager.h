@@ -40,7 +40,7 @@ bool getIsFixMode();
 bool getIsLimitEnable();
 bool getIsPlaying();
 // set
-void setDataId(uint8_t stubNum, uint8_t dataId);
+void setDataID(uint8_t stubNum, uint8_t dataID, uint8_t subID = 0);
 void setStatusCallback(void (*statusCb)(const char *));
 void setGain(uint8_t G_SEL_A, uint8_t G_SEL_B, uint8_t val);
 void setPlayCategory(uint8_t value);

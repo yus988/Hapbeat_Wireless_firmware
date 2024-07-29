@@ -77,7 +77,8 @@ bool _isBtnPressed[] = {false, false};
 void vibrationNotify() {
   digitalWrite(EN_VIBAMP_PIN, HIGH);
   delay(10);
-  audioManager::setDataId(2, ID_MSG.lowBattery);
+  audioManager::setDataID(2, ID_MSG.lowBattery);
+  audioManager::stopAudio(2);
   audioManager::playAudio(2, 30);
 }
 
