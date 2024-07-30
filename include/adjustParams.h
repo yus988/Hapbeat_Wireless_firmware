@@ -51,8 +51,8 @@ const int restoreCycles = 100;  // 復帰サイクル数
 const int FIX_GAIN_STEP[] = {41, 28, 0};  // 各 playCategory に対応 0--63
 const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
 const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
-const CRGB COLOR_FIX_MODE = CRGB(0, 0, 2); // 無制限
-const CRGB COLOR_VOL_MODE = CRGB(2, 0, 0); // 制限
+const CRGB COLOR_FIX_MODE = CRGB(0, 0, 2);  // 無制限
+const CRGB COLOR_VOL_MODE = CRGB(2, 0, 0);  // 制限
 const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
 const int LIMITED_IDS[] = {0, 1};
 const char *LIMIT_ENABLE_MSG[] = {
@@ -73,15 +73,17 @@ const int BAT_NOTIFY_VOL = 3600;  // 残量低下を通知する閾値（mV）
 const unsigned int DISPLAY_TIMEOUT =
     5000;  // ディスプレイを消灯するまでの時間（msec）
 
+const unsigned int BATTERY_STATUS_INTERVAL =
+    10000;  // バッテリー情報を更新する時間（msec）
+
 // 各通知と音源のIDを紐づけ（メッセージの判別などに使用）
 struct ID_definitions {
   uint8_t blue;
   uint8_t yellow;
   uint8_t red;
-  uint8_t notify;    // 電池残量減少
+  uint8_t notify;  // 電池残量減少
 };
-const ID_definitions ID_MSG = {
-    .blue = 0, .yellow = 1, .red = 2, .notify = 4};
+const ID_definitions ID_MSG = {.blue = 0, .yellow = 1, .red = 2, .notify = 4};
 
 // ディスプレイに表示させるメッセージを管理
 struct MessageData {

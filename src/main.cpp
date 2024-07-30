@@ -37,6 +37,8 @@ TaskHandle_t thp[3];  // 環境によって必要タスク数が変わるので�
 bool _isFixMode;
 unsigned long _lastDisplayUpdate =
     0;  // ディスプレイが最後に更新された時刻を保持
+unsigned long _lastBatStatusUpdate =
+    0;  // ディスプレイが最後に更新された時刻を保持
 // LED
 CRGB _leds[1];
 CRGB _currentColor;
@@ -112,29 +114,37 @@ void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
   _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
 
-void showBatteryStatus() {
-  std::string socStr = std::to_string(lipo.soc());  // 数値を文字列に変換
-  std::string voltageStr =
-      std::to_string(lipo.voltage());           // 数値を文字列に変換
-  _display.ssd1306_command(SSD1306_DISPLAYON);  // ディスプレイを点灯させる
-  _display.clearDisplay();
-  uint8_t posX = 12;
+void manageBatteryStatus(bool showDisplay = false) {
+  int voltage = lipo.voltage();
+  int soc = (voltage - 3500) * 100 / (4100 - 3500);
+  if (soc < 0) {
+    soc = 0;
+  } else if (soc > 100) {
+    soc = 100;
+  }
+  uint8_t posX = 0;
   uint8_t posY = 8;
-  std::string text = std::string(socStr) + "%" + " : " +
-                     std::string(voltageStr) +
-                     "mV";  // C++のstd::stringを使用して文字列を結合
-  _display.setCursor(posX, posY);  // カーソルを設定
-
   // 電池残量が所定の値以下になったら振動再生
   if (lipo.voltage() < BAT_NOTIFY_VOL || lipo.soc() < BAT_NOTIFY_SOC) {
     vibrationNotify();
     displayManager::printEfont(&_display, "充電してください", posX, posY);
-  } else {
+  }
+  _lastBatStatusUpdate = millis();
+  if (showDisplay) {
+    std::string socStr = std::to_string(soc);  // 数値を文字列に変換
+    std::string voltageStr = std::to_string(voltage);  // 数値を文字列に変換
+    _display.ssd1306_command(SSD1306_DISPLAYON);  // ディスプレイを点灯させる
+    _display.clearDisplay();
+
+    std::string text = std::string(socStr) + "%" + " : " +
+                       std::string(voltageStr) +
+                       "mV";  // C++のstd::stringを使用して文字列を結合
+    _display.setCursor(posX, posY);  // カーソルを設定
     displayManager::printEfont(&_display, text.c_str(), posX,
                                posY);  // 文字列と座標を指定して表示
-  };
-  _display.display();             // ディスプレイに表示
-  _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
+    _display.display();                // ディスプレイに表示
+    _lastDisplayUpdate = millis();     // 画面更新時刻をリセット
+  }
 }
 
 // 所定の値に固定する。
@@ -336,10 +346,14 @@ void TaskUI(void *args) {
         audioManager::getIsPlaying() == false) {
       enableSleepMode();
     }
+    if (millis() - _lastBatStatusUpdate > BATTERY_STATUS_INTERVAL) {
+      manageBatteryStatus(false);
+    }
+
     if (MQTT_manager::getIsWiFiConnected()) {
       // デバッグ用、電池残量表示
       // BQ27220_Cmd::printBatteryStats();
-      // showBatteryStatus();
+      // manageBatteryStatus();
       // ボタン操作
       for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
         if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
@@ -367,7 +381,7 @@ void TaskUI(void *args) {
           } else if (i == 0) {
             USBSerial.println("Button 0");
             if (audioManager::getIsPlaying() == false) {
-              showBatteryStatus();
+              manageBatteryStatus(true);
             }
             audioManager::stopAudio();
           }
@@ -381,7 +395,7 @@ void TaskUI(void *args) {
       };
       // loop delay
     }
-    delay(200);
+    delay(190);
   }
 }
   #else
@@ -507,8 +521,7 @@ void setup() {
   BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 2048, NULL, 20, &thp[1], 1);
   xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
-  // showBatteryStatus();
-  attachInterrupt(digitalPinToInterrupt(BQ27x_PIN), showBatteryStatus, FALLING);
+
 }
 void loop() {
 #ifdef MQTT
