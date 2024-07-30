@@ -124,27 +124,28 @@ void manageBatteryStatus(bool showDisplay = false) {
   }
   uint8_t posX = 0;
   uint8_t posY = 8;
-  // 電池残量が所定の値以下になったら振動再生
-  if (lipo.voltage() < BAT_NOTIFY_VOL || lipo.soc() < BAT_NOTIFY_SOC) {
-    vibrationNotify();
-    displayManager::printEfont(&_display, "充電してください", posX, posY);
-  }
   _lastBatStatusUpdate = millis();
-  if (showDisplay) {
+  std::string text;
+  // 電池残量が所定の値以下になったら振動再生
+  if (voltage < BAT_NOTIFY_VOL || soc < BAT_NOTIFY_SOC) {
+    vibrationNotify();
+    text = "充電してください";
+  } else if (showDisplay) {
     std::string socStr = std::to_string(soc);  // 数値を文字列に変換
     std::string voltageStr = std::to_string(voltage);  // 数値を文字列に変換
-    _display.ssd1306_command(SSD1306_DISPLAYON);  // ディスプレイを点灯させる
-    _display.clearDisplay();
-
-    std::string text = std::string(socStr) + "%" + " : " +
-                       std::string(voltageStr) +
-                       "mV";  // C++のstd::stringを使用して文字列を結合
-    _display.setCursor(posX, posY);  // カーソルを設定
-    displayManager::printEfont(&_display, text.c_str(), posX,
-                               posY);  // 文字列と座標を指定して表示
-    _display.display();                // ディスプレイに表示
-    _lastDisplayUpdate = millis();     // 画面更新時刻をリセット
+    text = std::string(socStr) + "%" + " : " + std::string(voltageStr) +
+           "mV";  // C++のstd::stringを使用して文字列を結合
+  } else {
+    return;
   }
+  _display.ssd1306_command(SSD1306_DISPLAYON);  // ディスプレイを点灯させる
+  _display.clearDisplay();
+  _display.setCursor(posX, posY);  // カーソルを設定
+
+  displayManager::printEfont(&_display, text.c_str(), posX,
+                             posY);  // 文字列と座標を指定して表示
+  _display.display();                // ディスプレイに表示
+  _lastDisplayUpdate = millis();     // 画面更新時刻をリセット
 }
 
 // 所定の値に固定する。
@@ -162,7 +163,7 @@ void setFixGain(bool updateOLED = true) {
 
 // 待機中に極力電源オフ
 void enableSleepMode() {
-  // DISPLAY_TIMEOUT 秒が経過した場合、ディスプレイとLEDを消灯
+  // DISPLAY_TIMEOUT 秒が経過した場合、ディスプレイを消灯
   _display.ssd1306_command(SSD1306_DISPLAYOFF);
   // fill_solid(_leds, 1, CRGB::Black);  // すべてのLEDを黒色に設定。
   // FastLED.show();                     // LEDの色の変更を適用。
@@ -372,7 +373,7 @@ void TaskUI(void *args) {
             }
             int msgIdx = (isLimitEnable) ? 0 : 1;
             if (LIMIT_ENABLE_MSG[msgIdx] != nullptr) {
-              showTextWithParams(LIMIT_ENABLE_MSG[msgIdx], 8, 12, true);
+              showTextWithParams(LIMIT_ENABLE_MSG[msgIdx], 0, 8, true);
             } else {
               USBSerial.println("Error: Message pointer is null");
             }
@@ -521,7 +522,6 @@ void setup() {
   BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 2048, NULL, 20, &thp[1], 1);
   xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
-
 }
 void loop() {
 #ifdef MQTT

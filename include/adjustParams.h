@@ -68,7 +68,7 @@ const char *DECIBEL_TXT[] = {
     "18.0", "18.4", "18.8", "19.2", "19.6", "20.0", "20.4", "20.8",
     "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
 const int BAT_NOTIFY_SOC = 5;     // 残量低下を通知する閾値（％）
-const int BAT_NOTIFY_VOL = 3600;  // 残量低下を通知する閾値（mV）
+const int BAT_NOTIFY_VOL = 3550;  // 残量低下を通知する閾値（mV）
 
 const unsigned int DISPLAY_TIMEOUT =
     5000;  // ディスプレイを消灯するまでの時間（msec）
