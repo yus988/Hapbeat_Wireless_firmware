@@ -21,7 +21,6 @@
 
 //////////////// variables  /////////////////////////////
 // _display params
-const int DISP_ROT = 0;
 // const int DISP_ROT = 90; // 上下逆
 const int SCREEN_WIDTH = 128;  // OLED _display width, in pixels
 const int SCREEN_HEIGHT = 32;  // OLED _display height, in pixels

@@ -48,7 +48,11 @@ const int shutdownCycles[2] = {100, 40};
 const int restoreCycles = 100;  // 復帰サイクル数
 #endif
 #if defined(GENERAL_V2)
-const int FIX_GAIN_STEP[] = {41, 28, 0};  // 各 playCategory に対応 0--63
+
+// const int DISP_ROT = 0; // 左利き用
+const int DISP_ROT = 90; // 右利き用
+
+const int FIX_GAIN_STEP[] = {41, 30, 0};  // 各 playCategory に対応 0--63
 const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
 const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
 const CRGB COLOR_FIX_MODE = CRGB(0, 0, 2);  // 無制限
@@ -68,7 +72,7 @@ const char *DECIBEL_TXT[] = {
     "18.0", "18.4", "18.8", "19.2", "19.6", "20.0", "20.4", "20.8",
     "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
 const int BAT_NOTIFY_SOC = 5;     // 残量低下を通知する閾値（％）
-const int BAT_NOTIFY_VOL = 3550;  // 残量低下を通知する閾値（mV）
+const int BAT_NOTIFY_VOL = 3600;  // 残量低下を通知する閾値（mV）
 
 const unsigned int DISPLAY_TIMEOUT =
     5000;  // ディスプレイを消灯するまでの時間（msec）

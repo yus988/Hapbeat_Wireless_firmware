@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <MQTT.h>
-#include "../../config.h"
+#include "../../include/config.h"
 
 namespace MQTT_manager {
 extern bool mqttConnected;
