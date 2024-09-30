@@ -68,13 +68,16 @@ float calculateCurrent(int adc_value) {
 
 #if defined(GENERAL_V2)
 // see pam8003 datasheet p.7
-
 int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN};
 bool _isBtnPressed[] = {false, false};
 #endif
 
 //////////////// general functions  /////////////////////////////
 
+// 現状はstatus=表示する文字列となっているが、
+// 細かく設定したいなら、statusに応じて文とスタイルを別途定義すればよい。
+// コールバック関数の引数を変えると変更箇所が多くなるので非推奨。
+#ifdef MQTT
 void vibrationNotify() {
   digitalWrite(EN_VIBAMP_PIN, HIGH);
   audioManager::setDataID(2, ID_MSG.notify);
@@ -82,9 +85,6 @@ void vibrationNotify() {
   audioManager::playAudio(2, 30);
 }
 
-// 現状はstatus=表示する文字列となっているが、
-// 細かく設定したいなら、statusに応じて文とスタイルを別途定義すればよい。
-// コールバック関数の引数を変えると変更箇所が多くなるので非推奨。
 void showStatusText(const char *status) {
   _display.ssd1306_command(SSD1306_DISPLAYON);
   _display.clearDisplay();
@@ -96,19 +96,6 @@ void showStatusText(const char *status) {
   } else {
     displayManager::printEfont(&_display, status, 0, 0);
   }
-  _display.display();
-  _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
-}
-
-// 描画場所など指定したい場合はこれを使う
-void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
-                        bool isClearDisplay) {
-  _display.ssd1306_command(SSD1306_DISPLAYON);
-  if (isClearDisplay) {
-    _display.clearDisplay();
-  }
-  _display.setCursor(posX, posY);
-  displayManager::printEfont(&_display, text, posX, posY);
   _display.display();
   _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
@@ -147,6 +134,30 @@ void manageBatteryStatus(bool showDisplay = false) {
   _lastDisplayUpdate = millis();     // 画面更新時刻をリセット
 }
 
+// 待機中に極力電源オフ
+void enableSleepMode() {
+  // DISPLAY_TIMEOUT 秒が経過した場合、ディスプレイを消灯
+  _display.ssd1306_command(SSD1306_DISPLAYOFF);
+  // fill_solid(_leds, 1, CRGB::Black);  // すべてのLEDを黒色に設定。
+  // FastLED.show();                     // LEDの色の変更を適用。
+  digitalWrite(EN_VIBAMP_PIN, LOW);
+}
+
+#endif
+
+// 描画場所など指定したい場合はこれを使う
+void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
+                        bool isClearDisplay) {
+  _display.ssd1306_command(SSD1306_DISPLAYON);
+  if (isClearDisplay) {
+    _display.clearDisplay();
+  }
+  _display.setCursor(posX, posY);
+  displayManager::printEfont(&_display, text, posX, posY);
+  _display.display();
+  _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
+}
+
 // 所定の値に固定する。
 void setFixGain(bool updateOLED = true) {
   // 15dBにあたるステップ数0--63をanalogWrite0--255に変換する
@@ -158,15 +169,6 @@ void setFixGain(bool updateOLED = true) {
                                audioManager::getWearerId(),
                                FIX_GAIN_STEP[audioManager::getPlayCategory()]);
   }
-}
-
-// 待機中に極力電源オフ
-void enableSleepMode() {
-  // DISPLAY_TIMEOUT 秒が経過した場合、ディスプレイを消灯
-  _display.ssd1306_command(SSD1306_DISPLAYOFF);
-  // fill_solid(_leds, 1, CRGB::Black);  // すべてのLEDを黒色に設定。
-  // FastLED.show();                     // LEDの色の変更を適用。
-  digitalWrite(EN_VIBAMP_PIN, LOW);
 }
 
 //////////////////////// コールバック関数の定義 ////////////////////////
@@ -476,7 +478,6 @@ void setup() {
   FastLED.show();
 
 #if defined(NECKLACE_V_1_3)
-
   // battery current sensing pins
   pinMode(BAT_CURRENT_PIN, INPUT);
   pinMode(DETECT_ANALOG_IN_PIN, INPUT);
@@ -492,15 +493,17 @@ void setup() {
 #endif
 
 #ifdef ESPNOW
-  setFixGain();  // 実行しないと VibAmpVolume = 0 のままなので必須
-
   // ここはタスク依存
   int m_size = sizeof(PLAY_CATEGORY_TXT) / sizeof(PLAY_CATEGORY_TXT[0]);
   int w_size = sizeof(WEARER_ID_TXT) / sizeof(WEARER_ID_TXT[0]);
   int d_size = sizeof(DECIBEL_TXT) / sizeof(DECIBEL_TXT[0]);
+  USBSerial.println("setup before setTitile");
   displayManager::setTitle(PLAY_CATEGORY_TXT, m_size, WEARER_ID_TXT, w_size,
                            DECIBEL_TXT, d_size);
-  espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
+  USBSerial.println("setup after setTitile");
+  setFixGain(true);  // 実行しないと VibAmpVolume = 0 のままなので必須
+  USBSerial.println("setup after setFixGain");
+  // espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 #elif MQTT
   setFixGain(false);  // 実行しないと VibAmpVolume = 0 のままなので必須
   audioManager::setLimitIds(LIMITED_IDS,
@@ -511,11 +514,11 @@ void setup() {
     audioManager::setMessageData(msg.message, msg.id);
   };
   MQTT_manager::initMQTTclient(MQTTcallback, showStatusText);
-#endif
   while (!MQTT_manager::getIsWiFiConnected()) {
     USBSerial.println("waiting for WiFi connection...");
     delay(500);  // 少し待って再試行
   };
+#endif
   audioManager::readAllSoundFiles();
   audioManager::initAudioOut(I2S_BCLK_PIN, I2S_LRCK_PIN, I2S_DOUT_PIN);
   BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);

@@ -36,6 +36,8 @@ const char *DECIBEL_TXT[] = {
     "14.8", "15.2", "15.6", "16.0", "16.4", "16.8", "17.2", "17.6",
     "18.0", "18.4", "18.8", "19.2", "19.6", "20.0", "20.4", "20.8",
     "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
+
+
 // シャットダウン回避関連
 // 新バッテリー用（最大3.8A程度）
 // const float current_thresholds[2] = {5.0, 5.5};  // 電流値の閾値 (A)
@@ -46,11 +48,16 @@ const float current_thresholds[2] = {5.2, 5.5};  // 電流値の閾値 (A)
 const int shutdownCycles[2] = {100, 40};
 // シャットダウンサイクル数。大きいほど、長時間閾値越えを許容する。閾値に応じて変える
 const int restoreCycles = 100;  // 復帰サイクル数
+
+const int BAT_NOTIFY_SOC = 5;     // 残量低下を通知する閾値（％）
+const int BAT_NOTIFY_VOL = 3600;  // 残量低下を通知する閾値（mV）
+const int DISP_ROT = 0;  // ディスプレイの回転設定 左利き用
+
 #endif
 #if defined(GENERAL_V2)
 
 // const int DISP_ROT = 0; // 左利き用
-const int DISP_ROT = 90; // 右利き用
+const int DISP_ROT = 90;  // 右利き用
 
 const int FIX_GAIN_STEP[] = {41, 30, 0};  // 各 playCategory に対応 0--63
 const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};

@@ -11,7 +11,7 @@ extern bool mqttConnected;
 
 bool getIsWiFiConnected();
 void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
-                    void (*statusCb)(const char*)) ;
+                    void (*statusCb)(const char*));
 void loopMQTTclient();
 }  // namespace MQTT_manager
 
