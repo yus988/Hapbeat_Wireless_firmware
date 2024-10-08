@@ -1,5 +1,4 @@
 #include "MQTT_manager.h"
-
 #include "WiFi.h"
 
 namespace MQTT_manager {

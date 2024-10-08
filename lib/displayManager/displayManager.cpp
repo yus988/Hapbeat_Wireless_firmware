@@ -105,5 +105,4 @@ void updateOLED(Adafruit_SSD1306 *display, uint8_t playCategory,
   // USBSerial.printf("playCategory: %d, wearerNum: %d, gainStepNum: %d\n",
   //                  playCategory, wearerNum, gainStepNum);
 }
-
 }  // namespace displayManager

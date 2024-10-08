@@ -1,6 +1,5 @@
 #include <Arduino.h>
-
-#include <iostream>
+// #include <iostream>
 // ディスプレイ関連
 #include <Adafruit_SSD1306.h>
 #include <FastLED.h>
@@ -14,6 +13,10 @@
   #include <espnow_manager.h>
 #elif MQTT
   #include <MQTT_manager.h>
+#endif
+
+#ifdef NECKLACE_V_1_4
+  #include "MCP4018-SOLDERED.h"  // Include Soldered library for MCP4018 Digipot.
 #endif
 
 #include "adjustParams.h"
