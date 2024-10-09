@@ -17,8 +17,8 @@ const char *DECIBEL_TXT[] = {
 #endif
 
 #ifdef NECKLACE_V_1_3
-const int volumeThreshold = 100;
-const char *PLAY_CATEGORY_TXT[] = {"ゲーム2", "動画", "hoge"};
+const int volumeThreshold = 5;
+const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
 const int FIX_GAIN_STEP[] = {41, 28, 0};  // 各 playCategory に対応
 const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
 const CRGB COLOR_FIX_MODE = CRGB(10, 10, 10);
@@ -89,7 +89,6 @@ const MessageData DISP_MSG[] = {
     {2, "メッセージ 3"},
     {3, "メッセージ 4"},
 };
-
 #endif
 
 // 各配列のサイズを定義

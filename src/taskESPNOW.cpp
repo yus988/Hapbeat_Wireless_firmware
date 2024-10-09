@@ -13,22 +13,14 @@ void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
   _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
 
-// PAMの電圧を下げる
-void setAmpStepGain(int step, bool updateOLED = true) {
-  int volume = map(_currAIN, 0, 4095, 0, 255);
-  analogWrite(AOUT_VIBVOL_PIN, volume);
-  // ディスプレイにdB表示用のステップ数変換
-  if (updateOLED) {
-    displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
-                               audioManager::getWearerId(), step);
-  }
-}
-
 void TaskNeckESPNOW() {
   if (_isFixMode) {
     setFixGain();
   }
   while (1) {
+    // USBSerial.print("Digipot wiper: ");
+    // USBSerial.print(_digipot.getWiperValue(), DEC);
+    // USBSerial.println('%');
     // BQ27220_Cmd::printBatteryStats();
     // control pam8003 volume
     _currAIN = analogRead(AIN_VIBVOL_PIN);

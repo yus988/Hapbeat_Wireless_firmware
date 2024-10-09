@@ -53,7 +53,6 @@ void setup() {
   pinMode(AIN_VIBVOL_PIN, INPUT);
   // set device position as NECK = 0
   audioManager::setDevicePos(0);
-
 #endif
 
 #if defined(GENERAL_V2)
@@ -62,14 +61,11 @@ void setup() {
 
 #ifdef ESPNOW
   // ここはタスク依存
-  USBSerial.println("setup before setTitile");
   displayManager::setTitle(PLAY_CATEGORY_TXT, PLAY_CATEGORY_TXT_SIZE,
                            WEARER_ID_TXT, WEARER_ID_TXT_SIZE, DECIBEL_TXT,
                            DECIBEL_TXT_SIZE);
-  USBSerial.println("setup after setTitile");
   setFixGain(true);  // 実行しないと VibAmpVolume = 0 のままなので必須
-  USBSerial.println("setup after setFixGain");
-  // espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
+  espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 #elif MQTT
   setFixGain(false);  // 実行しないと VibAmpVolume = 0 のままなので必須
   audioManager::setLimitIds(LIMITED_IDS,
@@ -94,9 +90,6 @@ void setup() {
 #ifdef NECKLACE_V_1_4
   _digipot.begin();  // Initialize Digipot library.
   _digipot.setWiperPercent(50);
-  USBSerial.print("Digipot wiper: ");
-  USBSerial.print(_digipot.getWiperValue(), DEC);
-  USBSerial.println('%');
 #endif
 }
 void loop() {

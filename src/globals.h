@@ -69,5 +69,5 @@ extern bool _isBtnPressed[2];
 // 電流計算の関数宣言
 float calculateCurrent(int adc_value);
 void setFixGain(bool updateOLED = true);
-
+void setAmpStepGain(int step, bool updateOLED = true);
 #endif  // GLOBALS_H

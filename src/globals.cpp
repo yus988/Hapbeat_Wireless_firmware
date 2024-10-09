@@ -21,13 +21,16 @@ const int SCREEN_HEIGHT = 32;  // OLED _display height, in pixels
 Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, MOSI_PIN, SCLK_PIN,
                           OLED_DC_PIN, OLED_RESET_PIN, CS_PIN);
 
-
 // 所定の値に固定する。
 void setFixGain(bool updateOLED) {
-  // 15dBにあたるステップ数0--63をanalogWrite0--255に変換する
-  analogWrite(
-      AOUT_VIBVOL_PIN,
-      map(FIX_GAIN_STEP[audioManager::getPlayCategory()], 0, 63, 0, 255));
+  int fixVolume = FIX_GAIN_STEP[audioManager::getPlayCategory()];
+#ifdef NECKLACE_V_1_4
+  int volume = map(fixVolume, 0, 63, 0, 100);
+  _digipot.setWiperPercent(volume);
+#elif NECKLACE_V_1_3
+  int volume = map(fixVolume, 0, 63, 0, 255);
+  analogWrite(AOUT_VIBVOL_PIN, volume);
+#endif
   if (updateOLED) {
     displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
                                audioManager::getWearerId(),
@@ -35,6 +38,21 @@ void setFixGain(bool updateOLED) {
   }
 }
 
+// PAMの電圧を下げる
+void setAmpStepGain(int step, bool updateOLED) {
+#ifdef NECKLACE_V_1_4
+  int volume = map(step, 0, 63, 0, 100);
+  _digipot.setWiperPercent(volume);
+#elif NECKLACE_V_1_3
+  int volume = map(_currAIN, 0, 4095, 0, 255);
+  analogWrite(AOUT_VIBVOL_PIN, volume);
+#endif
+  // ディスプレイにdB表示用のステップ数変換
+  if (updateOLED) {
+    displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
+                               audioManager::getWearerId(), step);
+  }
+}
 
 #if defined(NECKLACE_V_1_3)
 // see pam8003 datasheet p.7
@@ -50,9 +68,8 @@ uint8_t _ampVolStep;
 #endif
 
 #if defined(NECKLACE_V_1_4)
-MCP4018_SOLDERED _digipot; // オブジェクトの定義
+MCP4018_SOLDERED _digipot;  // オブジェクトの定義
 #endif
-
 
 #if defined(GENERAL_V2)
 // see pam8003 datasheet p.7
