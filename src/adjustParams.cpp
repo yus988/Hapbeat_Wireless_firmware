@@ -16,10 +16,10 @@ const char *DECIBEL_TXT[] = {
     "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
 #endif
 
-#ifdef NECKLACE_V_1_3
+#ifdef NECKLACE_V2
 const int volumeThreshold = 5;
 const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
-const int FIX_GAIN_STEP[] = {41, 28, 0};  // 各 playCategory に対応
+const int FIX_GAIN_STEP[] = {41, 20, 0};  // 各 playCategory に対応
 const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
 const CRGB COLOR_FIX_MODE = CRGB(10, 10, 10);
 const CRGB COLOR_VOL_MODE = CRGB(0, 0, 10);

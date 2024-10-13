@@ -24,10 +24,10 @@ Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, MOSI_PIN, SCLK_PIN,
 // 所定の値に固定する。
 void setFixGain(bool updateOLED) {
   int fixVolume = FIX_GAIN_STEP[audioManager::getPlayCategory()];
-#ifdef NECKLACE_V_1_4
+#ifdef NECKLACE_V3
   int volume = map(fixVolume, 0, 63, 0, 100);
   _digipot.setWiperPercent(volume);
-#elif NECKLACE_V_1_3
+#elif NECKLACE_V2
   int volume = map(fixVolume, 0, 63, 0, 255);
   analogWrite(AOUT_VIBVOL_PIN, volume);
 #endif
@@ -40,10 +40,10 @@ void setFixGain(bool updateOLED) {
 
 // PAMの電圧を下げる
 void setAmpStepGain(int step, bool updateOLED) {
-#ifdef NECKLACE_V_1_4
+#ifdef NECKLACE_V3
   int volume = map(step, 0, 63, 0, 100);
   _digipot.setWiperPercent(volume);
-#elif NECKLACE_V_1_3
+#elif NECKLACE_V2
   int volume = map(_currAIN, 0, 4095, 0, 255);
   analogWrite(AOUT_VIBVOL_PIN, volume);
 #endif
@@ -54,7 +54,7 @@ void setAmpStepGain(int step, bool updateOLED) {
   }
 }
 
-#if defined(NECKLACE_V_1_3)
+#if defined(NECKLACE_V2)
 // see pam8003 datasheet p.7
 int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN, SW3_SEL_P_PIN, SW4_SEL_N_PIN,
                  SW5_ENTER_PIN};
@@ -67,7 +67,7 @@ bool _disableVolumeControl = false;
 uint8_t _ampVolStep;
 #endif
 
-#if defined(NECKLACE_V_1_4)
+#if defined(NECKLACE_V3)
 MCP4018_SOLDERED _digipot;  // オブジェクトの定義
 #endif
 

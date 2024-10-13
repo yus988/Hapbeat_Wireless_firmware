@@ -46,7 +46,7 @@ void setup() {
   _leds[0] = _currentColor;
   FastLED.show();
 
-#if defined(NECKLACE_V_1_3)
+#if defined(NECKLACE_V2)
   // battery current sensing pins
   pinMode(BAT_CURRENT_PIN, INPUT);
   pinMode(DETECT_ANALOG_IN_PIN, INPUT);
@@ -87,7 +87,7 @@ void setup() {
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 2048, NULL, 20, &thp[1], 1);
   xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
 
-#ifdef NECKLACE_V_1_4
+#ifdef NECKLACE_V3
   _digipot.begin();  // Initialize Digipot library.
   _digipot.setWiperPercent(50);
 #endif

@@ -19,9 +19,9 @@
   #include "taskMQTT.h"
 #endif
 
-#ifdef NECKLACE_V_1_4
+#ifdef NECKLACE_V3
   #include "MCP4018-SOLDERED.h"  // Include Soldered library for MCP4018 Digipot.
-  extern MCP4018_SOLDERED _digipot;     // Create object for Digipot library.
+extern MCP4018_SOLDERED _digipot;  // Create object for Digipot library.
 #endif
 
 #include "adjustParams.h"
@@ -37,7 +37,7 @@ extern const int BATTERY_CAPACITY;    // バッテリー容量 (mAh)
 // タスク関連の変数
 extern TaskHandle_t thp[3];  // タスクハンドル
 extern bool _isFixMode;
-extern unsigned long _lastDisplayUpdate;  // ディスプレイ更新時刻
+extern unsigned long _lastDisplayUpdate;    // ディスプレイ更新時刻
 extern unsigned long _lastBatStatusUpdate;  // バッテリー状態更新時刻
 
 // LED関連の変数
@@ -50,7 +50,7 @@ extern const int SCREEN_HEIGHT;  // OLED _display height
 extern Adafruit_SSD1306 _display;
 
 // バージョンごとのスイッチとボタンの状態
-#if defined(NECKLACE_V_1_3)
+#if defined(NECKLACE_V2)
 extern int _SW_PIN[5];
 extern bool _isBtnPressed[5];
 

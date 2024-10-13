@@ -4,14 +4,15 @@
 #include <Arduino.h>
 #include <vector>
 #include "driver/i2s.h"
-#define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
+// #define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
+#define STUB_NUM 6  // お化け屋敷の時は 6 必要（playCmd=3, oneshot_bgmのため）
 #define SOUND_FILE_NUM 60
 #define RAM_STORAGE 0
 #define FS_STORAGE 1
 // 再生するカテゴリなどの最大数を定義（RAMは限られるので大きくしすぎないように）
 #define CATEGORY_NUM 2
 #define POSITION_NUM 1
-#define DATA_NUM 20
+#define DATA_NUM 25
 #define SUB_DATA_NUM 6
 namespace audioManager {
 // int SAMPLING_RATE = 8000;

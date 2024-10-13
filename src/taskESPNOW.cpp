@@ -17,6 +17,7 @@ void TaskNeckESPNOW() {
   if (_isFixMode) {
     setFixGain();
   }
+  uint8_t prevAmpVolStep = 0;
   while (1) {
     // USBSerial.print("Digipot wiper: ");
     // USBSerial.print(_digipot.getWiperValue(), DEC);
@@ -27,10 +28,10 @@ void TaskNeckESPNOW() {
     _ampVolStep = map(_currAIN, 0, 4095, 0, 63);
     // uint8_t _ampVolStep = 0;
     if (!_isFixMode && !_disableVolumeControl &&
-        abs(_currAIN - _prevAIN) > volumeThreshold) {
+        _ampVolStep != prevAmpVolStep) {
       setAmpStepGain(_ampVolStep);
     }
-    _prevAIN = _currAIN;
+    prevAmpVolStep = _ampVolStep;
 
     // ボタン操作
     for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
@@ -117,7 +118,7 @@ void TaskBandESPNOW() {
 
 // main.cpp に出力する。用途に応じて適応するものを選択。
 void TaskUI(void *args) {
-#if defined(NECKLACE_V_1_3)
+#if defined(NECKLACE_V2)
   TaskNeckESPNOW();
 #elif defined(GENERAL_V2)
   TaskBandESPNOW();
