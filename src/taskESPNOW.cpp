@@ -9,7 +9,6 @@ void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
   }
   _display.setCursor(posX, posY);
   displayManager::printEfont(&_display, text, posX, posY);
-  _display.display();
   _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
 
@@ -27,9 +26,8 @@ void TaskNeckESPNOW() {
     _currAIN = analogRead(AIN_VIBVOL_PIN);
     _ampVolStep = map(_currAIN, 0, 4095, 0, 63);
     // uint8_t _ampVolStep = 0;
-    if (!_isFixMode && !_disableVolumeControl &&
-        _ampVolStep != prevAmpVolStep) {
-      setAmpStepGain(_ampVolStep);
+    if (!_isFixMode && _ampVolStep != prevAmpVolStep) {
+      setAmpStepGain(_ampVolStep, true);
     }
     prevAmpVolStep = _ampVolStep;
 
@@ -52,10 +50,7 @@ void TaskNeckESPNOW() {
           if (_isFixMode) {
             _isFixMode = false;
             _leds[0] = COLOR_VOL_MODE;
-            ;
-            if (!_disableVolumeControl) {
-              setAmpStepGain(_ampVolStep);
-            }
+            setAmpStepGain(_ampVolStep, true);
           } else {
             _isFixMode = true;
             _leds[0] = COLOR_FIX_MODE;
@@ -72,7 +67,7 @@ void TaskNeckESPNOW() {
           audioManager::setPlayCategory(playCategoryNum);
           audioManager::setWearerId(wearId);
         }
-        vTaskDelay(1 / portTICK_PERIOD_MS);
+        // vTaskDelay(1 / portTICK_PERIOD_MS);
       }
       if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
     };

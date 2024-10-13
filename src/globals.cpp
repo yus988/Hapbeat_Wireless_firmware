@@ -63,7 +63,6 @@ bool _isBtnPressed[] = {false, false, false, false, false};
 // volume related variables
 int _prevAIN = 0;
 int _currAIN = 0;
-bool _disableVolumeControl = false;
 uint8_t _ampVolStep;
 #endif
 

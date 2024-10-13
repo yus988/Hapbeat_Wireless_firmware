@@ -88,6 +88,7 @@ void printEfont(Adafruit_SSD1306 *display, const char *str, int posX,
       posY += 16 * textsize;
     }
   }
+  (*display).display();
 }
 
 void updateOLED(Adafruit_SSD1306 *display, uint8_t playCategory,
@@ -101,7 +102,6 @@ void updateOLED(Adafruit_SSD1306 *display, uint8_t playCategory,
   printEfont(display, wearerTxt[wearerNum], 128 - 70, 8);
   // ボリュームの更新
   printEfont(display, decibelTxt[gainStepNum], 128 - 35, 8);
-  (*display).display();
   // USBSerial.printf("playCategory: %d, wearerNum: %d, gainStepNum: %d\n",
   //                  playCategory, wearerNum, gainStepNum);
 }

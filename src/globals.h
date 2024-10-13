@@ -57,7 +57,6 @@ extern bool _isBtnPressed[5];
 // 音量関連の変数
 extern int _prevAIN;
 extern int _currAIN;
-extern bool _disableVolumeControl;
 extern uint8_t _ampVolStep;
 #endif
 

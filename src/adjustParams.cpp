@@ -19,7 +19,7 @@ const char *DECIBEL_TXT[] = {
 #ifdef NECKLACE_V2
 const int volumeThreshold = 5;
 const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
-const int FIX_GAIN_STEP[] = {41, 20, 0};  // 各 playCategory に対応
+const int FIX_GAIN_STEP[] = {41, 24, 0};  // 各 playCategory に対応
 const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
 const CRGB COLOR_FIX_MODE = CRGB(10, 10, 10);
 const CRGB COLOR_VOL_MODE = CRGB(0, 0, 10);

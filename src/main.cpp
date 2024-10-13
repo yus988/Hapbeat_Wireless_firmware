@@ -5,7 +5,9 @@
 void TaskAudio(void *args) {
   while (1) {
     audioManager::playAudioInLoop();
-    delay(50);
+    // delay(20);
+    delay(1);
+    // vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
 
@@ -29,6 +31,8 @@ void setup() {
   pinMode(EN_OLED_PIN, OUTPUT);
   digitalWrite(EN_OLED_PIN, HIGH);
   displayManager::initOLED(&_display, DISP_ROT);
+  const char *initMsg = "Initializing...";
+  displayManager::printEfont(&_display, initMsg, 0, 8);
   // vibAmp
   pinMode(EN_VIBAMP_PIN, OUTPUT);
   digitalWrite(EN_VIBAMP_PIN, HIGH);
@@ -59,6 +63,24 @@ void setup() {
   audioManager::setDevicePos(5);
 #endif
 
+  // I2C関連 init
+  // SDA_PIN と SCL_PIN を明示する。
+  Wire.begin(SDA_PIN, SCL_PIN);  // Initialize I2C master
+  // BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
+#ifdef NECKLACE_V3
+  // 以下の begin の中に Wire.begin() があるが、引数が無いので SDA_PIN と
+  // SDA_PIN を明示できない。事前に Wire.begin(SDA_PIN, SDA_PIN) が必要
+  _digipot.begin();  // Initialize Digipot library.
+  _digipot.setWiperPercent(0);
+#endif
+  USBSerial.println("I2C connected");
+  // delay(300);
+  // データ読み込み
+  audioManager::readAllSoundFiles();
+  audioManager::initAudioOut(BCLK_PIN, LRCK_PIN, DOUT_PIN);
+  // 読み込む前に playSndOnRecv 入るとエラーになるので、読み込むための時間を確保
+  delay(200);
+
 #ifdef ESPNOW
   // ここはタスク依存
   displayManager::setTitle(PLAY_CATEGORY_TXT, PLAY_CATEGORY_TXT_SIZE,
@@ -81,16 +103,9 @@ void setup() {
     delay(500);  // 少し待って再試行
   };
 #endif
-  audioManager::readAllSoundFiles();
-  audioManager::initAudioOut(BCLK_PIN, LRCK_PIN, DOUT_PIN);
-  BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
-  xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 2048, NULL, 20, &thp[1], 1);
-  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 2048, NULL, 23, &thp[0], 1);
 
-#ifdef NECKLACE_V3
-  _digipot.begin();  // Initialize Digipot library.
-  _digipot.setWiperPercent(50);
-#endif
+  xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 20, &thp[0], 1);
+  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 4096, NULL, 23, &thp[1], 1);
 }
 void loop() {
 #ifdef MQTT

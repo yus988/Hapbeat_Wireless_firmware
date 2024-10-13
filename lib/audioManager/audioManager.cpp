@@ -178,8 +178,8 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   uint8_t pos = 0;  // pos = 0 は仮置き
   uint8_t idx = _audioDataIndex[_settings.playCategory][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
-  USBSerial.printf("audio IDX = ");
-  USBSerial.println(idx);
+  // USBSerial.printf("audio IDX = ");
+  // USBSerial.println(idx);
 
   _volume[tStubNum] = tVol;
 
@@ -229,14 +229,14 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       "%d, Vol %d:%d, playtype %d\n",
       data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
   // USBSerial.print("Free heap: ");
-  USBSerial.println(ESP.getFreeHeap());
+  // USBSerial.println(ESP.getFreeHeap());
   // data = [_category, _wearerId, _devicePos, data_id, _subID, _L_Vol,
   // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持
   if ((data[0] == _settings.playCategory || data[0] == 99) &&
       (_settings.wearerId == 0 || data[1] == _settings.wearerId ||
        data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
-    USBSerial.println("prepare to playAudio");
+    // USBSerial.println("prepare to playAudio");
     // 0 = oneshot(0,1), 1=loopStart(2,3), 2=stopAudio, 3=2ndline(4,5)
     // 括弧内はstub番号
     uint8_t playCmd = data[7];
