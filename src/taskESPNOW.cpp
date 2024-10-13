@@ -12,9 +12,14 @@ void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
   _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
 
+#if defined(NECKLACE_V2)
 void TaskNeckESPNOW() {
   if (_isFixMode) {
     setFixGain();
+  } else {
+    _currAIN = analogRead(AIN_VIBVOL_PIN);
+    _ampVolStep = map(_currAIN, 0, 4095, 0, 63);
+    setAmpStepGain(_ampVolStep, true);
   }
   uint8_t prevAmpVolStep = 0;
   while (1) {
@@ -66,6 +71,7 @@ void TaskNeckESPNOW() {
           displayManager::updateOLED(&_display, playCategoryNum, wearId, tstep);
           audioManager::setPlayCategory(playCategoryNum);
           audioManager::setWearerId(wearId);
+          setAmpStepGain(tstep, true);
         }
         // vTaskDelay(1 / portTICK_PERIOD_MS);
       }
@@ -76,7 +82,9 @@ void TaskNeckESPNOW() {
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
+#endif
 
+#if defined(BAND_V2)
 void TaskBandESPNOW() {
   while (1) {
     // デバッグ用、電池残量表示
@@ -110,12 +118,12 @@ void TaskBandESPNOW() {
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
-
+#endif
 // main.cpp に出力する。用途に応じて適応するものを選択。
 void TaskUI(void *args) {
 #if defined(NECKLACE_V2)
   TaskNeckESPNOW();
-#elif defined(GENERAL_V2)
+#elif defined(BAND_V2)
   TaskBandESPNOW();
 #endif
 }

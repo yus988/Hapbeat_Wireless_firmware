@@ -19,7 +19,7 @@ const char *DECIBEL_TXT[] = {
 #ifdef NECKLACE_V2
 const int volumeThreshold = 5;
 const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
-const int FIX_GAIN_STEP[] = {41, 24, 0};  // 各 playCategory に対応
+const int FIX_GAIN_STEP[] = {41, 32, 0};  // 各 playCategory に対応
 const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
 const CRGB COLOR_FIX_MODE = CRGB(10, 10, 10);
 const CRGB COLOR_VOL_MODE = CRGB(0, 0, 10);
@@ -33,16 +33,15 @@ const char *DECIBEL_TXT[] = {
     "14.8", "15.2", "15.6", "16.0", "16.4", "16.8", "17.2", "17.6",
     "18.0", "18.4", "18.8", "19.2", "19.6", "20.0", "20.4", "20.8",
     "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
-
-const float current_thresholds[2] = {5.2, 5.5};  // 電流値の閾値 (A)
-const int shutdownCycles[2] = {100, 40};
-const int restoreCycles = 100;    // 復帰サイクル数
-const int BAT_NOTIFY_SOC = 5;     // 残量低下を通知する閾値（％）
-const int BAT_NOTIFY_VOL = 3600;  // 残量低下を通知する閾値（mV）
+// const float current_thresholds[2] = {5.2, 5.5};  // 電流値の閾値 (A)
+// const int shutdownCycles[2] = {100, 40};
+// const int restoreCycles = 100;    // 復帰サイクル数
+// const int BAT_NOTIFY_SOC = 5;     // 残量低下を通知する閾値（％）
+// const int BAT_NOTIFY_VOL = 3600;  // 残量低下を通知する閾値（mV）
 const int DISP_ROT = 0;  // ディスプレイの回転設定 左利き用
 #endif
 
-#ifdef GENERAL_V2
+#ifdef BAND_V2
 const int DISP_ROT = 90;                  // 右利き用
 const int FIX_GAIN_STEP[] = {41, 30, 0};  // 各 playCategory に対応 0--63
 const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
@@ -69,6 +68,7 @@ const int BAT_NOTIFY_VOL = 3600;  // 残量低下を通知する閾値（mV）
 const unsigned int DISPLAY_TIMEOUT = 3000;           // 3000ミリ秒
 const unsigned int BATTERY_STATUS_INTERVAL = 30000;  // 30000ミリ秒
 
+  #ifdef MQTT
 struct ID_definitions {
   uint8_t blue;
   uint8_t yellow;
@@ -89,6 +89,7 @@ const MessageData DISP_MSG[] = {
     {2, "メッセージ 3"},
     {3, "メッセージ 4"},
 };
+  #endif
 #endif
 
 // 各配列のサイズを定義

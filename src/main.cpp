@@ -6,7 +6,7 @@ void TaskAudio(void *args) {
   while (1) {
     audioManager::playAudioInLoop();
     // delay(20);
-    delay(1);
+    delay(5);
     // vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
@@ -59,7 +59,7 @@ void setup() {
   audioManager::setDevicePos(0);
 #endif
 
-#if defined(GENERAL_V2)
+#if defined(BAND_V2)
   audioManager::setDevicePos(5);
 #endif
 

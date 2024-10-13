@@ -3,7 +3,7 @@
 // 現状はstatus=表示する文字列となっているが、
 // 細かく設定したいなら、statusに応じて文とスタイルを別途定義すればよい。
 // コールバック関数の引数を変えると変更箇所が多くなるので非推奨。
-#if defined(GENERAL_V2) && defined(MQTT)
+#if defined(BAND_V2) && defined(MQTT)
 //////////////////////// コールバック関数の定義 ////////////////////////
 void messageReceived(char *topic, byte *payload, unsigned int length) {
   USBSerial.print("Message arrived in topic: ");

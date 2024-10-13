@@ -60,7 +60,7 @@ extern int _currAIN;
 extern uint8_t _ampVolStep;
 #endif
 
-#if defined(GENERAL_V2)
+#if defined(BAND_V2)
 extern int _SW_PIN[2];
 extern bool _isBtnPressed[2];
 #endif

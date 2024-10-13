@@ -45,7 +45,7 @@
   #define DETECT_ANALOG_IN_PIN 45
 #endif
 
-#if defined(GENERAL_V2)
+#if defined(BAND_V2)
   // Audio pins
   #define BCLK_PIN 39
   #define LRCK_PIN 38
