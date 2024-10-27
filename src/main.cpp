@@ -88,15 +88,16 @@ void setup() {
                            DECIBEL_TXT_SIZE);
   setFixGain(true);  // 実行しないと VibAmpVolume = 0 のままなので必須
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
+
 #elif MQTT
   setFixGain(false);  // 実行しないと VibAmpVolume = 0 のままなので必須
-  audioManager::setLimitIds(LIMITED_IDS,
-                            sizeof(LIMITED_IDS) / sizeof(LIMITED_IDS[0]));
+  audioManager::setLimitIds(LIMITED_IDS, LIMITED_IDS_SIZE);
   audioManager::setStatusCallback(showStatusText);
   // DISP_MSG 配列の内容を messages ベクターに追加
-  for (const auto &msg : DISP_MSG) {
-    audioManager::setMessageData(msg.message, msg.id);
-  };
+  for (int i = 0; i < DISP_MSG_SIZE; i++) {
+    const auto &msg = DISP_MSG[i];
+    Serial.println(msg.message);  // メッセージの出力例
+  }
   MQTT_manager::initMQTTclient(MQTTcallback, showStatusText);
   while (!MQTT_manager::getIsWiFiConnected()) {
     USBSerial.println("waiting for WiFi connection...");
@@ -105,7 +106,13 @@ void setup() {
 #endif
 
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 20, &thp[0], 1);
-  xTaskCreatePinnedToCore(TaskUI, "TaskUI", 4096, NULL, 23, &thp[1], 1);
+#ifdef ESPNOW
+  xTaskCreatePinnedToCore(TaskUI_ESPNOW, "TaskUI_ESPNOW", 4096, NULL, 23,
+                          &thp[1], 1);
+#elif MQTT
+  xTaskCreatePinnedToCore(TaskUI_MQTT, "TaskUI_MQTT", 4096, NULL, 23, &thp[1],
+                          1);
+#endif
 }
 void loop() {
 #ifdef MQTT

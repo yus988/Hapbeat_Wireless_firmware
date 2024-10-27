@@ -11,12 +11,14 @@
 #include <audioManager.h>
 #include <displayManager.h>
 
-#ifdef ESPNOW
+#if defined(ESPNOW) && !defined(MQTT)
   #include <espnow_manager.h>
-  #include "taskESPNOW.h"
-#elif MQTT
+  #include "./taskESPNOW/taskESPNOW.h"
+#elif defined(MQTT) && !defined(ESPNOW)
   #include <MQTT_manager.h>
-  #include "taskMQTT.h"
+  #include "./taskMQTT/taskMQTT.h"
+#else
+  #error "Either ESPNOW or MQTT must be defined, not both."
 #endif
 
 #ifdef NECKLACE_V3
@@ -33,6 +35,26 @@ extern const float INA_GAIN;          // INA180A2IDBVRのゲイン (V/V)
 extern const int ADC_MAX;             // ADCの分解能
 extern const float V_REF;             // アナログ基準電圧 (V)
 extern const int BATTERY_CAPACITY;    // バッテリー容量 (mAh)
+
+// adjustParams.cpp の変数追加
+extern const int DISP_ROT;
+extern const int FIX_GAIN_STEP[];
+extern const char *PLAY_CATEGORY_TXT[];
+extern const char *WEARER_ID_TXT[];
+extern const CRGB COLOR_FIX_MODE;
+extern const CRGB COLOR_VOL_MODE;
+extern const CRGB COLOR_DANGER_MODE;
+extern const char *DECIBEL_TXT[];
+extern const int BAT_NOTIFY_SOC;
+extern const int BAT_NOTIFY_VOL;
+
+
+#ifdef MQTT
+extern const ID_definitions ID_MSG;
+extern const MessageData DISP_MSG[];
+extern const int LIMITED_IDS[];
+extern const char *LIMIT_ENABLE_MSG[];
+#endif
 
 // タスク関連の変数
 extern TaskHandle_t thp[3];  // タスクハンドル
@@ -69,4 +91,6 @@ extern bool _isBtnPressed[2];
 float calculateCurrent(int adc_value);
 void setFixGain(bool updateOLED = true);
 void setAmpStepGain(int step, bool updateOLED = true);
+void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
+                        bool isClearDisplay);
 #endif  // GLOBALS_H

@@ -1,6 +1,6 @@
 #ifndef TASK_ESPNOW_H
 #define TASK_ESPNOW_H
 
-void TaskUI(void *args);
+void TaskUI_ESPNOW(void *args);
 
 #endif  // TASK_ESPNOW_H

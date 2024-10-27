@@ -1,16 +1,5 @@
-#include "globals.h"
+#include "../globals.h"
 
-// 描画場所など指定したい場合はこれを使う
-void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
-                        bool isClearDisplay) {
-  _display.ssd1306_command(SSD1306_DISPLAYON);
-  if (isClearDisplay) {
-    _display.clearDisplay();
-  }
-  _display.setCursor(posX, posY);
-  displayManager::printEfont(&_display, text, posX, posY);
-  _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
-}
 
 #if defined(NECKLACE_V2)
 void TaskNeckESPNOW() {
@@ -120,7 +109,7 @@ void TaskBandESPNOW() {
 }
 #endif
 // main.cpp に出力する。用途に応じて適応するものを選択。
-void TaskUI(void *args) {
+void TaskUI_ESPNOW(void *args) {
 #if defined(NECKLACE_V2)
   TaskNeckESPNOW();
 #elif defined(BAND_V2)

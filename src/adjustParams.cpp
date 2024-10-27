@@ -42,6 +42,7 @@ const int DISP_ROT = 0;  // ディスプレイの回転設定 左利き用
 #endif
 
 #ifdef BAND_V2
+
 const int DISP_ROT = 90;                  // 右利き用
 const int FIX_GAIN_STEP[] = {41, 30, 0};  // 各 playCategory に対応 0--63
 const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
@@ -49,9 +50,6 @@ const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
 const CRGB COLOR_FIX_MODE = CRGB(0, 0, 2);  // 無制限
 const CRGB COLOR_VOL_MODE = CRGB(2, 0, 0);  // 制限
 const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
-const int LIMITED_IDS[] = {0, 1};
-const char *LIMIT_ENABLE_MSG[] = {
-    "全て再生", "制限モード"};  // 0: isLimitEnable = false, 1: true
 
 const char *DECIBEL_TXT[] = {
     "-75",  "-40",  "-34",  "-28",  "-22",  "-16",  "-10",  "-7.5",
@@ -69,31 +67,30 @@ const unsigned int DISPLAY_TIMEOUT = 3000;           // 3000ミリ秒
 const unsigned int BATTERY_STATUS_INTERVAL = 30000;  // 30000ミリ秒
 
   #ifdef MQTT
-struct ID_definitions {
-  uint8_t blue;
-  uint8_t yellow;
-  uint8_t red;
-  uint8_t notify;  // 電池残量減少
-};
-
 const ID_definitions ID_MSG = {0, 1, 2, 3};  // 例
-
-struct MessageData {
-  uint8_t id;
-  const char *message;
-};
-
 const MessageData DISP_MSG[] = {
     {0, "メッセージ 1"},
     {1, "メッセージ 2"},
     {2, "メッセージ 3"},
     {3, "メッセージ 4"},
 };
+const int LIMITED_IDS[] = {0, 1};  // 制限非制限
+const char *LIMIT_ENABLE_MSG[] = {
+    "全て再生", "制限モード"};  // 0: isLimitEnable = false, 1: true
   #endif
+
 #endif
 
 // 各配列のサイズを定義
+// ESPNOWで使用
+#ifdef ESPNOW
 const int PLAY_CATEGORY_TXT_SIZE =
     sizeof(PLAY_CATEGORY_TXT) / sizeof(PLAY_CATEGORY_TXT[0]);
 const int WEARER_ID_TXT_SIZE = sizeof(WEARER_ID_TXT) / sizeof(WEARER_ID_TXT[0]);
 const int DECIBEL_TXT_SIZE = sizeof(DECIBEL_TXT) / sizeof(DECIBEL_TXT[0]);
+#elif MQTT
+// MQTTで使用
+const int LIMITED_IDS_SIZE =
+    sizeof(LIMITED_IDS) / sizeof(LIMITED_IDS[0]);  // サイズ定義
+const int DISP_MSG_SIZE = sizeof(DISP_MSG) / sizeof(DISP_MSG[0]);  // サイズ定義
+#endif

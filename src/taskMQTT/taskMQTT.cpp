@@ -1,4 +1,4 @@
-#include "globals.h"
+#include "../globals.h"
 
 // 現状はstatus=表示する文字列となっているが、
 // 細かく設定したいなら、statusに応じて文とスタイルを別途定義すればよい。
@@ -20,6 +20,8 @@ void MQTTcallback(char *topic, byte *payload, unsigned int length) {
   digitalWrite(EN_VIBAMP_PIN, HIGH);
   audioManager::PlaySndFromMQTTcallback(topic, payload, length);
 }
+
+////////////////// MQTT用関数 //////////////////////////////////
 
 void vibrationNotify() {
   digitalWrite(EN_VIBAMP_PIN, HIGH);
@@ -86,9 +88,10 @@ void enableSleepMode() {
   digitalWrite(EN_VIBAMP_PIN, LOW);
 }
 
-  #include "../lib/MQTT_manager/MQTT_manager.h"
+////////////////// Task 本体 //////////////////////////////////
+
 // color_sensor 用タスク
-void TaskBandMQTT(void *args) {
+void TaskBandMQTT() {
   while (1) {
     // 所定の時間後に消灯。ただし音声再生中は実行しない
     if (millis() - _lastDisplayUpdate > DISPLAY_TIMEOUT &&
@@ -148,3 +151,12 @@ void TaskBandMQTT(void *args) {
   }
 }
 #endif
+
+// main.cpp に出力する。用途に応じて適応するものを選択。
+void TaskUI_MQTT(void *args) {
+#if defined(NECKLACE_V2) && defined(MQTT)
+  TaskNeckMQTT();
+#elif defined(BAND_V2) && defined(MQTT)
+  TaskBandMQTT();
+#endif
+}

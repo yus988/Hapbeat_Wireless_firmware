@@ -1,5 +1,6 @@
 // 保持用変数と頻繁に調整しない変数をmain.cppとtask関数内で使用するグローバル変数として定義
 #include "globals.h"
+#include "adjustParams.h"  // LIMITED_IDS および DISP_MSG の型とサイズを取得
 
 const float SHUNT_RESISTANCE = 0.01;  // シャント抵抗 (オーム)
 const float INA_GAIN = 50.0;          // INA180A2IDBVRのゲイン (V/V)
@@ -21,13 +22,16 @@ const int SCREEN_HEIGHT = 32;  // OLED _display height, in pixels
 Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, MOSI_PIN, SCLK_PIN,
                           OLED_DC_PIN, OLED_RESET_PIN, CS_PIN);
 
+//////////////////////////// general functions
+////////////////////////////////////////
+
 // 所定の値に固定する。
 void setFixGain(bool updateOLED) {
   int fixVolume = FIX_GAIN_STEP[audioManager::getPlayCategory()];
 #if defined(NECKLACE_V3)
   int volume = map(fixVolume, 0, 63, 0, 100);
   _digipot.setWiperPercent(volume);
-#else defined(NECKLACE_V2) || defined(BAND_V2)
+#elif defined(NECKLACE_V2) || defined(BAND_V2)
   int volume = map(fixVolume, 0, 63, 0, 255);
   analogWrite(AOUT_VIBVOL_PIN, volume);
 #endif
@@ -52,6 +56,18 @@ void setAmpStepGain(int step, bool updateOLED) {
     displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
                                audioManager::getWearerId(), step);
   }
+}
+
+// 描画場所など指定したい場合はこれを使う
+void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
+                        bool isClearDisplay) {
+  _display.ssd1306_command(SSD1306_DISPLAYON);
+  if (isClearDisplay) {
+    _display.clearDisplay();
+  }
+  _display.setCursor(posX, posY);
+  displayManager::printEfont(&_display, text, posX, posY);
+  _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
 
 #if defined(NECKLACE_V2)
