@@ -96,8 +96,10 @@ void setup() {
   // DISP_MSG 配列の内容を messages ベクターに追加
   for (int i = 0; i < DISP_MSG_SIZE; i++) {
     const auto &msg = DISP_MSG[i];
-    Serial.println(msg.message);  // メッセージの出力例
+    audioManager::setMessageData(msg.message, msg.id);
+    USBSerial.println(msg.message);  // メッセージの出力例
   }
+
   MQTT_manager::initMQTTclient(MQTTcallback, showStatusText);
   while (!MQTT_manager::getIsWiFiConnected()) {
     USBSerial.println("waiting for WiFi connection...");

@@ -69,9 +69,9 @@ const unsigned int BATTERY_STATUS_INTERVAL = 30000;  // 30000ミリ秒
   #ifdef MQTT
 const ID_definitions ID_MSG = {0, 1, 2, 3};  // 例
 const MessageData DISP_MSG[] = {
-    {0, "メッセージ 1"},
-    {1, "メッセージ 2"},
-    {2, "メッセージ 3"},
+    {0, "青 / Blue \nランプ点灯"},
+    {1, "黄 / Yellow \nランプ点灯"},
+    {2, "赤 / Red \nランプ点灯"},
     {3, "メッセージ 4"},
 };
 const int LIMITED_IDS[] = {0, 1};  // 制限非制限
