@@ -5,7 +5,14 @@ namespace MQTT_manager {
 
 int attemptTimes = 5;
 bool mqttConnected = false;
-WiFiClientSecure espClient;
+
+#ifdef INTERNET
+WiFiClientSecure espClient;  // インターネット用の安全なクライアント
+const char* ca_cert = MQTT_CERTIFICATE;
+#elif LOCAL
+WiFiClient espClient;        // ローカル接続用の一般的なクライアント
+#endif
+
 MQTTClient client;
 int QoS_Val = 1;  // 0, 1, 2
 const char* clientIdPrefix = "Hapbeat_esp32_client-";
@@ -14,12 +21,9 @@ void (*statusCallback)(const char*);
 
 void messageReceived(String& topic, String& payload) {
   if (mqttCallback) {
-    mqttCallback((char*)topic.c_str(), (byte*)payload.c_str(),
-                 payload.length());
+    mqttCallback((char*)topic.c_str(), (byte*)payload.c_str(), payload.length());
   }
 }
-
-const char* ca_cert = MQTT_CERTIFICATE;
 
 String getUniqueClientId() {
   String clientId = clientIdPrefix;
@@ -28,11 +32,10 @@ String getUniqueClientId() {
 }
 
 void reconnect() {
-  int attemptCount = 0;  // 試行回数をカウントする変数
+  int attemptCount = 0;
   while (!client.connected()) {
     String clientId = getUniqueClientId();
-    String connectionAttemptMsg =
-        "Connecting to \nMQTT trial: " + String(attemptCount);
+    String connectionAttemptMsg = "Connecting to \nMQTT trial: " + String(attemptCount);
     if (statusCallback) {
       statusCallback(connectionAttemptMsg.c_str());
     }
@@ -52,12 +55,12 @@ void reconnect() {
       String retryMsg = "try again in 1 seconds";
     }
     delay(1000);
-    if (attemptCount >= attemptTimes) {  // 10回試行したが接続できなかった場合
+    if (attemptCount >= attemptTimes) {
       statusCallback("connection failed");
       delay(3000);
-      return;  // 接続失敗を報告して関数から抜ける
+      return;
     }
-    attemptCount++;  // 試行回数をインクリメント
+    attemptCount++;
   }
 }
 
@@ -67,29 +70,28 @@ void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
   statusCallback = statusCb;
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  int attemptCount = 0;  // 試行回数をカウントする変数
+  int attemptCount = 0;
 
   while (WiFi.status() != WL_CONNECTED) {
     String message = "Connecting to \nWiFi trial: " + String(attemptCount);
-    statusCallback(message.c_str());  //
-    // 現在の試行回数を含めてステータスを報告
-    // statusCallback("Connecting to WiFi");  //
-    // 現在の試行回数を含めてステータスを報告
+    statusCallback(message.c_str());
     delay(1000);
-    if (attemptCount >= 10) {  // 10回試行したが接続できなかった場合
+    if (attemptCount >= 10) {
       statusCallback("connection failed");
-      break;  // 接続失敗を報告して関数から抜ける
+      break;
     }
-    attemptCount++;  // 試行回数をインクリメント
+    attemptCount++;
   }
   statusCallback("WiFi connected!");
 
-  // モデムスリープモードを有効に設定
   WiFi.setSleep(true);
 
-  espClient.setCACert(ca_cert);
+#ifdef INTERNET
+  espClient.setCACert(ca_cert);  // インターネット接続の場合のみ証明書を設定
+#endif
+
   client.begin(MQTT_SERVER, MQTT_PORT, espClient);
-  client.setCleanSession(true);  // false で新しいセッションとして接続
+  client.setCleanSession(true);
   client.onMessage(messageReceived);
   reconnect();
 }
@@ -102,7 +104,6 @@ void loopMQTTclient() {
   }
 }
 
-// wifiの情報を返す
 bool getIsWiFiConnected() { return WiFi.status() == WL_CONNECTED; }
 
 }  // namespace MQTT_manager

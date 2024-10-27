@@ -81,6 +81,21 @@ uint8_t _dataID[STUB_NUM];
 uint8_t _subID[STUB_NUM];
 uint8_t _volume[STUB_NUM];
 
+// 再送無視処理（ループの時だけ）
+unsigned long _lastReceiveTime = 0;
+uint8_t _lastData[8];  // データの長さが8バイトの場合（適宜変更）
+const unsigned long _ignoreDuration = 300;  // 一定時間以内の重複データを無視
+bool _ignoreLoopData = false;  // ループ再生データを無視するためのフラグ
+
+bool isSameData(const uint8_t *data, int len) {
+  for (int i = 0; i < len; i++) {
+    if (data[i] != _lastData[i]) {
+      return false;  // 一つでも異なるバイトがあれば別データ
+    }
+  }
+  return true;  // 全て同じであれば重複
+}
+
 // モード選択の対象にするIDを格納
 int _limitIDs[10];        // 最大10個のIDを格納する配列
 size_t _numLimitIDs = 0;  // 現在格納されているIDの数
@@ -112,7 +127,6 @@ void readAllSoundFiles() {
   uint8_t subID;
   File root = LittleFS.open("/");
   File _file = root.openNextFile();
-
   uint8_t fileIdx = 0;
 
   while (_file) {
@@ -136,7 +150,7 @@ void readAllSoundFiles() {
                      fileName.c_str(), cat, pos, dataID,
                      fileName[underscorePos3 + 1], isRight,
                      storageType.c_str());
-
+    USBSerial.println(fileIdx);
     _audioDataSize[fileIdx] = _file.size();
 
     // データの格納場所を決定
@@ -179,6 +193,9 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   uint8_t pos = 0;  // pos = 0 は仮置き
   uint8_t idx = _audioDataIndex[_settings.playCategory][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
+  // USBSerial.printf("audio IDX = ");
+  // USBSerial.println(idx);
+
   _volume[tStubNum] = tVol;
 
   _stub[tStubNum]->SetGain((float)tVol / maxVol);
@@ -220,8 +237,24 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   // USBSerial.printf("Succeed to play with stub: %d\n", tStubNum);
 }
 
+
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len) {
+  unsigned long currentTime = millis();
+  // ループ再生（data[7] == 1）のデータで、無視期間中の場合
+  if (_ignoreLoopData && currentTime - _lastReceiveTime < _ignoreDuration) {
+    USBSerial.println("Ignoring loop data during _ignoreDuration");
+    return;
+  }
+  // ループ再生のデータ（data[7] == 1）の場合、無視フラグを立てて無視期間を設定
+  if (data[7] == 1) {
+    _ignoreLoopData = true;
+    _lastReceiveTime = currentTime;
+  } else {
+    _ignoreLoopData = false;  // 他のデータの場合は無視フラグをリセット
+  }
+
+  // 通常の処理
   USBSerial.printf(
       "received: _category %d, _wearerId %d, _devPos %d, _dataID %d, _subID "
       "%d, Vol %d:%d, playtype %d\n",
@@ -231,18 +264,18 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   // data = [_category, _wearerId, _devicePos, data_id, _subID, _L_Vol,
   // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持
   if ((data[0] == _settings.playCategory || data[0] == 99) &&
-      (data[1] == _settings.wearerId || data[1] == 99) &&
+      (_settings.wearerId == 0 || data[1] == _settings.wearerId ||
+       data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
-    USBSerial.println("prepare to playAudio");
+    // USBSerial.println("prepare to playAudio");
     // 0 = oneshot(0,1), 1=loopStart(2,3), 2=stopAudio, 3=2ndline(4,5)
     // 括弧内はstub番号
     uint8_t playCmd = data[7];
-
     if (playCmd == 2) {
       for (int iStub = 2; iStub <= 3; ++iStub) {
         while (_wav_gen[iStub]->isRunning()) {
           stopAudio(iStub);
-          delay(10);
+          // delay(10);
         }
       }
       return;
@@ -347,8 +380,9 @@ void playAudioInLoop() {
           (iStub == 3 && _wav_gen[3]->isRunning())) {  // loop _stub case
         if (_wav_gen[iStub]->isRunning()) {
           if (!_wav_gen[iStub]->loop()) {
-            // stopAudio(iStub);
+            // stopAudio(iStub); //コメントアウトの意味は不明
             playAudio(iStub, _volume[iStub]);
+            delay(5);
           }
         }
       } else {

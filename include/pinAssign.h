@@ -2,11 +2,11 @@
 #ifndef PIN_ASSIGNMENT_H
 #define PIN_ASSIGNMENT_H
 
-#if defined(NECKLACE_V_1_3)
+#if defined(NECKLACE_V2)
   // Audio pins
-  #define I2S_BCLK_PIN 39
-  #define I2S_DOUT_PIN 40
-  #define I2S_LRCK_PIN 38
+  #define BCLK_PIN 39
+  #define LRCK_PIN 38
+  #define DOUT_PIN 40
   #define I2S_MLCK_PIN 41
   #define EN_I2S_DAC_PIN 11
   // ピン番号はv1_3で変更予定
@@ -45,11 +45,11 @@
   #define DETECT_ANALOG_IN_PIN 45
 #endif
 
-#if defined(GENERAL_V2)
+#if defined(BAND_V2)
   // Audio pins
-  #define I2S_BCLK_PIN 39
-  #define I2S_DOUT_PIN 40
-  #define I2S_LRCK_PIN 38
+  #define BCLK_PIN 39
+  #define LRCK_PIN 38
+  #define DOUT_PIN 40
   #define I2S_MLCK_PIN 48
   #define EN_I2S_DAC_PIN 33
   #define EN_MOTOR_PIN 47
@@ -78,9 +78,9 @@
 
 #if defined(NECKLACE)
   // Audio pins
-  #define I2S_BCLK_PIN 39
-  #define I2S_DOUT_PIN 40
-  #define I2S_LRCK_PIN 38
+  #define BCLK_PIN 39
+  #define LRCK_PIN 38
+  #define DOUT_PIN 40
   #define I2S_MLCK_PIN 41
   #define EN_I2S_DAC_PIN 7
   // ピン番号はv1_3で変更予定
