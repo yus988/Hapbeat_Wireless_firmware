@@ -6,7 +6,7 @@ void TaskNeckESPNOW() {
     setFixGain();
   } else {
     _currAIN = analogRead(AIN_VIBVOL_PIN);
-    _ampVolStep = map(_currAIN, 0, 4095, 0, 63);
+    _ampVolStep = map(_currAIN, 0, 4095, 0, DECIBEL_TXT_SIZE - 1);
     setAmpStepGain(_ampVolStep, true);
   }
   uint8_t prevAmpVolStep = 0;
@@ -17,7 +17,7 @@ void TaskNeckESPNOW() {
     // BQ27220_Cmd::printBatteryStats();
     // control pam8003 volume
     _currAIN = analogRead(AIN_VIBVOL_PIN);
-    _ampVolStep = map(_currAIN, 0, 4095, 0, 63);
+    _ampVolStep = map(_currAIN, 0, 4095, 0, DECIBEL_TXT_SIZE - 1);
     // uint8_t _ampVolStep = 0;
     if (!_isFixMode && _ampVolStep != prevAmpVolStep) {
       setAmpStepGain(_ampVolStep, true);
