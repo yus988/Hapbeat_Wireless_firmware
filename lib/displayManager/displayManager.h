@@ -3,7 +3,9 @@
 #ifndef DISPLAY_MANAGER_H
   #define DISPLAY_MANAGER_H
 namespace displayManager {
-void initOLED(Adafruit_SSD1306 *display, int rot);
+void initOLED(Adafruit_SSD1306 *display, int rot, const int textsize,
+              const int playPos[2], const int channelPos[2],
+              const int gainPos[2]);
 void setTitle(const char **menu, int m_size, const char **wearer, int w_size,
               const char **decibel, int d_size);
 void updateOLED(Adafruit_SSD1306 *display, uint8_t playCategory,

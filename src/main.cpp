@@ -30,7 +30,8 @@ void setup() {
   // init _display
   pinMode(EN_OLED_PIN, OUTPUT);
   digitalWrite(EN_OLED_PIN, HIGH);
-  displayManager::initOLED(&_display, DISP_ROT);
+  displayManager::initOLED(&_display, DISP_ROT, FONT_SIZE, PLAY_CATEGORY_POS,
+                           CHANNEL_ID_POS, GAIN_STEP_POS);
   const char *initMsg = "Initializing...";
   displayManager::printEfont(&_display, initMsg, 0, 8);
   // vibAmp
@@ -41,18 +42,13 @@ void setup() {
   pinMode(EN_MOTOR_PIN, OUTPUT);
   digitalWrite(EN_MOTOR_PIN, HIGH);
   pinMode(BQ27x_PIN, INPUT);
+  audioManager::setDevicePos(DEVICE_POS);
 
 #if defined(NECKLACE_V2)
   // battery current sensing pins
   pinMode(BAT_CURRENT_PIN, INPUT);
   pinMode(DETECT_ANALOG_IN_PIN, INPUT);
   pinMode(AIN_VIBVOL_PIN, INPUT);
-  // set device position as NECK = 0
-  audioManager::setDevicePos(0);
-#endif
-
-#if defined(BAND_V2)
-  audioManager::setDevicePos(5);
 #endif
 
   // I2C関連 init
