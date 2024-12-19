@@ -106,14 +106,14 @@ void printEfont(Adafruit_SSD1306 *display, const char *str, int posX,
 }
 
 // OLEDの更新
-void updateOLED(Adafruit_SSD1306 *display, uint8_t playCategory,
+void updateOLED(Adafruit_SSD1306 *display, uint8_t categoryNum,
                 uint8_t channelNum, uint8_t gainStepNum) {
-  USBSerial.printf("playCategory: %d, channelNum: %d, gainStepNum: %d\n",
-                   playCategory, channelNum, gainStepNum);
+  USBSerial.printf("categoryNum: %d, channelNum: %d, gainStepNum: %d\n",
+                   categoryNum, channelNum, gainStepNum);
   (*display).clearDisplay();
 
   // カテゴリの更新
-  printEfont(display, _menuTxt[playCategory], _playCategoryPos[0],
+  printEfont(display, _menuTxt[categoryNum], _playCategoryPos[0],
              _playCategoryPos[1]);
 
   // チャンネルの変更

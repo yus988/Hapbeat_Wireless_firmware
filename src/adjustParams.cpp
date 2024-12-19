@@ -17,14 +17,14 @@
 */
 
 #ifdef NECKLACE_V2
-// カテゴリ名の設定
-const char *CATEGORY_ID_TXT[] = {"category 0", "category 1", "category 2"};
+// カテゴリ名の設定（日本語OK）
+const char *CATEGORY_ID_TXT[] = {"cat_0", "cat_1", "cat_2"};
 // 各 channel における固定モード時のボリューム値。
 // 0--31まで32段階、数値は大きいほど振動が大きくなる
 const int FIX_GAIN_STEP[] = {21, 16, 5};
 
 // 装着者番号やチャンネル名の設定
-const char *CHANNEL_ID_TXT[] = {"ch 0", "ch 1", "ch 2", "ch 3"};
+const char *CHANNEL_ID_TXT[] = {"ch_0", "ch_1", "ch_2", "ch_3"};
 
 // 振動強度の強さ 0--31の段階表示（描画領域を節約したい場合）
 // デシベル表記は参照
@@ -35,8 +35,8 @@ const char *GAIN_STEP_TXT[] = {"0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",
 
 // 各項目の表示位置の調整（x, y）ディスプレイの大きさは 128×32（ピクセル単位）
 const int CATEGORY_TEXT_POS[2] = {0, 8};
-const int CHANNEL_TEXT_POS[2] = {58, 8};
-const int GAIN_STEP_TEXT_POS[2] = {93, 8};
+const int CHANNEL_TEXT_POS[2] = {54, 8};
+const int GAIN_STEP_TEXT_POS[2] = {100, 8};
 const int DISP_ROT = 0;   // ディスプレイの向き（deg）上下反転にするなら90
 const int FONT_SIZE = 1;  // テキストサイズが1のときy=8で縦方向の中心
 
@@ -49,7 +49,7 @@ const int DEVICE_POS = 0;
 
 #ifdef BAND_V2
 const int DISP_ROT = 90;                  // 右利き用
-const int FIX_GAIN_STEP[] = {21, 15, 0};  // 各 playCategory に対応 0--63
+const int FIX_GAIN_STEP[] = {21, 15, 0};  // 各 categoryNum に対応 0--63
 const char *CATEGORY_ID_TXT[] = {"Ch 1", "Ch 2", "Ch 3"};
 const char *CHANNEL_ID_TXT[] = {"#1", "#2", "#3", "#4"};
 const CRGB COLOR_FIX_MODE = CRGB(0, 0, 2);  // 無制限

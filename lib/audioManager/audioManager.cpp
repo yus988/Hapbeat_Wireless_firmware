@@ -51,7 +51,7 @@ uint8_t _devicePos;  // 装着場所の指定
 uint8_t _gainNum;    //
 // EEPROM内に保存するデバイスコンフィグを格納
 struct ConfigData {
-  uint8_t playCategory;
+  uint8_t categoryNum;
   uint8_t channelId;  // 装着者のID。99でブロードキャスト
   bool isFixMode;
   bool isLimitEnable;
@@ -104,9 +104,9 @@ void initParamsEEPROM() {
   size_t eepromSize = sizeof(ConfigData);
   EEPROM.begin(eepromSize);
   EEPROM.get(0, _settings);
-  if (_settings.channelId == 0xFF || _settings.playCategory == 0xFF ||
+  if (_settings.channelId == 0xFF || _settings.categoryNum == 0xFF ||
       _settings.isFixMode == 0xFF) {
-    _settings.playCategory = 0;
+    _settings.categoryNum = 0;
     _settings.channelId = 0;
     _settings.isFixMode = true;
     _settings.isLimitEnable = false;
@@ -191,7 +191,7 @@ void stopAudio(uint8_t stub) {
 void playAudio(uint8_t tStubNum, uint8_t tVol) {
   int isLR = (tStubNum % 2 == 0) ? 0 : 1;
   uint8_t pos = 0;  // pos = 0 は仮置き
-  uint8_t idx = _audioDataIndex[_settings.playCategory][pos][_dataID[tStubNum]]
+  uint8_t idx = _audioDataIndex[_settings.categoryNum][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
   // USBSerial.printf("audio IDX = ");
   // USBSerial.println(idx);
@@ -262,7 +262,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   // USBSerial.println(ESP.getFreeHeap());
   // data = [_category, _channel_Id, _devicePos, data_id, _subID, _L_Vol,
   // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持
-  if ((data[0] == _settings.playCategory || data[0] == 99) &&
+  if ((data[0] == _settings.categoryNum || data[0] == 99) &&
       (_settings.channelId == 0 || data[1] == _settings.channelId ||
        data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
@@ -415,7 +415,7 @@ void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
 
 // get
 uint8_t getGain() { return _gainNum; }
-uint8_t getPlayCategory() { return _settings.playCategory; }
+uint8_t getPlayCategory() { return _settings.categoryNum; }
 uint8_t getWearerId() { return _settings.channelId; }
 uint8_t getDevicePos() { return _devicePos; }
 bool getIsFixMode() { return _settings.isFixMode; }
@@ -437,8 +437,8 @@ void setDataID(uint8_t stubNum, uint8_t dataID, uint8_t subID) {
 }
 
 void setPlayCategory(uint8_t value) {
-  _settings.playCategory = value;
-  EEPROM.put(offsetof(ConfigData, playCategory), _settings.playCategory);
+  _settings.categoryNum = value;
+  EEPROM.put(offsetof(ConfigData, categoryNum), _settings.categoryNum);
   EEPROM.commit();
 }
 void setWearerId(uint8_t value) {
