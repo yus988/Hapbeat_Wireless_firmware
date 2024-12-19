@@ -27,16 +27,16 @@ void setPositions(const int playPos[2], const int channelPos[2],
 }
 
 // 日本語テキストのセットアップ
-void setTitle(const char **menu, int m_size, const char **wearer, int w_size,
-              const char **decibel, int d_size) {
+void setTitle(const char **category, int m_size, const char **channel,
+              int w_size, const char **gainstep, int d_size) {
   for (int i = 0; i < m_size; i++) {
-    _menuTxt[i] = menu[i];
+    _menuTxt[i] = category[i];
   }
   for (int i = 0; i < w_size; i++) {
-    _wearerTxt[i] = wearer[i];
+    _wearerTxt[i] = channel[i];
   }
   for (int i = 0; i < d_size; i++) {
-    _decibelTxt[i] = decibel[i];
+    _decibelTxt[i] = gainstep[i];
   }
 }
 
@@ -107,9 +107,9 @@ void printEfont(Adafruit_SSD1306 *display, const char *str, int posX,
 
 // OLEDの更新
 void updateOLED(Adafruit_SSD1306 *display, uint8_t playCategory,
-                uint8_t wearerNum, uint8_t gainStepNum) {
-  USBSerial.printf("playCategory: %d, wearerNum: %d, gainStepNum: %d\n",
-                   playCategory, wearerNum, gainStepNum);
+                uint8_t channelNum, uint8_t gainStepNum) {
+  USBSerial.printf("playCategory: %d, channelNum: %d, gainStepNum: %d\n",
+                   playCategory, channelNum, gainStepNum);
   (*display).clearDisplay();
 
   // カテゴリの更新
@@ -117,7 +117,7 @@ void updateOLED(Adafruit_SSD1306 *display, uint8_t playCategory,
              _playCategoryPos[1]);
 
   // チャンネルの変更
-  printEfont(display, _wearerTxt[wearerNum], _channelIdPos[0],
+  printEfont(display, _wearerTxt[channelNum], _channelIdPos[0],
              _channelIdPos[1]);
 
   // ボリュームの更新

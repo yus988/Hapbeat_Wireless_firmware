@@ -39,15 +39,14 @@ extern const int BATTERY_CAPACITY;    // バッテリー容量 (mAh)
 // adjustParams.cpp の変数追加
 extern const int DISP_ROT;
 extern const int FIX_GAIN_STEP[];
-extern const char *PLAY_CATEGORY_TXT[];
-extern const char *WEARER_ID_TXT[];
+extern const char *CATEGORY_ID_TXT[];
+extern const char *CHANNEL_ID_TXT[];
 extern const CRGB COLOR_FIX_MODE;
 extern const CRGB COLOR_VOL_MODE;
 extern const CRGB COLOR_DANGER_MODE;
-extern const char *DECIBEL_TXT[];
+extern const char *GAIN_STEP_TXT[];
 extern const int BAT_NOTIFY_SOC;
 extern const int BAT_NOTIFY_VOL;
-
 
 #ifdef MQTT
 extern const ID_definitions ID_MSG;

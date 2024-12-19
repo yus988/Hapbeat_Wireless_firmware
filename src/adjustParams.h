@@ -5,9 +5,9 @@
 
 // 頻繁に調整したい変数はこちらで調整
 extern const int FIX_GAIN_STEP[];
-extern const char *PLAY_CATEGORY_TXT[];
-extern const char *WEARER_ID_TXT[];
-extern const char *DECIBEL_TXT[];
+extern const char *CATEGORY_ID_TXT[];
+extern const char *CHANNEL_ID_TXT[];
+extern const char *GAIN_STEP_TXT[];
 extern const CRGB COLOR_FIX_MODE;
 extern const CRGB COLOR_VOL_MODE;
 extern const CRGB COLOR_DANGER_MODE;
@@ -20,17 +20,17 @@ extern const int DISP_ROT;
 extern const unsigned int DISPLAY_TIMEOUT;
 extern const unsigned int BATTERY_STATUS_INTERVAL;
 
-extern const int PLAY_CATEGORY_POS[2];
-extern const int CHANNEL_ID_POS[2];
-extern const int GAIN_STEP_POS[2];
+extern const int CATEGORY_TEXT_POS[2];
+extern const int CHANNEL_TEXT_POS[2];
+extern const int GAIN_STEP_TEXT_POS[2];
 extern const int FONT_SIZE;
 extern const int DEVICE_POS;
 
 // 各配列のサイズを定義
 // ESPNOWで使用
-extern const int PLAY_CATEGORY_TXT_SIZE;
-extern const int WEARER_ID_TXT_SIZE;
-extern const int DECIBEL_TXT_SIZE;
+extern const int CATEGORY_ID_TXT_SIZE;
+extern const int CHANNEL_ID_TXT_SIZE;
+extern const int GAIN_STEP_TXT_SIZE;
 // MQTTのみで使用
 extern const int LIMITED_IDS[];
 extern const char *LIMIT_ENABLE_MSG[];

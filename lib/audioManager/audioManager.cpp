@@ -33,7 +33,7 @@ void (*statusCallback)(const char *);
 
 struct DataPacket {
   uint8_t category;
-  uint8_t wearerId;
+  uint8_t channelId;
   uint8_t devicePos;
   uint8_t dataID;
   uint8_t subID;
@@ -52,7 +52,7 @@ uint8_t _gainNum;    //
 // EEPROM内に保存するデバイスコンフィグを格納
 struct ConfigData {
   uint8_t playCategory;
-  uint8_t wearerId;  // 装着者のID。99でブロードキャスト
+  uint8_t channelId;  // 装着者のID。99でブロードキャスト
   bool isFixMode;
   bool isLimitEnable;
 };
@@ -65,7 +65,7 @@ uint8_t sel_B_pin;
 AudioGeneratorWAV *_wav_gen[STUB_NUM];
 AudioFileSourceLittleFS *_audioFileSrc[SOUND_FILE_NUM];
 String _audioFileNames[SOUND_FILE_NUM];
-int16_t *_audioRAM[SOUND_FILE_NUM];  // RAMに格納するデータのポインタ
+int16_t *_audioRAM[SOUND_FILE_NUM];         // RAMに格納するデータのポインタ
 uint8_t _audioStorageType[SOUND_FILE_NUM];  // データの格納場所を示すフラグ
 AudioOutputI2S *_i2s_out;
 AudioOutputMixer *_mixer;
@@ -104,10 +104,10 @@ void initParamsEEPROM() {
   size_t eepromSize = sizeof(ConfigData);
   EEPROM.begin(eepromSize);
   EEPROM.get(0, _settings);
-  if (_settings.wearerId == 0xFF || _settings.playCategory == 0xFF ||
+  if (_settings.channelId == 0xFF || _settings.playCategory == 0xFF ||
       _settings.isFixMode == 0xFF) {
     _settings.playCategory = 0;
-    _settings.wearerId = 0;
+    _settings.channelId = 0;
     _settings.isFixMode = true;
     _settings.isLimitEnable = false;
   }
@@ -237,7 +237,6 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   // USBSerial.printf("Succeed to play with stub: %d\n", tStubNum);
 }
 
-
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len) {
   unsigned long currentTime = millis();
@@ -256,15 +255,15 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
 
   // 通常の処理
   USBSerial.printf(
-      "received: _category %d, _wearerId %d, _devPos %d, _dataID %d, _subID "
+      "received: _category %d, _channel_Id %d, _devPos %d, _dataID %d, _subID "
       "%d, Vol %d:%d, playtype %d\n",
       data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
   // USBSerial.print("Free heap: ");
   // USBSerial.println(ESP.getFreeHeap());
-  // data = [_category, _wearerId, _devicePos, data_id, _subID, _L_Vol,
+  // data = [_category, _channel_Id, _devicePos, data_id, _subID, _L_Vol,
   // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持
   if ((data[0] == _settings.playCategory || data[0] == 99) &&
-      (_settings.wearerId == 0 || data[1] == _settings.wearerId ||
+      (_settings.channelId == 0 || data[1] == _settings.channelId ||
        data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
     // USBSerial.println("prepare to playAudio");
@@ -340,7 +339,7 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   // データをESP-NOW形式に変換
   DataPacket dataPacket;
   dataPacket.category = values[0];
-  dataPacket.wearerId = values[1];
+  dataPacket.channelId = values[1];
   dataPacket.devicePos = values[2];
   dataPacket.dataID = values[3];
   dataPacket.subID = values[4];
@@ -417,7 +416,7 @@ void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
 // get
 uint8_t getGain() { return _gainNum; }
 uint8_t getPlayCategory() { return _settings.playCategory; }
-uint8_t getWearerId() { return _settings.wearerId; }
+uint8_t getWearerId() { return _settings.channelId; }
 uint8_t getDevicePos() { return _devicePos; }
 bool getIsFixMode() { return _settings.isFixMode; }
 bool getIsLimitEnable() { return _settings.isLimitEnable; }
@@ -443,8 +442,8 @@ void setPlayCategory(uint8_t value) {
   EEPROM.commit();
 }
 void setWearerId(uint8_t value) {
-  _settings.wearerId = value;
-  EEPROM.put(offsetof(ConfigData, wearerId), _settings.wearerId);
+  _settings.channelId = value;
+  EEPROM.put(offsetof(ConfigData, channelId), _settings.channelId);
   EEPROM.commit();
 };
 void setGain(uint8_t val, uint8_t G_SEL_A = 99, uint8_t G_SEL_B = 99) {
