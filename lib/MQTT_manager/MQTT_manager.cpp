@@ -3,6 +3,7 @@
 
 namespace MQTT_manager {
 
+
 int attemptTimes = 5;
 bool mqttConnected = false;
 
@@ -68,6 +69,12 @@ void initMQTTclient(void (*callback)(char*, byte*, unsigned int),
                     void (*statusCb)(const char*)) {
   mqttCallback = callback;
   statusCallback = statusCb;
+
+  #ifdef LOCAL
+  if (!WiFi.config(LOCAL_IP, GATEWAY, SUBNET)) {
+      Serial.printf("Failed to configure static IP");
+  }
+  #endif
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   int attemptCount = 0;
