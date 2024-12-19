@@ -41,14 +41,6 @@ void setup() {
   pinMode(EN_MOTOR_PIN, OUTPUT);
   digitalWrite(EN_MOTOR_PIN, HIGH);
   pinMode(BQ27x_PIN, INPUT);
-  _isFixMode = audioManager::getIsFixMode();
-  if (_isFixMode) {
-    _currentColor = COLOR_FIX_MODE;
-  } else {
-    _currentColor = COLOR_VOL_MODE;
-  }
-  _leds[0] = _currentColor;
-  FastLED.show();
 
 #if defined(NECKLACE_V2)
   // battery current sensing pins
@@ -80,6 +72,15 @@ void setup() {
   audioManager::initAudioOut(BCLK_PIN, LRCK_PIN, DOUT_PIN);
   // 読み込む前に playSndOnRecv 入るとエラーになるので、読み込むための時間を確保
   delay(200);
+
+  _isFixMode = audioManager::getIsFixMode();
+  if (_isFixMode) {
+    _currentColor = COLOR_FIX_MODE;
+  } else {
+    _currentColor = COLOR_VOL_MODE;
+  }
+  _leds[0] = _currentColor;
+  FastLED.show();
 
 #ifdef ESPNOW
   // ここはタスク依存

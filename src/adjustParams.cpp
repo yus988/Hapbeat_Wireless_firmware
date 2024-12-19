@@ -2,35 +2,28 @@
 #include "adjustParams.h"
 
 #ifdef NECKLACE_V2
-const int volumeThreshold = 5;
-const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
-const int FIX_GAIN_STEP[] = {21, 16, 0};  // 各 playCategory に対応
-const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
-const CRGB COLOR_FIX_MODE = CRGB(10, 10, 10);
-const CRGB COLOR_VOL_MODE = CRGB(0, 0, 10);
-const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
-const char *DECIBEL_TXT[] = {
-    "-75",  "-34",  "-22",  "-10",  "-5",   "0",    "3.0",  "4.4",
-    "5.2",  "6.0",  "6.8",  "7.6",  "8.4",  "9.2",  "10.0", "10.8",
-    "11.6", "12.4", "13.2", "14.0", "14.8", "15.6", "16.4", "17.2",
-    "18.0", "18.8", "19.6", "20.4", "21.2", "22.0", "22.8", "24.0"};
-const int DISP_ROT = 0;  // ディスプレイの回転設定 左利き用
+const char *PLAY_CATEGORY_TXT[] = {"Ch 1", "Ch 2", "Ch 3"};
+/* 各 channel における固定モード時のボリューム値。
+ * 0--31まで32段階、数値は大きいほど振動が大きくなる
+ */
+const int FIX_GAIN_STEP[] = {21, 16, 5};
+const char *WEARER_ID_TXT[] = {"#1", "#2", "#3", "#4"};
+const CRGB COLOR_FIX_MODE =
+    CRGB(10, 10, 10);  // 固定モードの LED カラー（r, g, b)
+const CRGB COLOR_VOL_MODE =
+    CRGB(0, 0, 10);      // 変動モードの LED カラー（r, g, b)
+const int DISP_ROT = 0;  // ディスプレイの向き（deg）上下反転にするなら90
 #endif
 
 #ifdef BAND_V2
 
 const int DISP_ROT = 90;                  // 右利き用
 const int FIX_GAIN_STEP[] = {21, 15, 0};  // 各 playCategory に対応 0--63
-const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
-const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
+const char *PLAY_CATEGORY_TXT[] = {"Ch 1", "Ch 2", "Ch 3"};
+const char *WEARER_ID_TXT[] = {"#1", "#2", "#3", "#4"};
 const CRGB COLOR_FIX_MODE = CRGB(0, 0, 2);  // 無制限
 const CRGB COLOR_VOL_MODE = CRGB(2, 0, 0);  // 制限
 const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
-const char *DECIBEL_TXT[] = {
-    "-75",  "-34",  "-22",  "-10",  "-5",   "0",    "3.0",  "4.4",
-    "5.2",  "6.0",  "6.8",  "7.6",  "8.4",  "9.2",  "10.0", "10.8",
-    "11.6", "12.4", "13.2", "14.0", "14.8", "15.6", "16.4", "17.2",
-    "18.0", "18.8", "19.6", "20.4", "21.2", "22.0", "22.8", "24.0"};
 const int BAT_NOTIFY_SOC = 5;               // 残量低下を通知する閾値（％）
 const int BAT_NOTIFY_VOL = 3600;            // 残量低下を通知する閾値（mV）
 const unsigned int DISPLAY_TIMEOUT = 3000;  // 3000ミリ秒
@@ -51,6 +44,15 @@ const char *LIMIT_ENABLE_MSG[] = {
 
 #endif
 
+// ==============================
+// 以下は原則変更しないでください
+// ==============================
+const char *DECIBEL_TXT[] = {
+    "-75",  "-34",  "-22",  "-10",  "-5",   "0",    "3.0",  "4.4",
+    "5.2",  "6.0",  "6.8",  "7.6",  "8.4",  "9.2",  "10.0", "10.8",
+    "11.6", "12.4", "13.2", "14.0", "14.8", "15.6", "16.4", "17.2",
+    "18.0", "18.8", "19.6", "20.4", "21.2", "22.0", "22.8", "24.0"};
+
 // 各配列のサイズを定義
 // ESPNOWで使用
 #ifdef ESPNOW
@@ -64,3 +66,4 @@ const int LIMITED_IDS_SIZE =
     sizeof(LIMITED_IDS) / sizeof(LIMITED_IDS[0]);                  // サイズ定義
 const int DISP_MSG_SIZE = sizeof(DISP_MSG) / sizeof(DISP_MSG[0]);  // サイズ定義
 #endif
+

@@ -12,8 +12,7 @@ TaskHandle_t thp[3];  // 環境によって必要タスク数が変わるので�
 bool _isFixMode;
 unsigned long _lastDisplayUpdate =
     0;  // ディスプレイが最後に更新された時刻を保持
-unsigned long _lastBatStatusUpdate =
-    0;  // ディスプレイが最後に更新された時刻を保持
+unsigned long _lastBatStatusUpdate = 0;
 // LED
 CRGB _leds[1];
 CRGB _currentColor;

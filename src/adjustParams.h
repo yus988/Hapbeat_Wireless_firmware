@@ -8,7 +8,6 @@ extern const int FIX_GAIN_STEP[];
 extern const char *PLAY_CATEGORY_TXT[];
 extern const char *WEARER_ID_TXT[];
 extern const char *DECIBEL_TXT[];
-extern const int volumeThreshold;
 extern const CRGB COLOR_FIX_MODE;
 extern const CRGB COLOR_VOL_MODE;
 extern const CRGB COLOR_DANGER_MODE;
