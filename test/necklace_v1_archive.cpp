@@ -1,3 +1,51 @@
+
+#ifdef NECKLACE
+const int FIX_GAIN_STEP = 41;
+const char *PLAY_CATEGORY_TXT[] = {"ゲーム", "動画", "hoge"};
+const char *WEARER_ID_TXT[] = {"ALL", "競技", "会場", "4", "5", "6"};
+const char *DECIBEL_TXT[] = {
+    "-75",  "-40",  "-34",  "-28",  "-22",  "-16",  "-10",  "-7.5",
+    "-5",   "-2.5", "0",    "1.5",  "3.0",  "4.0",  "4.4",  "4.8",
+    "5.2",  "5.6",  "6.0",  "6.4",  "6.8",  "7.2",  "7.6",  "8.0",
+    "8.4",  "8.8",  "9.2",  "9.6",  "10.0", "10.4", "10.8", "11.2",
+    "11.6", "12.0", "12.4", "12.8", "13.2", "13.6", "14.0", "14.4",
+    "14.8", "15.2", "15.6", "16.0", "16.4", "16.8", "17.2", "17.6",
+    "18.0", "18.4", "18.8", "19.2", "19.6", "20.0", "20.4", "20.8",
+    "21.2", "21.6", "22.0", "22.4", "22.8", "23.2", "23.6", "24.0"};
+#endif
+
+
+#if defined(NECKLACE)
+  // Audio pins
+  #define BCLK_PIN 39
+  #define LRCK_PIN 38
+  #define DOUT_PIN 40
+  #define I2S_MLCK_PIN 41
+  #define EN_I2S_DAC_PIN 7
+  // ピン番号はv1_3で変更予定
+  #define EN_MOTOR_PIN 44
+  // analog amp
+  #define EN_VIBAMP_PIN 43
+  #define AIN_VIBVOL_PIN 1
+  #define AOUT_VIBVOL_PIN 4
+  // _display pins
+  #define SCLK_PIN 17
+  #define MOSI_PIN 18
+  #define MISO_PIN 37
+  #define OLED_DC_PIN 16
+  #define OLED_RESET_PIN 15
+  #define CS_PIN 14
+  #define EN_OLED_PIN 47
+  // Button pins
+  #define SW1_VOL_P_PIN 13
+  #define SW2_VOL_N_PIN 12
+  #define SW3_SEL_P_PIN 2
+  #define SW4_SEL_N_PIN 34
+  #define SW5_ENTER_PIN 21
+  // LED
+  #define LED_PIN 3
+#endif
+
 #ifdef NECKLACE_V1
   // Audio pins
   #define I2S_BCLK_PIN 39
