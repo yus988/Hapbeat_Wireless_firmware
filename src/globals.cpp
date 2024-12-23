@@ -12,8 +12,7 @@ TaskHandle_t thp[3];  // 環境によって必要タスク数が変わるので�
 bool _isFixMode;
 unsigned long _lastDisplayUpdate =
     0;  // ディスプレイが最後に更新された時刻を保持
-unsigned long _lastBatStatusUpdate =
-    0;  // ディスプレイが最後に更新された時刻を保持
+unsigned long _lastBatStatusUpdate = 0;
 // LED
 CRGB _leds[1];
 CRGB _currentColor;
@@ -29,10 +28,10 @@ Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, MOSI_PIN, SCLK_PIN,
 void setFixGain(bool updateOLED) {
   int fixVolume = FIX_GAIN_STEP[audioManager::getPlayCategory()];
 #if defined(NECKLACE_V3)
-  int volume = map(fixVolume, 0, DECIBEL_TXT_SIZE - 1, 0, 100);
+  int volume = map(fixVolume, 0, GAIN_STEP_TXT_SIZE - 1, 0, 100);
   _digipot.setWiperPercent(volume);
 #elif defined(NECKLACE_V2) || defined(BAND_V2)
-  int volume = map(fixVolume, 0, DECIBEL_TXT_SIZE - 1, 0, 255);
+  int volume = map(fixVolume, 0, GAIN_STEP_TXT_SIZE - 1, 0, 255);
   analogWrite(AOUT_VIBVOL_PIN, volume);
 #endif
   if (updateOLED) {
@@ -45,7 +44,7 @@ void setFixGain(bool updateOLED) {
 // PAMの電圧を下げる
 void setAmpStepGain(int step, bool updateOLED) {
 #ifdef NECKLACE_V3
-  int volume = map(step, 0, DECIBEL_TXT_SIZE - 1, 0, 100);
+  int volume = map(step, 0, GAIN_STEP_TXT_SIZE - 1, 0, 100);
   _digipot.setWiperPercent(volume);
 #elif NECKLACE_V2
   int volume = map(_currAIN, 0, 4095, 0, 255);

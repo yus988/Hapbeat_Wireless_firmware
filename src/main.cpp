@@ -5,9 +5,7 @@
 void TaskAudio(void *args) {
   while (1) {
     audioManager::playAudioInLoop();
-    // delay(20);
     delay(5);
-    // vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
 
@@ -30,7 +28,8 @@ void setup() {
   // init _display
   pinMode(EN_OLED_PIN, OUTPUT);
   digitalWrite(EN_OLED_PIN, HIGH);
-  displayManager::initOLED(&_display, DISP_ROT);
+  displayManager::initOLED(&_display, DISP_ROT, FONT_SIZE, CATEGORY_TEXT_POS,
+                           CHANNEL_TEXT_POS, GAIN_STEP_TEXT_POS);
   const char *initMsg = "Initializing...";
   displayManager::printEfont(&_display, initMsg, 0, 8);
   // vibAmp
@@ -41,26 +40,13 @@ void setup() {
   pinMode(EN_MOTOR_PIN, OUTPUT);
   digitalWrite(EN_MOTOR_PIN, HIGH);
   pinMode(BQ27x_PIN, INPUT);
-  _isFixMode = audioManager::getIsFixMode();
-  if (_isFixMode) {
-    _currentColor = COLOR_FIX_MODE;
-  } else {
-    _currentColor = COLOR_VOL_MODE;
-  }
-  _leds[0] = _currentColor;
-  FastLED.show();
+  audioManager::setDevicePos(DEVICE_POS);
 
 #if defined(NECKLACE_V2)
   // battery current sensing pins
   pinMode(BAT_CURRENT_PIN, INPUT);
   pinMode(DETECT_ANALOG_IN_PIN, INPUT);
   pinMode(AIN_VIBVOL_PIN, INPUT);
-  // set device position as NECK = 0
-  audioManager::setDevicePos(0);
-#endif
-
-#if defined(BAND_V2)
-  audioManager::setDevicePos(5);
 #endif
 
   // I2C関連 init
@@ -81,11 +67,20 @@ void setup() {
   // 読み込む前に playSndOnRecv 入るとエラーになるので、読み込むための時間を確保
   delay(200);
 
+  _isFixMode = audioManager::getIsFixMode();
+  if (_isFixMode) {
+    _currentColor = COLOR_FIX_MODE;
+  } else {
+    _currentColor = COLOR_VOL_MODE;
+  }
+  _leds[0] = _currentColor;
+  FastLED.show();
+
 #ifdef ESPNOW
   // ここはタスク依存
-  displayManager::setTitle(PLAY_CATEGORY_TXT, PLAY_CATEGORY_TXT_SIZE,
-                           WEARER_ID_TXT, WEARER_ID_TXT_SIZE, DECIBEL_TXT,
-                           DECIBEL_TXT_SIZE);
+  displayManager::setTitle(CATEGORY_ID_TXT, CATEGORY_ID_TXT_SIZE,
+                           CHANNEL_ID_TXT, CHANNEL_ID_TXT_SIZE, GAIN_STEP_TXT,
+                           GAIN_STEP_TXT_SIZE);
   setFixGain(true);  // 実行しないと VibAmpVolume = 0 のままなので必須
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 

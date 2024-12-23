@@ -1,4 +1,4 @@
-#include "../globals.h"
+#include "globals.h"
 
 #if defined(NECKLACE_V2)
 void TaskNeckESPNOW() {
@@ -6,7 +6,7 @@ void TaskNeckESPNOW() {
     setFixGain();
   } else {
     _currAIN = analogRead(AIN_VIBVOL_PIN);
-    _ampVolStep = map(_currAIN, 0, 4095, 0, DECIBEL_TXT_SIZE - 1);
+    _ampVolStep = map(_currAIN, 0, 4095, 0, GAIN_STEP_TXT_SIZE - 1);
     setAmpStepGain(_ampVolStep, true);
   }
   uint8_t prevAmpVolStep = 0;
@@ -17,7 +17,7 @@ void TaskNeckESPNOW() {
     // BQ27220_Cmd::printBatteryStats();
     // control pam8003 volume
     _currAIN = analogRead(AIN_VIBVOL_PIN);
-    _ampVolStep = map(_currAIN, 0, 4095, 0, DECIBEL_TXT_SIZE - 1);
+    _ampVolStep = map(_currAIN, 0, 4095, 0, GAIN_STEP_TXT_SIZE - 1);
     // uint8_t _ampVolStep = 0;
     if (!_isFixMode && _ampVolStep != prevAmpVolStep) {
       setAmpStepGain(_ampVolStep, true);
@@ -31,11 +31,11 @@ void TaskNeckESPNOW() {
         uint8_t wearId = audioManager::getWearerId();
         audioManager::stopAudio();
         // 各ボタン毎の操作 0,1 = 上下, 2,3 = 左右, 4 = 右下
-        if (i == 1 && wearId < WEARER_ID_TXT_SIZE - 1) {
+        if (i == 1 && wearId < CHANNEL_ID_TXT_SIZE - 1) {
           wearId += 1;
         } else if (i == 0 && wearId > 0) {
           wearId -= 1;
-        } else if (i == 3 && (playCategoryNum < PLAY_CATEGORY_TXT_SIZE - 1)) {
+        } else if (i == 3 && (playCategoryNum < CATEGORY_ID_TXT_SIZE - 1)) {
           playCategoryNum += 1;
         } else if (i == 2 && playCategoryNum > 0) {
           playCategoryNum -= 1;
@@ -83,12 +83,12 @@ void TaskBandESPNOW() {
         uint8_t playCategoryNum = audioManager::getPlayCategory();
         uint8_t wearId = audioManager::getWearerId();
         audioManager::stopAudio();
-        if (i == 2 && wearId < WEARER_ID_TXT_SIZE - 1) {
+        if (i == 2 && wearId < CHANNEL_ID_TXT_SIZE - 1) {
           wearId += 1;
         } else if (i == 0 && wearId > 0) {
           wearId -= 1;
         } else if (i == 1) {
-          if (playCategoryNum < PLAY_CATEGORY_TXT_SIZE - 1) {
+          if (playCategoryNum < CATEGORY_ID_TXT_SIZE - 1) {
             playCategoryNum += 1;
           } else {
             playCategoryNum = 0;
