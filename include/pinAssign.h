@@ -24,15 +24,11 @@
   #define CS_PIN 14
   #define EN_OLED_PIN 21
   // Button pins
-  #define SW1_VOL_P_PIN 26
-  #define SW2_VOL_N_PIN 47
-  // 基板上はこちらが正しいが、旧版に合わせるため逆にする
-  // #define SW3_SEL_P_PIN 33
-  // #define SW4_SEL_N_PIN 34
-  #define SW3_SEL_P_PIN 34
-  #define SW4_SEL_N_PIN 33
-  //
-  #define SW5_ENTER_PIN 48
+  #define SW0_PIN 26
+  #define SW1_PIN 47
+  #define SW2_PIN 33
+  #define SW3_PIN 34
+  #define SW4_PIN 48
   // LED
   #define LED_PIN 8
 
@@ -65,8 +61,8 @@
   #define CS_PIN 42
   #define EN_OLED_PIN 2
   // Button pins
-  #define SW1_VOL_P_PIN 13
-  #define SW2_VOL_N_PIN 14
+  #define SW0_PIN 13
+  #define SW1_PIN 14
   //   #define SW3_ENTER_PIN 0
   // LED
   #define LED_PIN 34
