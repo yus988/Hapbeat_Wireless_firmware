@@ -71,8 +71,7 @@ void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
 
 #if defined(NECKLACE_V2)
 // see pam8003 datasheet p.7
-int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN, SW3_SEL_P_PIN, SW4_SEL_N_PIN,
-                 SW5_ENTER_PIN};
+int _SW_PIN[] = {SW0_PIN, SW1_PIN, SW2_PIN, SW3_PIN, SW4_PIN};
 bool _isBtnPressed[] = {false, false, false, false, false};
 
 // volume related variables
@@ -87,6 +86,6 @@ MCP4018_SOLDERED _digipot;  // オブジェクトの定義
 
 #if defined(BAND_V2)
 // see pam8003 datasheet p.7
-int _SW_PIN[] = {SW1_VOL_P_PIN, SW2_VOL_N_PIN};
+int _SW_PIN[] = {SW0_PIN, SW1_PIN};
 bool _isBtnPressed[] = {false, false};
 #endif

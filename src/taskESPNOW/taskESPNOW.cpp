@@ -35,9 +35,9 @@ void TaskNeckESPNOW() {
           wearId += 1;
         } else if (i == 0 && wearId > 0) {
           wearId -= 1;
-        } else if (i == 3 && (playCategoryNum < CATEGORY_ID_TXT_SIZE - 1)) {
+        } else if (i == 2 && (playCategoryNum < CATEGORY_ID_TXT_SIZE - 1)) {
           playCategoryNum += 1;
-        } else if (i == 2 && playCategoryNum > 0) {
+        } else if (i == 3 && playCategoryNum > 0) {
           playCategoryNum -= 1;
         } else if (i == 4) {
           if (_isFixMode) {
