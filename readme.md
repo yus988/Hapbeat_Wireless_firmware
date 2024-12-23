@@ -11,7 +11,7 @@
    （デバイスマネージャーで不明なデバイスと表示されなければ OK。ドライバインストールは不要）
 3. VSCode の下部（画像赤枠）env:DuoWL_V3-ESPNOW を選択しビルド&書き込み
    ![alt text](assets/desc_env.png)
-4. PlatformIO -> upload file image で wav データを Hapbeat にアップロード  
+4. PlatformIO -> upload file image で dataフォルダ内にある wav データを Hapbeat にアップロード  
    ![alt text](desc_fileupload.png)
 5. 電源を OFF->BOOT ボタンを押下しないで電源を ON
 
