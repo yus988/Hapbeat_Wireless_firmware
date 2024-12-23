@@ -1,4 +1,4 @@
-#include "../globals.h"
+#include "globals.h"
 
 #if defined(NECKLACE_V2)
 void TaskNeckESPNOW() {

@@ -1,4 +1,4 @@
-#include "../globals.h"
+#include "globals.h"
 
 // 現状はstatus=表示する文字列となっているが、
 // 細かく設定したいなら、statusに応じて文とスタイルを別途定義すればよい。
