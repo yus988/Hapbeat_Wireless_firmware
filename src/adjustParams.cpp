@@ -49,22 +49,26 @@ const int DEVICE_POS = 0;
 
 #ifdef BAND_V2
 const int DISP_ROT = 90;                  // 右利き用
-const int FIX_GAIN_STEP[] = {21, 15, 0};  // 各 categoryNum に対応 0--63
-const char *CATEGORY_ID_TXT[] = {"Ch 1", "Ch 2", "Ch 3"};
-const char *CHANNEL_ID_TXT[] = {"#1", "#2", "#3", "#4"};
+const int FIX_GAIN_STEP[] = {21, 0, 31};  // 各 categoryNum に対応 0--31
+const char *CATEGORY_ID_TXT[] = {"cat_0", "cat_1", "cat_2"};
+const char *CHANNEL_ID_TXT[] = {"ch_0", "ch_1", "ch_2", "ch_3"};
 const CRGB COLOR_FIX_MODE = CRGB(0, 0, 2);  // 無制限
 const CRGB COLOR_VOL_MODE = CRGB(2, 0, 0);  // 制限
 const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
-const int BAT_NOTIFY_SOC = 5;               // 残量低下を通知する閾値（％）
-const int BAT_NOTIFY_VOL = 3600;            // 残量低下を通知する閾値（mV）
-const unsigned int DISPLAY_TIMEOUT = 3000;  // 3000ミリ秒
+const char *GAIN_STEP_TXT[] = {"0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",
+                               "8",  "9",  "10", "11", "12", "13", "14", "15",
+                               "16", "17", "18", "19", "20", "21", "22", "23",
+                               "24", "25", "26", "27", "28", "29", "30", "31"};
 const unsigned int BATTERY_STATUS_INTERVAL = 30000;  // 30000ミリ秒
-const int CATEGORY_TEXT_POS[] = {0, 8};
-const int CHANNEL_TEXT_POS[] = {58, 8};
-const int GAIN_STEP_TEXT_POS[] = {93, 8};
+const int CATEGORY_TEXT_POS[2] = {0, 8};
+const int CHANNEL_TEXT_POS[2] = {54, 8};
+const int GAIN_STEP_TEXT_POS[2] = {100, 8};
 const int FONT_SIZE = 1;  // テキストサイズが1のときy=8で縦方向の中心
 
   #ifdef MQTT
+const int BAT_NOTIFY_SOC = 5;                // 残量低下を通知する閾値（％）
+const int BAT_NOTIFY_VOL = 3600;             // 残量低下を通知する閾値（mV）
+const unsigned int DISPLAY_TIMEOUT = 3000;   // 3000ミリ秒
 const ID_definitions ID_MSG = {0, 1, 2, 3};  // 例
 const MessageData DISP_MSG[] = {
     {0, "青 / Blue \nランプ点灯"},
@@ -76,7 +80,7 @@ const int LIMITED_IDS[] = {0, 1};  // 制限非制限
 const char *LIMIT_ENABLE_MSG[] = {
     "全て再生", "制限モード"};  // 0: isLimitEnable = false, 1: true
   #endif
-const int DEVICE_POS = 5;  //
+const int DEVICE_POS = 5;  // 腕想定
 
 #endif
 

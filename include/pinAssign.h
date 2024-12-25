@@ -61,9 +61,9 @@
   #define CS_PIN 42
   #define EN_OLED_PIN 2
   // Button pins
-  #define SW0_PIN 13
-  #define SW1_PIN 14
-  //   #define SW3_ENTER_PIN 0
+  #define SW0_PIN 14
+  #define SW1_PIN 13
+  #define SW2_PIN 12
   // LED
   #define LED_PIN 34
   // current sensing

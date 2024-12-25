@@ -27,18 +27,18 @@ void TaskNeckESPNOW() {
     // ボタン操作
     for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
       if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
-        uint8_t playCategoryNum = audioManager::getPlayCategory();
-        uint8_t wearId = audioManager::getWearerId();
+        uint8_t category_ID = audioManager::getCategoryID();
+        uint8_t channel_ID = audioManager::getChannelID();
         audioManager::stopAudio();
         // 各ボタン毎の操作 0,1 = 上下, 2,3 = 左右, 4 = 右下
-        if (i == 1 && wearId < CHANNEL_ID_TXT_SIZE - 1) {
-          wearId += 1;
-        } else if (i == 0 && wearId > 0) {
-          wearId -= 1;
-        } else if (i == 2 && (playCategoryNum < CATEGORY_ID_TXT_SIZE - 1)) {
-          playCategoryNum += 1;
-        } else if (i == 3 && playCategoryNum > 0) {
-          playCategoryNum -= 1;
+        if (i == 1 && channel_ID < CHANNEL_ID_TXT_SIZE - 1) {
+          channel_ID += 1;
+        } else if (i == 0 && channel_ID > 0) {
+          channel_ID -= 1;
+        } else if (i == 2 && (category_ID < CATEGORY_ID_TXT_SIZE - 1)) {
+          category_ID += 1;
+        } else if (i == 3 && category_ID > 0) {
+          category_ID -= 1;
         } else if (i == 4) {
           if (_isFixMode) {
             _isFixMode = false;
@@ -54,11 +54,10 @@ void TaskNeckESPNOW() {
         }
         _isBtnPressed[i] = true;
         if (i != 4) {
-          int tstep =
-              (_isFixMode) ? FIX_GAIN_STEP[playCategoryNum] : _ampVolStep;
-          displayManager::updateOLED(&_display, playCategoryNum, wearId, tstep);
-          audioManager::setPlayCategory(playCategoryNum);
-          audioManager::setWearerId(wearId);
+          int tstep = (_isFixMode) ? FIX_GAIN_STEP[category_ID] : _ampVolStep;
+          displayManager::updateOLED(&_display, category_ID, channel_ID, tstep);
+          audioManager::setCategoryID(category_ID);
+          audioManager::setChannelID(channel_ID);
           setAmpStepGain(tstep, true);
         }
         // vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -80,25 +79,46 @@ void TaskBandESPNOW() {
     // ボタン操作
     for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
       if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
-        uint8_t playCategoryNum = audioManager::getPlayCategory();
-        uint8_t wearId = audioManager::getWearerId();
+        uint8_t category_ID = audioManager::getCategoryID();
+        uint8_t channel_ID = audioManager::getChannelID();
         audioManager::stopAudio();
-        if (i == 2 && wearId < CHANNEL_ID_TXT_SIZE - 1) {
-          wearId += 1;
-        } else if (i == 0 && wearId > 0) {
-          wearId -= 1;
-        } else if (i == 1) {
-          if (playCategoryNum < CATEGORY_ID_TXT_SIZE - 1) {
-            playCategoryNum += 1;
+
+  #if defined(BAND_V3)
+        // 上から、0, 2, 1 の並びであることに注意
+        if (i == 0) {
+          if (category_ID < CATEGORY_ID_TXT_SIZE - 1) {
+            category_ID += 1;
           } else {
-            playCategoryNum = 0;
+            category_ID = 0;
           }
         }
+        if (i == 2) {
+          if (channel_ID < CHANNEL_ID_TXT_SIZE - 1) {
+            channel_ID += 1;
+          } else {
+            channel_ID = 0;
+          }
+        }
+
+  #else
+          // if (i == 2 && channel_ID < CHANNEL_ID_TXT_SIZE - 1) {
+          //   channel_ID += 1;
+          // } else if (i == 0 && channel_ID > 0) {
+          //   channel_ID -= 1;
+          // } else if (i == 1) {
+          //   if (category_ID < CATEGORY_ID_TXT_SIZE - 1) {
+          //     category_ID += 1;
+          //   } else {
+          //     category_ID = 0;
+          //   }
+          // }
+  #endif
         _isBtnPressed[i] = true;
-        displayManager::updateOLED(&_display, playCategoryNum, wearId,
-                                   FIX_GAIN_STEP[playCategoryNum]);
-        audioManager::setPlayCategory(playCategoryNum);
-        audioManager::setWearerId(wearId);
+        displayManager::updateOLED(&_display, category_ID, channel_ID,
+                                   FIX_GAIN_STEP[category_ID]);
+        audioManager::setCategoryID(category_ID);
+        audioManager::setChannelID(channel_ID);
+        setAmpStepGain(FIX_GAIN_STEP[category_ID], true);
       }
       if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
     };
@@ -107,6 +127,7 @@ void TaskBandESPNOW() {
   }
 }
 #endif
+
 // main.cpp に出力する。用途に応じて適応するものを選択。
 void TaskUI_ESPNOW(void *args) {
 #if defined(NECKLACE_V2)

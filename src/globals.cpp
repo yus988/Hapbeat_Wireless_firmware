@@ -26,8 +26,8 @@ Adafruit_SSD1306 _display(SCREEN_WIDTH, SCREEN_HEIGHT, MOSI_PIN, SCLK_PIN,
 
 // 所定の値に固定する。
 void setFixGain(bool updateOLED) {
-  int fixVolume = FIX_GAIN_STEP[audioManager::getPlayCategory()];
-#if defined(NECKLACE_V3)
+  int fixVolume = FIX_GAIN_STEP[audioManager::getCategoryID()];
+#if defined(EN_MCP4018)
   int volume = map(fixVolume, 0, GAIN_STEP_TXT_SIZE - 1, 0, 100);
   _digipot.setWiperPercent(volume);
 #elif defined(NECKLACE_V2) || defined(BAND_V2)
@@ -35,15 +35,15 @@ void setFixGain(bool updateOLED) {
   analogWrite(AOUT_VIBVOL_PIN, volume);
 #endif
   if (updateOLED) {
-    displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
-                               audioManager::getWearerId(),
-                               FIX_GAIN_STEP[audioManager::getPlayCategory()]);
+    displayManager::updateOLED(&_display, audioManager::getCategoryID(),
+                               audioManager::getChannelID(),
+                               FIX_GAIN_STEP[audioManager::getCategoryID()]);
   }
 }
 
 // PAMの電圧を下げる
 void setAmpStepGain(int step, bool updateOLED) {
-#ifdef NECKLACE_V3
+#ifdef EN_MCP4018
   int volume = map(step, 0, GAIN_STEP_TXT_SIZE - 1, 0, 100);
   _digipot.setWiperPercent(volume);
 #elif NECKLACE_V2
@@ -52,8 +52,8 @@ void setAmpStepGain(int step, bool updateOLED) {
 #endif
   // ディスプレイにdB表示用のステップ数変換
   if (updateOLED) {
-    displayManager::updateOLED(&_display, audioManager::getPlayCategory(),
-                               audioManager::getWearerId(), step);
+    displayManager::updateOLED(&_display, audioManager::getCategoryID(),
+                               audioManager::getChannelID(), step);
   }
 }
 
@@ -80,11 +80,14 @@ int _currAIN = 0;
 uint8_t _ampVolStep;
 #endif
 
-#if defined(NECKLACE_V3)
+#if defined(EN_MCP4018)
 MCP4018_SOLDERED _digipot;  // オブジェクトの定義
 #endif
 
-#if defined(BAND_V2)
+#if defined(BAND_V3)
+int _SW_PIN[] = {SW0_PIN, SW1_PIN, SW2_PIN};
+bool _isBtnPressed[] = {false, false, false};
+#elif defined(BAND_V2)
 // see pam8003 datasheet p.7
 int _SW_PIN[] = {SW0_PIN, SW1_PIN};
 bool _isBtnPressed[] = {false, false};

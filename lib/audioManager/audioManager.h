@@ -11,7 +11,6 @@
 #define DATA_NUM 25        // 各カテゴリのデータ最大数
 #define SUB_DATA_NUM 6     // sub_id の最大数
 
-
 //////////////////////////////////
 // 以下は基本固定
 
@@ -33,9 +32,9 @@ void playAudioInLoop();
 void playAudio(uint8_t tStubNum, uint8_t tVol);
 void stopAudio(uint8_t stubId = 99);
 // get
-uint8_t getPlayCategory();
+uint8_t getCategoryID();
 uint8_t getGain();
-uint8_t getWearerId();
+uint8_t getChannelID();
 uint8_t getDevicePos();
 bool getIsFixMode();
 bool getIsLimitEnable();
@@ -44,8 +43,8 @@ bool getIsPlaying();
 void setDataID(uint8_t stubNum, uint8_t dataID, uint8_t subID = 0);
 void setStatusCallback(void (*statusCb)(const char *));
 void setGain(uint8_t G_SEL_A, uint8_t G_SEL_B, uint8_t val);
-void setPlayCategory(uint8_t value);
-void setWearerId(uint8_t value);
+void setCategoryID(uint8_t value);
+void setChannelID(uint8_t value);
 void setDevicePos(uint8_t value);
 void setIsFixMode(bool value);
 void setLimitIds(const int limitIDs[], size_t size);  // 更新

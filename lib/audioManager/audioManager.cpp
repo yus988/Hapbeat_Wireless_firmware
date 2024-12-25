@@ -142,9 +142,10 @@ void readAllSoundFiles() {
     isRight = fileName[hyphenPos2 + 1] == 'R' ? 1 : 0;
     String storageType = fileName.substring(hyphenPos3 + 1);
 
-    USBSerial.printf("FILE: %s, cat = %d, id = %d, sub id = %c, isRight: %d, Storage: %s\n",
-                     fileName.c_str(), cat, dataID, fileName[hyphenPos2 + 1],
-                     isRight, storageType.c_str());
+    USBSerial.printf(
+        "FILE: %s, cat = %d, id = %d, sub id = %c, isRight: %d, Storage: %s\n",
+        fileName.c_str(), cat, dataID, fileName[hyphenPos2 + 1], isRight,
+        storageType.c_str());
     USBSerial.println(fileIdx);
     _audioDataSize[fileIdx] = _file.size();
 
@@ -412,8 +413,8 @@ void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
 
 // get
 uint8_t getGain() { return _gainNum; }
-uint8_t getPlayCategory() { return _settings.categoryNum; }
-uint8_t getWearerId() { return _settings.channelId; }
+uint8_t getCategoryID() { return _settings.categoryNum; }
+uint8_t getChannelID() { return _settings.channelId; }
 uint8_t getDevicePos() { return _devicePos; }
 bool getIsFixMode() { return _settings.isFixMode; }
 bool getIsLimitEnable() { return _settings.isLimitEnable; }
@@ -433,12 +434,12 @@ void setDataID(uint8_t stubNum, uint8_t dataID, uint8_t subID) {
   _subID[stubNum] = subID;
 }
 
-void setPlayCategory(uint8_t value) {
+void setCategoryID(uint8_t value) {
   _settings.categoryNum = value;
   EEPROM.put(offsetof(ConfigData, categoryNum), _settings.categoryNum);
   EEPROM.commit();
 }
-void setWearerId(uint8_t value) {
+void setChannelID(uint8_t value) {
   _settings.channelId = value;
   EEPROM.put(offsetof(ConfigData, channelId), _settings.channelId);
   EEPROM.commit();
