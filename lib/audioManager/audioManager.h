@@ -6,8 +6,8 @@
 #include "driver/i2s.h"
 
 // 調整項目（値を大きくするほどRAMを圧迫するので、適切なサイズに設定してください）
-#define SOUND_FILE_NUM 60  // 読み込むファイルの最大数（＝/data 内のファイル数）
 #define CATEGORY_NUM 3     // カテゴリの最大数
+#define SOUND_FILE_NUM 60  // 読み込むファイルの最大数（＝/data 内のファイル数）
 #define DATA_NUM 25        // 各カテゴリのデータ最大数
 #define SUB_DATA_NUM 6     // sub_id の最大数
 
@@ -50,5 +50,9 @@ void setIsFixMode(bool value);
 void setLimitIds(const int limitIDs[], size_t size);  // 更新
 void setMessageData(const char *msg, uint8_t id);
 void setIsLimitEnable(bool value);
+void setCategorySize(uint8_t size);
+void saveVolumeLevels(uint8_t *volumeLevels, uint8_t size);
+void loadVolumeLevels(uint8_t *volumeLevels, uint8_t size);
+
 }  // namespace audioManager
 #endif

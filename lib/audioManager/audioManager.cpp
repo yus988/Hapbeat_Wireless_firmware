@@ -55,6 +55,8 @@ struct ConfigData {
   uint8_t channelId;  // 装着者のID。99でブロードキャスト
   bool isFixMode;
   bool isLimitEnable;
+  uint8_t volumeLevels[CATEGORY_NUM];  // カテゴリごとのボリュームレベル
+                                       // (最大CATEGORY_NUMカテゴリ)
 };
 ConfigData _settings;
 
@@ -80,6 +82,9 @@ size_t _audioDataSize[SOUND_FILE_NUM];
 uint8_t _dataID[STUB_NUM];
 uint8_t _subID[STUB_NUM];
 uint8_t _volume[STUB_NUM];
+
+// CATEGORY_ID_TXT_SIZEを格納する変数
+static uint8_t _categorySize = 0;
 
 // 再送無視処理（ループの時だけ）
 unsigned long _lastReceiveTime = 0;
@@ -110,6 +115,21 @@ void initParamsEEPROM() {
     _settings.channelId = 0;
     _settings.isFixMode = true;
     _settings.isLimitEnable = false;
+
+    // デフォルトのボリュームレベルを設定
+    for (uint8_t i = 0; i < CATEGORY_NUM; i++) {
+      _settings.volumeLevels[i] = 15;
+    }
+    // 設定をEEPROMに保存
+    EEPROM.put(0, _settings);
+    EEPROM.commit();
+  }
+
+  // EEPROMから読み込んだボリュームレベルの範囲チェック
+  for (uint8_t i = 0; i < CATEGORY_NUM; i++) {
+    if (_settings.volumeLevels[i] > 31) {
+      _settings.volumeLevels[i] = 15;  // 範囲外の値をリセット
+    }
   }
 }
 
@@ -474,6 +494,25 @@ void setMessageData(const char *msg, uint8_t id) {
 }
 void setStatusCallback(void (*statusCb)(const char *)) {
   statusCallback = statusCb;
+}
+
+// CATEGORY_ID_TXT_SIZEをセット
+void setCategorySize(uint8_t size) { _categorySize = size; }
+
+// ボリュームレベルをEEPROMに保存
+void saveVolumeLevels(uint8_t *newVolumeLevels, uint8_t size) {
+  for (uint8_t i = 0; i < size && i < CATEGORY_NUM; i++) {
+    _settings.volumeLevels[i] = newVolumeLevels[i];
+  }
+  EEPROM.put(0, _settings);  // ConfigData全体を保存
+  EEPROM.commit();
+}
+
+// ボリュームレベルをEEPROMから読み込み
+void loadVolumeLevels(uint8_t *destVolumeLevels, uint8_t size) {
+  for (uint8_t i = 0; i < size && i < CATEGORY_NUM; i++) {
+    destVolumeLevels[i] = _settings.volumeLevels[i];
+  }
 }
 
 }  // namespace audioManager

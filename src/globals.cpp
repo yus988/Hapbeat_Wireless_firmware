@@ -44,8 +44,21 @@ void setFixGain(bool updateOLED) {
 // PAMの電圧を下げる
 void setAmpStepGain(int step, bool updateOLED) {
 #ifdef EN_MCP4018
-  int volume = map(step, 0, GAIN_STEP_TXT_SIZE - 1, 0, 100);
-  _digipot.setWiperPercent(volume);
+  int volume = 0;
+  // 表示0～23に基づいてワイパー値を計算
+  if (step == 0) {
+    volume = 0;
+  } else if (step >= 1 && step <= 22) {
+    volume = map(step, 1, 22, 20, 110);  // 表示1～22に対応するワイパー値を計算
+  } else if (step == 23) {
+    volume = 127;
+  }
+  USBSerial.printf("Step: %d, Volume: %d\n", step, volume);
+  _digipot.setWiperValue(volume);
+  // _digipot.setWiperPercent(volume);
+  USBSerial.print("After Digipot wiper: ");
+  USBSerial.print(_digipot.getWiperValue(), DEC);
+  USBSerial.println("/127");
 #elif NECKLACE_V2
   int volume = map(_currAIN, 0, 4095, 0, 255);
   analogWrite(AOUT_VIBVOL_PIN, volume);

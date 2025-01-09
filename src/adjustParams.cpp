@@ -18,20 +18,21 @@
 
 #ifdef NECKLACE_V2
 // カテゴリ名の設定（日本語OK）
-const char *CATEGORY_ID_TXT[] = {"cat_0", "cat_1", "cat_2"};
+// ※カテゴリの数を4以上にする場合は、./lib/audioManager/audioManager.h の
+// CATEGORY_NUM の値も変更してください。
+const char *CATEGORY_ID_TXT[] = {"ゲーム", "動画"};
 // 各 channel における固定モード時のボリューム値。
 // 0--31まで32段階、数値は大きいほど振動が大きくなる
 const int FIX_GAIN_STEP[] = {21, 16, 5};
 
 // 装着者番号やチャンネル名の設定
-const char *CHANNEL_ID_TXT[] = {"ch_0", "ch_1", "ch_2", "ch_3"};
+const char *CHANNEL_ID_TXT[] = {"ALL", "競技", "会場"};
 
 // 振動強度の強さ 0--31の段階表示（描画領域を節約したい場合）
 // デシベル表記は参照
 const char *GAIN_STEP_TXT[] = {"0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",
                                "8",  "9",  "10", "11", "12", "13", "14", "15",
-                               "16", "17", "18", "19", "20", "21", "22", "23",
-                               "24", "25", "26", "27", "28", "29", "30", "31"};
+                               "16", "17", "18", "19", "20", "21", "22", "23"};
 
 // 各項目の表示位置の調整（x, y）ディスプレイの大きさは 128×32（ピクセル単位）
 const int CATEGORY_TEXT_POS[2] = {0, 8};
@@ -48,17 +49,18 @@ const int DEVICE_POS = 0;
 #endif
 
 #ifdef BAND_V2
+const int ADJ_VOL_STEP = 4;               // 音量調整モードでのステップ量
 const int DISP_ROT = 90;                  // 右利き用
-const int FIX_GAIN_STEP[] = {21, 0, 31};  // 各 categoryNum に対応 0--31
+const int FIX_GAIN_STEP[] = {16, 0, 23};  // 各 categoryNum に対応 0--23
+// ※カテゴリの数を4以上にする場合は、./lib/audioManager/audioManager.h の
+// CATEGORY_NUM の値も変更してください。
 const char *CATEGORY_ID_TXT[] = {"cat_0", "cat_1", "cat_2"};
 const char *CHANNEL_ID_TXT[] = {"ch_0", "ch_1", "ch_2", "ch_3"};
-const CRGB COLOR_FIX_MODE = CRGB(0, 0, 2);  // 無制限
-const CRGB COLOR_VOL_MODE = CRGB(2, 0, 0);  // 制限
-const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
+const CRGB COLOR_FIX_MODE = CRGB(5, 5, 5);
+const CRGB COLOR_VOL_MODE = CRGB(0, 0, 5);
 const char *GAIN_STEP_TXT[] = {"0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",
                                "8",  "9",  "10", "11", "12", "13", "14", "15",
-                               "16", "17", "18", "19", "20", "21", "22", "23",
-                               "24", "25", "26", "27", "28", "29", "30", "31"};
+                               "16", "17", "18", "19", "20", "21", "22", "23"};
 const unsigned int BATTERY_STATUS_INTERVAL = 30000;  // 30000ミリ秒
 const int CATEGORY_TEXT_POS[2] = {0, 8};
 const int CHANNEL_TEXT_POS[2] = {54, 8};
@@ -66,6 +68,9 @@ const int GAIN_STEP_TEXT_POS[2] = {100, 8};
 const int FONT_SIZE = 1;  // テキストサイズが1のときy=8で縦方向の中心
 
   #ifdef MQTT
+COLOR_FIX_MODE = CRGB(0, 0, 2);  // 無制限
+COLOR_VOL_MODE = CRGB(2, 0, 0);  // 制限
+const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
 const int BAT_NOTIFY_SOC = 5;                // 残量低下を通知する閾値（％）
 const int BAT_NOTIFY_VOL = 3600;             // 残量低下を通知する閾値（mV）
 const unsigned int DISPLAY_TIMEOUT = 3000;   // 3000ミリ秒

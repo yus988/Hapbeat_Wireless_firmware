@@ -49,6 +49,14 @@ void setup() {
   pinMode(AIN_VIBVOL_PIN, INPUT);
 #endif
 
+#if defined(BAND_V3)
+  // CATEGORY_ID_TXT_SIZEをセット
+  audioManager::setCategorySize(CATEGORY_ID_TXT_SIZE);
+  // ボリュームレベル配列を初期化
+  uint8_t volumeLevels[CATEGORY_ID_TXT_SIZE] = {0};
+  audioManager::loadVolumeLevels(volumeLevels, CATEGORY_ID_TXT_SIZE);
+#endif
+
   // I2C関連 init
   // SDA_PIN と SCL_PIN を明示する。
   Wire.begin(SDA_PIN, SCL_PIN);  // Initialize I2C master
