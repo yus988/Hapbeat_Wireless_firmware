@@ -39,6 +39,7 @@ extern const int BATTERY_CAPACITY;    // バッテリー容量 (mAh)
 // adjustParams.cpp の変数追加
 extern const int DISP_ROT;
 extern const int FIX_GAIN_STEP[];
+
 extern const char *CATEGORY_ID_TXT[];
 extern const char *CHANNEL_ID_TXT[];
 extern const CRGB COLOR_FIX_MODE;

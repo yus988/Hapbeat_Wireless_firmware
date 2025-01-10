@@ -128,7 +128,7 @@ void initParamsEEPROM() {
   // EEPROMから読み込んだボリュームレベルの範囲チェック
   for (uint8_t i = 0; i < CATEGORY_NUM; i++) {
     if (_settings.volumeLevels[i] > 31) {
-      _settings.volumeLevels[i] = 15;  // 範囲外の値をリセット
+      _settings.volumeLevels[i] = 16;  // 範囲外の値をリセット
     }
   }
 }
