@@ -21,7 +21,7 @@
   #error "Either ESPNOW or MQTT must be defined, not both."
 #endif
 
-#ifdef NECKLACE_V3
+#ifdef EN_MCP4018
   #include "MCP4018-SOLDERED.h"  // Include Soldered library for MCP4018 Digipot.
 extern MCP4018_SOLDERED _digipot;  // Create object for Digipot library.
 #endif
@@ -39,6 +39,7 @@ extern const int BATTERY_CAPACITY;    // バッテリー容量 (mAh)
 // adjustParams.cpp の変数追加
 extern const int DISP_ROT;
 extern const int FIX_GAIN_STEP[];
+
 extern const char *CATEGORY_ID_TXT[];
 extern const char *CHANNEL_ID_TXT[];
 extern const CRGB COLOR_FIX_MODE;
@@ -81,7 +82,10 @@ extern int _currAIN;
 extern uint8_t _ampVolStep;
 #endif
 
-#if defined(BAND_V2)
+#if defined(BAND_V3)
+extern int _SW_PIN[3];
+extern bool _isBtnPressed[3];
+#elif defined(BAND_V2)
 extern int _SW_PIN[2];
 extern bool _isBtnPressed[2];
 #endif

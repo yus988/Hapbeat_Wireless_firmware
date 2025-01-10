@@ -49,11 +49,19 @@ void setup() {
   pinMode(AIN_VIBVOL_PIN, INPUT);
 #endif
 
+#if defined(BAND_V3)
+  // CATEGORY_ID_TXT_SIZEをセット
+  audioManager::setCategorySize(CATEGORY_ID_TXT_SIZE);
+  // ボリュームレベル配列を初期化
+  uint8_t volumeLevels[CATEGORY_ID_TXT_SIZE] = {0};
+  audioManager::loadVolumeLevels(volumeLevels, CATEGORY_ID_TXT_SIZE);
+#endif
+
   // I2C関連 init
   // SDA_PIN と SCL_PIN を明示する。
   Wire.begin(SDA_PIN, SCL_PIN);  // Initialize I2C master
   // BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
-#ifdef NECKLACE_V3
+#ifdef EN_MCP4018
   // 以下の begin の中に Wire.begin() があるが、引数が無いので SDA_PIN と
   // SDA_PIN を明示できない。事前に Wire.begin(SDA_PIN, SDA_PIN) が必要
   _digipot.begin();  // Initialize Digipot library.

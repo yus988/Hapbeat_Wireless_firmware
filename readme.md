@@ -34,7 +34,8 @@
 
 ## 画面 UI の変更
 
-[`src/adjustParams.cpp`](https://github.com/yus988/Hapbeat_Wireless_firmware/blob/main/src/adjustParams.cpp)内の変数の値を用途に応じて調整してください。
+[`src/adjustParams.cpp`](https://github.com/yus988/Hapbeat_Wireless_firmware/blob/main/src/adjustParams.cpp.template)（初回ビルド時に`src/adjustParams.cpp.template`から自動で複製）内の変数の値を用途に応じて調整してください。
+- もし自動で複製されなかった場合は手動で複製してください。.templateを削除すればOKです。
 
 ## 振動用音声データの差し替え
 

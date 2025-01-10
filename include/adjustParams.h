@@ -26,6 +26,8 @@ extern const int GAIN_STEP_TEXT_POS[2];
 extern const int FONT_SIZE;
 extern const int DEVICE_POS;
 
+extern const int ADJ_VOL_STEP;
+
 // 各配列のサイズを定義
 // ESPNOWで使用
 extern const int CATEGORY_ID_TXT_SIZE;
