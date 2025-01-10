@@ -13,6 +13,7 @@
 
 //////////////////////////////////
 // 以下は基本固定
+#define VOLUME_MAX 23     //ボリュームの最大値
 
 // #define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
 #define STUB_NUM 6  // お化け屋敷の時は 6 必要（playCmd=3, oneshot_bgmのため）
