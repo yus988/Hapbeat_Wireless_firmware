@@ -233,14 +233,13 @@ void stopAudio(uint8_t stub) {
 void playAudio(uint8_t tStubNum, uint8_t tVol) {
   int isLR = (tStubNum % 2 == 0) ? 0 : 1;
   uint8_t pos = 0;  // pos = 0 は仮置き
-  _playingIdx = _audioDataIndex[_settings.categoryNum][pos][_dataID[tStubNum]]
-                               [_subID[tStubNum]][isLR];
   _volume[tStubNum] = tVol;
   _stub[tStubNum]->SetGain((float)tVol / maxVol);
-
   if (_wav_gen[tStubNum]->isRunning()) {
     _wav_gen[tStubNum]->stop();
   }
+  _playingIdx = _audioDataIndex[_settings.categoryNum][pos][_dataID[tStubNum]]
+                               [_subID[tStubNum]][isLR];
   ////// 上記は固定 ///
 
   if (!_wav_gen[tStubNum]->begin(_audioFileSources[_playingIdx],
