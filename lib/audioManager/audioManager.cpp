@@ -18,7 +18,20 @@
 #include "AudioOutputI2S.h"
 #include "AudioOutputMixer.h"
 
+// test用、削除する
+#include <esp_now.h>  // test
+
 namespace audioManager {
+
+#ifdef DEBUG_WL
+  #define DEBUG_PRINT(x) USBSerial.print(x)
+  #define DEBUG_PRINTLN(x) USBSerial.println(x)
+  #define DEBUG_PRINTF(fmt, ...) USBSerial.printf(fmt, ##__VA_ARGS__)
+#else
+  #define DEBUG_PRINT(x)
+  #define DEBUG_PRINTLN(x)
+  #define DEBUG_PRINTF(fmt, ...)
+#endif
 
 struct MessageData {
   uint8_t id;
@@ -72,6 +85,8 @@ uint8_t _audioStorageType[SOUND_FILE_NUM];  // データの格納場所を示す
 AudioOutputI2S *_i2s_out;
 AudioOutputMixer *_mixer;
 AudioOutputMixerStub *_stub[STUB_NUM];
+
+AudioFileSource *_audioFileSources[SOUND_FILE_NUM] = {nullptr};
 
 // グローバル変数またはクラスメンバとして以前のオーディオソースを保持する配列を宣言
 AudioFileSource *_previousSources[STUB_NUM] = {nullptr};
@@ -137,7 +152,7 @@ void initParamsEEPROM() {
 void readAllSoundFiles() {
   // LittleFSマウント確認
   if (!LittleFS.begin()) {
-    USBSerial.println("LittleFS Mount Failed");
+    DEBUG_PRINTLN("LittleFS Mount Failed");
     return;
   }
   uint8_t isRight;
@@ -162,11 +177,11 @@ void readAllSoundFiles() {
     isRight = fileName[hyphenPos2 + 1] == 'R' ? 1 : 0;
     String storageType = fileName.substring(hyphenPos3 + 1);
 
-    USBSerial.printf(
+    DEBUG_PRINTF(
         "FILE: %s, cat = %d, id = %d, sub id = %c, isRight: %d, Storage: %s\n",
         fileName.c_str(), cat, dataID, fileName[hyphenPos2 + 1], isRight,
         storageType.c_str());
-    USBSerial.println(fileIdx);
+    DEBUG_PRINTLN(fileIdx);
     _audioDataSize[fileIdx] = _file.size();
 
     // データの格納場所を決定
@@ -175,6 +190,7 @@ void readAllSoundFiles() {
                                        2];  // 16ビット（2バイト）ごとのデータ
       _file.read(reinterpret_cast<uint8_t *>(_audioRAM[fileIdx]),
                  _audioDataSize[fileIdx]);
+
       _audioStorageType[fileIdx] = RAM_STORAGE;
     } else {
       // ファイル名のみ格納
@@ -209,11 +225,7 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   uint8_t pos = 0;  // pos = 0 は仮置き
   uint8_t idx = _audioDataIndex[_settings.categoryNum][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
-  // USBSerial.printf("audio IDX = ");
-  // USBSerial.println(idx);
-
   _volume[tStubNum] = tVol;
-
   _stub[tStubNum]->SetGain((float)tVol / maxVol);
   if (_wav_gen[tStubNum]->isRunning()) {
     _wav_gen[tStubNum]->stop();
@@ -229,20 +241,19 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   if (_audioStorageType[idx] == RAM_STORAGE) {
     src = new AudioFileSourcePROGMEM(_audioRAM[idx], _audioDataSize[idx]);
     if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
-      USBSerial.println("Failed to start WAV generator with RAM data");
+      DEBUG_PRINTLN("Failed to start WAV generator with RAM data");
       delete src;
       return;
     }
   } else {
     src = new AudioFileSourceLittleFS(_audioFileNames[idx].c_str());
     if (!src->isOpen()) {
-      USBSerial.printf("Failed to open file: %s\n",
-                       _audioFileNames[idx].c_str());
+      DEBUG_PRINTF("Failed to open file: %s\n", _audioFileNames[idx].c_str());
       delete src;
       return;
     }
     if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
-      USBSerial.println("Failed to start WAV generator with FS data");
+      DEBUG_PRINTLN("Failed to start WAV generator with FS data");
       delete src;
       return;
     }
@@ -250,55 +261,53 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
   // 新しいオーディオソースを保存
   _previousSources[tStubNum] = src;
   isPlayAudio[tStubNum] = true;
-  // USBSerial.printf("Succeed to play with stub: %d\n", tStubNum);
+  // DEBUG_PRINTF("Succeed to play with stub: %d\n", tStubNum);
 }
 
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len) {
+  // pingpongテスト用
+  // uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+  // esp_err_t result = esp_now_send(broadcastAddress, data, data_len);
+  // if (result == ESP_OK) {
+  //   Serial.println("Ping送信成功");
+  // } else {
+  //   Serial.printf("Ping送信失敗: %d\n", result);
+  // }
+  // return;
+  // ★ 処理開始時刻の記録（μs単位）
+  unsigned long recvStartTime = micros();
+
   unsigned long currentTime = millis();
+
   // ループ再生（data[7] == 1）のデータで、無視期間中の場合
   if (_ignoreLoopData && currentTime - _lastReceiveTime < _ignoreDuration) {
-    USBSerial.println("Ignoring loop data during _ignoreDuration");
+    DEBUG_PRINTLN("Ignoring loop data during _ignoreDuration");
     return;
   }
-  // ループ再生のデータ（data[7] ==
-  // 1）の場合、無視フラグを立てて無視期間を設定
+
+  // ループ再生のデータ（data[7] == 1）の場合、無視フラグを立てて無視期間を設定
   if (data[7] == 1) {
     _ignoreLoopData = true;
     _lastReceiveTime = currentTime;
   } else {
-    _ignoreLoopData = false;  // 他のデータの場合は無視フラグをリセット
+    _ignoreLoopData = false;
   }
 
   // 通常の処理
-  USBSerial.printf(
-      "received: _category %d, _channel_Id %d, _devPos %d, _dataID %d, "
-      "_subID "
-      "%d, Vol %d:%d, playtype %d\n",
-      data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
-  // USBSerial.print("Free heap: ");
-  // USBSerial.println(ESP.getFreeHeap());
-  // data = [_category, _channel_Id, _devicePos, data_id, _subID, _L_Vol,
-  // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持
+  uint8_t playCmd = data[7];
   if ((data[0] == _settings.categoryNum || data[0] == 99) &&
       (_settings.channelId == 0 || data[1] == _settings.channelId ||
        data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
-    // USBSerial.println("prepare to playAudio");
-    // 0 = oneshot(0,1), 1=loopStart(2,3), 2=stopAudio, 3=oneShot 2ndline(4,5)
-    // 括弧内はstub番号
-    uint8_t playCmd = data[7];
     if (playCmd == 2) {
       for (int iStub = 2; iStub <= 3; ++iStub) {
         while (_wav_gen[iStub]->isRunning()) {
           stopAudio(iStub);
-          // delay(10);
         }
       }
-      return;
     } else {
       int startIdx;
-      // 再生するstubを選択
       switch (playCmd) {
         case 0:
           startIdx = 0;
@@ -308,36 +317,48 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
           break;
         case 3:
           startIdx = 4;
+          break;
       }
-      // 再生するデータを選択
+
       for (int i = startIdx; i <= startIdx + 1; ++i) {
         _dataID[i] = data[3];
         _subID[i] = data[4];
         _volume[i] = data[5 + i % 2];
       }
+
       uint8_t stub = startIdx;
       stopAudio(stub);
       playAudio(stub, _volume[stub]);
-      // ステレオ再生を左右のボリュームから判断
+
       if (_volume[stub] != _volume[stub + 1]) {
         stopAudio(stub + 1);
         playAudio(stub + 1, _volume[stub + 1]);
       }
     }
   }
+
+  // ★ 処理終了時刻の記録
+  unsigned long recvEndTime = micros();
+
+  // ★ 処理時間の計算（μs → ms）
+  float processingTimeMs = (recvEndTime - recvStartTime) / 1000.0;
+
+  // ★ 処理時間の出力
+  USBSerial.printf("★ 受信から音声再生開始までの遅延: %.3f ms\n",
+                   processingTimeMs);
 }
 
 // MQTT接続にESPNOWのコールバックを実行するためのリレー関数
 void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
-  USBSerial.println();
-  USBSerial.print("Message arrived in topic: ");
-  USBSerial.println(topic);
+  DEBUG_PRINTLN();
+  DEBUG_PRINT("Message arrived in topic: ");
+  DEBUG_PRINTLN(topic);
 
-  USBSerial.print("Message: ");
+  DEBUG_PRINT("Message: ");
   for (int i = 0; i < length; i++) {
-    USBSerial.print((char)payload[i]);
+    DEBUG_PRINT((char)payload[i]);
   }
-  USBSerial.println();
+  DEBUG_PRINTLN();
 
   // 文字列を整数に変換する処理
   String payloadStr((char *)payload, length);
@@ -368,7 +389,7 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   // 制限されたIDがあるか確認
   for (size_t i = 0; i < _numLimitIDs; ++i) {
     if (_settings.isLimitEnable == true && _limitIDs[i] == dataPacket.dataID) {
-      USBSerial.println("ID is restricted, aborting action.");
+      DEBUG_PRINTLN("ID is restricted, aborting action.");
       return;  // 制限されたIDが見つかった場合、ここで処理を中断
     }
   }
@@ -391,15 +412,15 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
 void playAudioInLoop() {
   for (int iStub = 0; iStub < STUB_NUM; iStub++) {
     if (isPlayAudio[iStub]) {
-      // USBSerial.printf("playing stub: ");
-      // USBSerial.println(iStub);
+      // DEBUG_PRINTF("playing stub: ");
+      // DEBUG_PRINTLN(iStub);
       if ((iStub == 2 && _wav_gen[2]->isRunning()) ||
           (iStub == 3 && _wav_gen[3]->isRunning())) {  // loop _stub case
         if (_wav_gen[iStub]->isRunning()) {
           if (!_wav_gen[iStub]->loop()) {
             // stopAudio(iStub); //コメントアウトの意味は不明
             playAudio(iStub, _volume[iStub]);
-            delay(5);
+            delay(1);
           }
         }
       } else {
@@ -466,8 +487,8 @@ void setChannelID(uint8_t value) {
 };
 void setGain(uint8_t val, uint8_t G_SEL_A = 99, uint8_t G_SEL_B = 99) {
   _gainNum = val;
-  USBSerial.printf("_gainNum: ");
-  USBSerial.println(val);
+  DEBUG_PRINTF("_gainNum: ");
+  DEBUG_PRINTLN(val);
 }
 void setDevicePos(uint8_t value) { _devicePos = value; };
 void setIsFixMode(bool value) {

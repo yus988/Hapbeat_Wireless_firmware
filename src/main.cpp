@@ -5,7 +5,7 @@
 void TaskAudio(void *args) {
   while (1) {
     audioManager::playAudioInLoop();
-    delay(5);
+    delay(1);
   }
 }
 
@@ -13,6 +13,7 @@ void TaskAudio(void *args) {
 void setup() {
   // デバッグ用ボタン
   USBSerial.begin(115200);
+
   USBSerial.println("init Hapbeat wireless reciever");
   audioManager::initParamsEEPROM();
   delay(5);
@@ -109,13 +110,12 @@ void setup() {
     delay(500);  // 少し待って再試行
   };
 #endif
-
-  xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 20, &thp[0], 1);
+  xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 5, &thp[0], 1);
 #ifdef ESPNOW
   xTaskCreatePinnedToCore(TaskUI_ESPNOW, "TaskUI_ESPNOW", 4096, NULL, 23,
                           &thp[1], 1);
 #elif MQTT
-  xTaskCreatePinnedToCore(TaskUI_MQTT, "TaskUI_MQTT", 4096, NULL, 23, &thp[1],
+  xTaskCreatePinnedToCore(TaskUI_MQTT, "TaskUI_MQTT", 4096, NULL, 23, &thp[1],about:blank#blocked
                           1);
 #endif
 }
