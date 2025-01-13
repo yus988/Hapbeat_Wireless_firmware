@@ -219,9 +219,18 @@ void readAllSoundFiles() {
 
 // 引数無しの場合は全てのstubを停止
 void stopAudio(uint8_t stub) {
-  _wav_gen[stub]->stop();  // ★ デコーダーのみ停止
-  _stub[stub]->stop();
-  isPlayAudio[stub] = false;
+  // デフォルト=99はヘッダーに記載。taskUIからの呼び出し時に必須
+  if (stub == 99) {
+    for (int iStub = 0; iStub < STUB_NUM; iStub++) {
+      _wav_gen[iStub]->stop();
+      _stub[iStub]->stop();
+      isPlayAudio[iStub] = false;
+    }
+  } else {
+    _wav_gen[stub]->stop();
+    _stub[stub]->stop();
+    isPlayAudio[stub] = false;
+  }
   // ★ 個別のstubにもseek追加
   if (_audioFileSources[_playingIdx] != nullptr) {
     _audioFileSources[_playingIdx]->open(_audioFileNames[_playingIdx].c_str());
