@@ -21,8 +21,7 @@
 #define FS_STORAGE 1
 #define POSITION_NUM 1
 namespace audioManager {
-const int SAMPLING_RATE = 8000;
-// const int SAMPLING_RATE = 16000;
+const int SAMPLING_RATE = 16000; //8000 だと明確に遅くなる
 void initParamsEEPROM();
 void readAllSoundFiles();
 void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN);
@@ -30,7 +29,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len);
 void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length);
 void playAudioInLoop();
-void playAudio(uint8_t tStubNum, uint8_t tVol);
+void playAudio(uint8_t tStubNum, uint8_t tVol, bool isLoop = false);
 void stopAudio(uint8_t stubId = 99);
 // get
 uint8_t getCategoryID();
