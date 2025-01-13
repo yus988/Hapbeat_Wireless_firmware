@@ -97,6 +97,7 @@ size_t _audioDataSize[SOUND_FILE_NUM];
 uint8_t _dataID[STUB_NUM];
 uint8_t _subID[STUB_NUM];
 uint8_t _volume[STUB_NUM];
+uint8_t _playingIdx;  // 再生中のidxを表示
 
 // CATEGORY_ID_TXT_SIZEを格納する変数
 static uint8_t _categorySize = 0;
@@ -190,12 +191,23 @@ void readAllSoundFiles() {
                                        2];  // 16ビット（2バイト）ごとのデータ
       _file.read(reinterpret_cast<uint8_t *>(_audioRAM[fileIdx]),
                  _audioDataSize[fileIdx]);
+      // ★ AudioFileSourcePROGMEMでキャッシュ作成
+      _audioFileSources[fileIdx] = new AudioFileSourcePROGMEM(
+          _audioRAM[fileIdx], _audioDataSize[fileIdx]);
 
       _audioStorageType[fileIdx] = RAM_STORAGE;
     } else {
       // ファイル名のみ格納
       String fullPath = "/" + fileName;
       _audioFileNames[fileIdx] = fullPath;
+
+      // ★ AudioFileSourceLittleFSでキャッシュ作成
+      _audioFileSources[fileIdx] =
+          new AudioFileSourceLittleFS(fullPath.c_str());
+
+      if (!_audioFileSources[fileIdx]->isOpen()) {
+        DEBUG_PRINTF("Failed to open file: %s\n", fullPath.c_str());
+      }
       _audioStorageType[fileIdx] = FS_STORAGE;
     }
 
@@ -207,61 +219,68 @@ void readAllSoundFiles() {
 
 // 引数無しの場合は全てのstubを停止
 void stopAudio(uint8_t stub) {
-  if (stub == 99) {
-    for (int iStub = 0; iStub < STUB_NUM; iStub++) {
-      _wav_gen[iStub]->stop();
-      _stub[iStub]->stop();
-      isPlayAudio[iStub] = false;
-    }
+  _wav_gen[stub]->stop();  // ★ デコーダーのみ停止
+  _stub[stub]->stop();
+  isPlayAudio[stub] = false;
+  // ★ 個別のstubにもseek追加
+  if (_audioFileSources[_playingIdx] != nullptr) {
+    _audioFileSources[_playingIdx]->open(_audioFileNames[_playingIdx].c_str());
+    DEBUG_PRINTF("successed in seek or open\n");
   } else {
-    _wav_gen[stub]->stop();
-    _stub[stub]->stop();
-    isPlayAudio[stub] = false;
+    DEBUG_PRINTF("_audioFileSources[_playingIdx] == nullptr\n");
   }
 }
-
 void playAudio(uint8_t tStubNum, uint8_t tVol) {
   int isLR = (tStubNum % 2 == 0) ? 0 : 1;
   uint8_t pos = 0;  // pos = 0 は仮置き
-  uint8_t idx = _audioDataIndex[_settings.categoryNum][pos][_dataID[tStubNum]]
+  _playingIdx = _audioDataIndex[_settings.categoryNum][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
   _volume[tStubNum] = tVol;
   _stub[tStubNum]->SetGain((float)tVol / maxVol);
+
   if (_wav_gen[tStubNum]->isRunning()) {
     _wav_gen[tStubNum]->stop();
   }
+  ////// 上記は固定 ///
 
-  // 以前のオーディオソースが存在すれば削除（ヒープメモリ解放のため必須）
-  if (_previousSources[tStubNum] != nullptr) {
-    delete _previousSources[tStubNum];
-    _previousSources[tStubNum] = nullptr;
+  if (!_wav_gen[tStubNum]->begin(_audioFileSources[_playingIdx],
+                                 _stub[tStubNum])) {
+    DEBUG_PRINTLN("Failed to start WAV generator");
+    return;
   }
-
-  AudioFileSource *src = nullptr;
-  if (_audioStorageType[idx] == RAM_STORAGE) {
-    src = new AudioFileSourcePROGMEM(_audioRAM[idx], _audioDataSize[idx]);
-    if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
-      DEBUG_PRINTLN("Failed to start WAV generator with RAM data");
-      delete src;
-      return;
-    }
-  } else {
-    src = new AudioFileSourceLittleFS(_audioFileNames[idx].c_str());
-    if (!src->isOpen()) {
-      DEBUG_PRINTF("Failed to open file: %s\n", _audioFileNames[idx].c_str());
-      delete src;
-      return;
-    }
-    if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
-      DEBUG_PRINTLN("Failed to start WAV generator with FS data");
-      delete src;
-      return;
-    }
-  }
-  // 新しいオーディオソースを保存
-  _previousSources[tStubNum] = src;
   isPlayAudio[tStubNum] = true;
-  // DEBUG_PRINTF("Succeed to play with stub: %d\n", tStubNum);
+
+  ////////////////// 以前のコード //////////////////
+  // 以前のオーディオソースが存在すれば削除（ヒープメモリ解放のため必須）
+  // if (_previousSources[tStubNum] != nullptr) {
+  //   delete _previousSources[tStubNum];
+  //   _previousSources[tStubNum] = nullptr;
+  // }
+
+  // AudioFileSource *src = nullptr;
+  // if (_audioStorageType[idx] == RAM_STORAGE) {
+  //   src = new AudioFileSourcePROGMEM(_audioRAM[idx], _audioDataSize[idx]);
+  //   if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
+  //     DEBUG_PRINTLN("Failed to start WAV generator with RAM data");
+  //     delete src;
+  //     return;
+  //   }
+  // } else {
+  //   src = new AudioFileSourceLittleFS(_audioFileNames[idx].c_str());
+  //   if (!src->isOpen()) {
+  //     DEBUG_PRINTF("Failed to open file: %s\n",
+  //     _audioFileNames[idx].c_str()); delete src; return;
+  //   }
+  //   if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
+  //     DEBUG_PRINTLN("Failed to start WAV generator with FS data");
+  //     delete src;
+  //     return;
+  //   }
+  // }
+  // // 新しいオーディオソースを保存
+  // _previousSources[tStubNum] = src;
+  // isPlayAudio[tStubNum] = true;
+  // // DEBUG_PRINTF("Succeed to play with stub: %d\n", tStubNum);
 }
 
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
@@ -327,11 +346,11 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       }
 
       uint8_t stub = startIdx;
-      stopAudio(stub);
+      // stopAudio(stub);
       playAudio(stub, _volume[stub]);
 
       if (_volume[stub] != _volume[stub + 1]) {
-        stopAudio(stub + 1);
+        // stopAudio(stub + 1);
         playAudio(stub + 1, _volume[stub + 1]);
       }
     }
@@ -420,7 +439,7 @@ void playAudioInLoop() {
           if (!_wav_gen[iStub]->loop()) {
             // stopAudio(iStub); //コメントアウトの意味は不明
             playAudio(iStub, _volume[iStub]);
-            delay(1);
+            // delay(1);
           }
         }
       } else {
@@ -443,7 +462,7 @@ void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
   for (int i = 0; i < STUB_NUM; i++) {
     _wav_gen[i] = new AudioGeneratorWAV();
   }
-  // _mixer に１回渡したら、あとは _stub => _mixer の順で色々渡す
+  // _mixer に1回渡したら、あとは _stub => _mixer の順で色々渡す
   _mixer = new AudioOutputMixer(32, _i2s_out);
 
   for (int i = 0; i < STUB_NUM; i++) {
