@@ -318,8 +318,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   // 通常の処理
   uint8_t playCmd = data[7];
   if ((data[0] == _settings.categoryNum || data[0] == 99) &&
-      (_settings.channelId == 0 || data[1] == _settings.channelId ||
-       data[1] == 99) &&
+      (data[1] == _settings.channelId || data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
     if (playCmd == 2) {
       for (int iStub = 2; iStub <= 3; ++iStub) {
