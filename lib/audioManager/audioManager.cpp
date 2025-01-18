@@ -210,7 +210,7 @@ void readAllSoundFiles() {
 
 // 引数無しの場合は全てのstubを停止
 void stopAudio(uint8_t stub) {
-  // デフォルト=99はヘッダーに記載。taskUIからの呼び出し時に必須
+  // デフォルト=99はヘッダーファイルに記載。taskUIからの呼び出し時に必須
   if (stub == 99) {
     for (int iStub = 0; iStub < STUB_NUM; iStub++) {
       _wav_gen[iStub]->stop();
@@ -233,51 +233,40 @@ void playAudio(uint8_t tStubNum, uint8_t tVol, bool isLoop) {
   _volume[tStubNum] = tVol;
   _stub[tStubNum]->SetGain((float)tVol / maxVol);
 
-  // ★ ループ再生の場合、AudioGeneratorWAVが動作中ならseekで先頭へ
-  if (isLoop && _wav_gen[tStubNum]->isRunning()) {
-    if (_previousSources[tStubNum] != nullptr) {
-      if (!_previousSources[tStubNum]->seek(0, SEEK_SET)) {
-        USBSerial.println("Failed to seek to start position for looping.");
-        return;
-      }
-    } else {
-      USBSerial.println("Previous audio source is null for looping.");
+  if (_wav_gen[tStubNum]->isRunning()) {
+    _wav_gen[tStubNum]->stop();
+  }
+  // ★ 初回または非ループ時はAudioFileSourceを新規作成
+  if (_previousSources[tStubNum] != nullptr) {
+    delete _previousSources[tStubNum];
+    _previousSources[tStubNum] = nullptr;
+  }
+
+  AudioFileSource *src = nullptr;
+  if (_audioStorageType[idx] == RAM_STORAGE) {
+    src = new AudioFileSourcePROGMEM(_audioRAM[idx], _audioDataSize[idx]);
+    if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
+      USBSerial.println("Failed to start WAV generator with RAM data");
+      delete src;
       return;
     }
   } else {
-    // ★ 初回または非ループ時はAudioFileSourceを新規作成
-    if (_previousSources[tStubNum] != nullptr) {
-      delete _previousSources[tStubNum];
-      _previousSources[tStubNum] = nullptr;
+    src = new AudioFileSourceLittleFS(_audioFileNames[idx].c_str());
+    if (!src->isOpen()) {
+      USBSerial.printf("Failed to open file: %s\n",
+                       _audioFileNames[idx].c_str());
+      delete src;
+      return;
     }
-
-    AudioFileSource *src = nullptr;
-    if (_audioStorageType[idx] == RAM_STORAGE) {
-      src = new AudioFileSourcePROGMEM(_audioRAM[idx], _audioDataSize[idx]);
-      if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
-        USBSerial.println("Failed to start WAV generator with RAM data");
-        delete src;
-        return;
-      }
-    } else {
-      src = new AudioFileSourceLittleFS(_audioFileNames[idx].c_str());
-      if (!src->isOpen()) {
-        USBSerial.printf("Failed to open file: %s\n",
-                         _audioFileNames[idx].c_str());
-        delete src;
-        return;
-      }
-      if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
-        USBSerial.println("Failed to start WAV generator with FS data");
-        delete src;
-        return;
-      }
+    if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
+      USBSerial.println("Failed to start WAV generator with FS data");
+      delete src;
+      return;
     }
-    _previousSources[tStubNum] = src;
   }
-
+  _previousSources[tStubNum] = src;
   isPlayAudio[tStubNum] = true;
-  USBSerial.printf("Succeed to play with stub: %d\n", tStubNum);
+  DEBUG_PRINTF("Succeed to play with stub: %d\n", tStubNum);
 }
 
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,

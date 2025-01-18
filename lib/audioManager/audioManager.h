@@ -16,7 +16,7 @@
 #define VOLUME_MAX 23     //ボリュームの最大値
 
 // #define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
-#define STUB_NUM 4  // お化け屋敷の時は 6 必要（playCmd=3, oneshot_bgmのため）
+#define STUB_NUM 6  // FPS/迷路デモするなら 6 必要（playCmd=3, oneshot_bgmのため）
 #define RAM_STORAGE 0
 #define FS_STORAGE 1
 #define POSITION_NUM 1
