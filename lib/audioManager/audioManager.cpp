@@ -91,6 +91,7 @@ AudioFileSource *_previousSources[STUB_NUM] = {nullptr};
 // [cat][pos][dataID][_subID][isRight]
 uint8_t _audioDataIndex[CATEGORY_NUM][POSITION_NUM][DATA_NUM][SUB_DATA_NUM][2];
 size_t _audioDataSize[SOUND_FILE_NUM];
+uint8_t _categoryNum[CATEGORY_NUM];
 uint8_t _dataID[STUB_NUM];
 uint8_t _subID[STUB_NUM];
 uint8_t _volume[STUB_NUM];
@@ -227,7 +228,7 @@ void stopAudio(uint8_t stub) {
 void playAudio(uint8_t tStubNum, uint8_t tVol, bool isLoop) {
   int isLR = (tStubNum % 2 == 0) ? 0 : 1;
   uint8_t pos = 0;  // pos = 0 は仮置き
-  uint8_t idx = _audioDataIndex[_settings.categoryNum][pos][_dataID[tStubNum]]
+  uint8_t idx = _audioDataIndex[_categoryNum[tStubNum]][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
 
   _volume[tStubNum] = tVol;
@@ -304,9 +305,12 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
     _ignoreLoopData = false;
   }
 
-  // 通常の処理
+  // カテゴリーを99で通すのはNG。ファイル名と紐づいているので、
+  // data[0]とファイルのカテゴリは必ず合わないといけない。
+  // カテゴリに限らず通すなら isEventModeで通す（audioManager.h）
+  // 後日 adjustParams.h に移すこと（set isEventModeを実装する）
   uint8_t playCmd = data[7];
-  if ((data[0] == _settings.categoryNum || data[0] == 99) &&
+  if ((data[0] == _settings.categoryNum || isEventMode) &&
       (data[1] == _settings.channelId || data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
     if (playCmd == 2) {
@@ -330,6 +334,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       }
 
       for (int i = startIdx; i <= startIdx + 1; ++i) {
+        _categoryNum[i] = data[0];
         _dataID[i] = data[3];
         _subID[i] = data[4];
         _volume[i] = data[5 + i % 2];

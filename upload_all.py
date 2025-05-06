@@ -4,7 +4,9 @@ import os
 import time
 
 # VSCodeのUIで選択中の環境を取得（デフォルトは "DuoWL_V3-ESPNOW"）
-TARGET_ENV = os.getenv('PIOENV', 'DuoWL_V3-ESPNOW')
+# TARGET_ENV = os.getenv('PIOENV', 'DuoWL_V3-ESPNOW')
+TARGET_ENV = os.getenv('PIOENV', 'DuoWL_V2-ESPNOW')
+
 
 # ESP32のポートを検出する関数
 def find_esp32_ports():
@@ -29,6 +31,17 @@ def upload_program_and_fs():
 
     for device in devices:
         print(f"\n{device} に {TARGET_ENV} 環境でファームウェアとファイルシステムをアップロードします...")
+
+        # 0️⃣ フラッシュの消去
+        try:
+            print(f"{device} のフラッシュを消去しています...")
+            result_erase = subprocess.run(["pio", "run", "-e", TARGET_ENV, "-t", "erase", "--upload-port", device], check=True)
+            print(f"{device} のフラッシュ消去が完了しました。")
+        except subprocess.CalledProcessError:
+            print(f"{device} のフラッシュ消去に失敗しました。")
+            continue  # 消去が失敗した場合、次のデバイスへ
+
+        time.sleep(2)  # デバイスのリセット待ち
 
         # 1️⃣ ファームウェア（プログラム）のアップロード
         try:

@@ -115,7 +115,7 @@ void setup() {
                           &thp[1], 1);
 #elif MQTT
   xTaskCreatePinnedToCore(TaskUI_MQTT, "TaskUI_MQTT", 4096, NULL, 23, &thp[1],
-                          about : blank #blocked 1);
+                          1);
 #endif
 }
 void loop() {
