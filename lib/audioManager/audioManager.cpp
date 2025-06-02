@@ -1,4 +1,3 @@
-
 #include "audioManager.h"
 #include <LittleFS.h>
 #include <string>
@@ -106,6 +105,12 @@ uint8_t _lastData[8];  // データの長さが8バイトの場合（適宜変�
 const unsigned long _ignoreDuration = 300;  // 一定時間以内の重複データを無視
 bool _ignoreLoopData = false;  // ループ再生データを無視するためのフラグ
 
+// 送信機・中継機からの重複メッセージ無視処理
+unsigned long _lastDuplicateCheckTime = 0;
+uint8_t _lastDuplicateData[8];  // 重複チェック用の前回データ
+const unsigned long _duplicateIgnoreDuration =
+    50;  // 50ms以内の重複データを無視
+
 bool isSameData(const uint8_t *data, int len) {
   for (int i = 0; i < len; i++) {
     if (data[i] != _lastData[i]) {
@@ -113,6 +118,18 @@ bool isSameData(const uint8_t *data, int len) {
     }
   }
   return true;  // 全て同じであれば重複
+}
+
+// data[2]以外が同じかどうかをチェックする関数
+bool isSameDataExceptPos2(const uint8_t *data, const uint8_t *lastData,
+                          int len) {
+  for (int i = 0; i < len; i++) {
+    if (i == 2) continue;  // data[2]はスキップ
+    if (data[i] != lastData[i]) {
+      return false;  // data[2]以外で異なるバイトがあれば別データ
+    }
+  }
+  return true;  // data[2]以外が全て同じであれば重複
 }
 
 // モード選択の対象にするIDを格納
@@ -272,18 +289,22 @@ void playAudio(uint8_t tStubNum, uint8_t tVol, bool isLoop) {
 
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len) {
-  // pingpongテスト用
-  // uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-  // esp_err_t result = esp_now_send(broadcastAddress, data, data_len);
-  // if (result == ESP_OK) {
-  //   Serial.println("Ping送信成功");
-  // } else {
-  //   Serial.printf("Ping送信失敗: %d\n", result);
-  // }
-  // return;
-  // ★ 処理開始時刻の記録（μs単位）
   unsigned long recvStartTime = micros();
   unsigned long currentTime = millis();
+
+  // 送信機・中継機からの重複メッセージチェック（data[2]以外が同じ場合）
+  if (currentTime - _lastDuplicateCheckTime < _duplicateIgnoreDuration &&
+      isSameDataExceptPos2(data, _lastDuplicateData, data_len)) {
+    DEBUG_PRINTLN("Ignoring duplicate message from transmitter/relay");
+    return;
+  }
+
+  // 前回受信データを更新
+  _lastDuplicateCheckTime = currentTime;
+  for (int i = 0; i < data_len; i++) {
+    _lastDuplicateData[i] = data[i];
+  }
+
   // ループ再生（data[7] == 1）のデータで、無視期間中の場合
   if (_ignoreLoopData && currentTime - _lastReceiveTime < _ignoreDuration) {
     DEBUG_PRINTLN("Ignoring loop data during _ignoreDuration");
@@ -298,6 +319,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
 
   // ループ再生のデータ（data[7] ==
   // 1）の場合、無視フラグを立てて無視期間を設定
+  // 中継モード（data[2] != 50）の場合は干渉させない。あくまで暫定処理
   if (data[7] == 1) {
     _ignoreLoopData = true;
     _lastReceiveTime = currentTime;
@@ -427,13 +449,33 @@ void playAudioInLoop() {
     if (isPlayAudio[iStub]) {
       // DEBUG_PRINTF("playing stub: ");
       // DEBUG_PRINTLN(iStub);
-      if ((iStub == 2 && _wav_gen[2]->isRunning()) ||
-          (iStub == 3 && _wav_gen[3]->isRunning())) {  // loop _stub case
-        if (_wav_gen[iStub]->isRunning()) {
-          if (!_wav_gen[iStub]->loop()) {
-            // stopAudio(iStub); //コメントアウトの意味は不明
+      if ((iStub == 2 || iStub == 3) &&
+          _wav_gen[iStub]->isRunning()) {  // loop _stub case
+        if (!_wav_gen[iStub]->loop()) {
+          // --- ギャップレスループ再生 ---
+          // 新しい AudioGeneratorWAV を生成し、準備が整ってから置き換える。
+          bool restarted = false;
+          if (_previousSources[iStub] != nullptr &&
+              _previousSources[iStub]->seek(0, SEEK_SET)) {
+            AudioGeneratorWAV *newGen = new AudioGeneratorWAV();
+            if (newGen->begin(_previousSources[iStub], _stub[iStub])) {
+              _stub[iStub]->SetGain((float)_volume[iStub] / maxVol);
+
+              // 旧インスタンスを止めて破棄
+              _wav_gen[iStub]->stop();
+              delete _wav_gen[iStub];
+              _wav_gen[iStub] = newGen;
+
+              isPlayAudio[iStub] = true;
+              restarted = true;
+            } else {
+              delete newGen;
+            }
+          }
+
+          if (!restarted) {
+            // 失敗時のみ従来処理（AudioFileSource再生成）
             playAudio(iStub, _volume[iStub], true);
-            delay(5);
           }
         }
       } else {

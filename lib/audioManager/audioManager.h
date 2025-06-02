@@ -10,7 +10,7 @@
 #define SOUND_FILE_NUM 60  // 読み込むファイルの最大数（＝/data 内のファイル数）
 #define DATA_NUM 25        // 各カテゴリのデータ最大数
 #define SUB_DATA_NUM 6     // sub_id の最大数
-const bool isEventMode = true;  // イベント時にカテゴリに限らず全て通すか
+const bool isEventMode = false;  // イベント時にカテゴリに限らず全て通すか
 
 //////////////////////////////////
 // 以下は基本固定
