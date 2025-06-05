@@ -380,11 +380,23 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   float processingTimeMs = (recvEndTime - recvStartTime) / 1000.0;
 
   // ★ 処理時間の出力
-  DEBUG_PRINTF("★ 受信から音声再生開始までの遅延: %.3f ms\n", processingTimeMs);
+  // DEBUG_PRINTF("★ 受信から音声再生開始までの遅延: %.3f ms\n", processingTimeMs);
 }
 
 // MQTT接続にESPNOWのコールバックを実行するためのリレー関数
 void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
+  // デバッグ出力（USBSerialで確実に出力）
+  USBSerial.println("=== PlaySndFromMQTTcallback START ===");
+  USBSerial.print("Topic: ");
+  USBSerial.println(topic);
+  USBSerial.print("Payload length: ");
+  USBSerial.println(length);
+  USBSerial.print("Payload: ");
+  for (unsigned int i = 0; i < length; i++) {
+    USBSerial.print((char)payload[i]);
+  }
+  USBSerial.println();
+  
   DEBUG_PRINTLN();
   DEBUG_PRINT("Message arrived in topic: ");
   DEBUG_PRINTLN(topic);
@@ -420,6 +432,17 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   dataPacket.lVol = values[5];
   dataPacket.rVol = values[6];
   dataPacket.playCmd = values[7];
+  
+  // 変換後のデータを出力
+  USBSerial.println("=== Converted DataPacket ===");
+  USBSerial.print("category: "); USBSerial.println(dataPacket.category);
+  USBSerial.print("channelId: "); USBSerial.println(dataPacket.channelId);
+  USBSerial.print("devicePos: "); USBSerial.println(dataPacket.devicePos);
+  USBSerial.print("dataID: "); USBSerial.println(dataPacket.dataID);
+  USBSerial.print("subID: "); USBSerial.println(dataPacket.subID);
+  USBSerial.print("lVol: "); USBSerial.println(dataPacket.lVol);
+  USBSerial.print("rVol: "); USBSerial.println(dataPacket.rVol);
+  USBSerial.print("playCmd: "); USBSerial.println(dataPacket.playCmd);
 
   // 制限されたIDがあるか確認
   for (size_t i = 0; i < _numLimitIDs; ++i) {
@@ -440,8 +463,12 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   // ダミーのMACアドレス（適宜設定）
   uint8_t dummy_mac_addr[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00};
 
+  USBSerial.println("=== Calling PlaySndOnDataRecv ===");
+  
   // ESP-NOWのコールバック関数を呼び出す
   PlaySndOnDataRecv(dummy_mac_addr, (uint8_t *)&dataPacket, sizeof(dataPacket));
+  
+  USBSerial.println("=== PlaySndFromMQTTcallback END ===");
 }
 
 void playAudioInLoop() {
