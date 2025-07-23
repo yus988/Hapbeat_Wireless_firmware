@@ -107,6 +107,15 @@ void setup() {
     USBSerial.println("waiting for WiFi connection...");
     delay(500);  // 少し待って再試行
   };
+
+#elif WIRED
+  // WIRED用初期化
+  USBSerial.println("init Hapbeat WIRED mode");
+  const char *wiredMsg = "WIRED Mode Ready";
+  displayManager::printEfont(&_display, wiredMsg, 0, 8);
+  _display.display();
+  // 振動アンプの初期化は必須
+  setFixGain(false);  // ボリューム調整モードで開始
 #endif
 
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 20, &thp[0], 1);
@@ -115,6 +124,9 @@ void setup() {
                           &thp[1], 1);
 #elif MQTT
   xTaskCreatePinnedToCore(TaskUI_MQTT, "TaskUI_MQTT", 4096, NULL, 23, &thp[1],
+                          1);
+#elif WIRED
+  xTaskCreatePinnedToCore(TaskUI_WIRED, "TaskUI_WIRED", 4096, NULL, 23, &thp[1],
                           1);
 #endif
 }

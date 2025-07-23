@@ -11,14 +11,16 @@
 #include <audioManager.h>
 #include <displayManager.h>
 
-#if defined(ESPNOW) && !defined(MQTT)
+#if defined(ESPNOW) && !defined(MQTT) && !defined(WIRED)
   #include <espnow_manager.h>
   #include "./taskESPNOW/taskESPNOW.h"
-#elif defined(MQTT) && !defined(ESPNOW)
+#elif defined(MQTT) && !defined(ESPNOW) && !defined(WIRED)
   #include <MQTT_manager.h>
   #include "./taskMQTT/taskMQTT.h"
+#elif defined(WIRED) && !defined(ESPNOW) && !defined(MQTT)
+  #include "./taskWIRED/taskWIRED.h"
 #else
-  #error "Either ESPNOW or MQTT must be defined, not both."
+  #error "Either ESPNOW, MQTT, or WIRED must be defined, not multiple or none."
 #endif
 
 #ifdef EN_MCP4018
