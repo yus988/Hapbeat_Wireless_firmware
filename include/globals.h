@@ -50,6 +50,7 @@ extern const CRGB COLOR_DANGER_MODE;
 extern const char *GAIN_STEP_TXT[];
 extern const int BAT_NOTIFY_SOC;
 extern const int BAT_NOTIFY_VOL;
+extern const bool ENABLE_WIRED_MUTE_FUNCTION;
 
 #ifdef MQTT
 extern const ID_definitions ID_MSG;

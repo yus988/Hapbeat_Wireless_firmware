@@ -116,27 +116,32 @@ void TaskWiredNeck() {
       if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
         _isBtnPressed[i] = true;
         
-        // どのボタンでもミュート/解除をトグル
-        isMuted = !isMuted;
+        // ミュート機能が有効な場合のみミュート/解除をトグル
+        if (ENABLE_WIRED_MUTE_FUNCTION) {
+          isMuted = !isMuted;
         
-        if (isMuted) {
-          // ミュート有効：音量0の固定モード
-          _isFixMode = true;
-          audioManager::setIsFixMode(true);
-          setAmpStepGain(0, false);  // 音量0に設定
-          updateMuteDisplay();       // ミュート表示
-          _leds[0] = COLOR_FIX_MODE; // LED色変更（ミュート時）
+          if (isMuted) {
+            // ミュート有効：音量0の固定モード
+            _isFixMode = true;
+            audioManager::setIsFixMode(true);
+            setAmpStepGain(0, false);  // 音量0に設定
+            updateMuteDisplay();       // ミュート表示
+            _leds[0] = COLOR_FIX_MODE; // LED色変更（ミュート時）
+          } else {
+            // ミュート解除：可変ボリューム制御に戻る
+            _isFixMode = false;
+            audioManager::setIsFixMode(false);
+            setAmpStepGain(_ampVolStep, false);  // 現在のアナログ値に復帰
+            updateVolumeDisplay(_ampVolStep);    // ボリューム表示復帰
+            _leds[0] = COLOR_VOL_MODE;           // LED色変更
+          }
+          FastLED.show();
+          
+          USBSerial.printf("Button %d pressed - Mute: %s\n", i, isMuted ? "ON" : "OFF");
         } else {
-          // ミュート解除：可変ボリューム制御に戻る
-          _isFixMode = false;
-          audioManager::setIsFixMode(false);
-          setAmpStepGain(_ampVolStep, false);  // 現在のアナログ値に復帰
-          updateVolumeDisplay(_ampVolStep);    // ボリューム表示復帰
-          _leds[0] = COLOR_VOL_MODE;           // LED色変更
+          // ミュート機能が無効の場合：ボタンが押されても何もしない
+          USBSerial.printf("Button %d pressed - Mute function disabled\n", i);
         }
-        FastLED.show();
-        
-        USBSerial.printf("Button %d pressed - Mute: %s\n", i, isMuted ? "ON" : "OFF");
       }
       if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) {
         _isBtnPressed[i] = false;

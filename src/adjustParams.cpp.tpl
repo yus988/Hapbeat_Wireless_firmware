@@ -43,6 +43,8 @@ const CRGB COLOR_FIX_MODE = CRGB(10, 10, 10);
 const CRGB COLOR_VOL_MODE = CRGB(0, 0, 10);
 // 装着位置の指定
 const int DEVICE_POS = 0;  // 首
+// Wired環境でのミュート機能の有効/無効 (true: 有効, false: 無効)
+const bool ENABLE_WIRED_MUTE_FUNCTION = true;
 #endif
 
 #ifdef BAND_V2

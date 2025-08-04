@@ -26,6 +26,9 @@ extern const int GAIN_STEP_TEXT_POS[2];
 extern const int FONT_SIZE;
 extern const int DEVICE_POS;
 
+// Wired環境用設定
+extern const bool ENABLE_WIRED_MUTE_FUNCTION;
+
 extern const int ADJ_VOL_STEP;
 
 // 各配列のサイズを定義
