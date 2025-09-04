@@ -86,7 +86,11 @@ void TaskBandESPNOW() {
     // BQ27220_Cmd::printBatteryStats();
     // ボタン操作
     for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
-      if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
+      int pinState = digitalRead(_SW_PIN[i]);
+      // デバッグ出力（必要に応じてコメントアウト）
+      // USBSerial.printf("SW[%d] pin=%d state=%d pressed=%d\n", i, _SW_PIN[i], pinState, _isBtnPressed[i]);
+      
+      if (!pinState && !_isBtnPressed[i]) {
   #if defined(BAND_V3)
         // SW番号は上から、0, 2, 1 の並びであることに注意
         if (i == 0) {
@@ -165,16 +169,28 @@ void TaskBandESPNOW() {
         }
 
   #else  // BAND_V2保持
-        if (i == 2 && channel_ID < CHANNEL_ID_TXT_SIZE - 1) {
-          channel_ID += 1;
-        } else if (i == 0 && channel_ID > 0) {
-          channel_ID -= 1;
-        } else if (i == 1) {
+        // Band_V2には2つのスイッチしかない（SW0_PIN, SW1_PIN）
+        if (i == 0) {  // SW0_PIN (14)
+          // チャンネル切り替え
+          if (channel_ID < CHANNEL_ID_TXT_SIZE - 1) {
+            channel_ID += 1;
+          } else {
+            channel_ID = 0;
+          }
+          audioManager::setChannelID(channel_ID);
+          displayManager::updateOLED(&_display, category_ID, channel_ID,
+                                     _isFixMode ? FIX_GAIN_STEP[category_ID] : volumeLevels[category_ID]);
+        } else if (i == 1) {  // SW1_PIN (13)
+          // カテゴリ切り替え
           if (category_ID < CATEGORY_ID_TXT_SIZE - 1) {
             category_ID += 1;
           } else {
             category_ID = 0;
           }
+          audioManager::setCategoryID(category_ID);
+          displayManager::updateOLED(&_display, category_ID, channel_ID,
+                                     _isFixMode ? FIX_GAIN_STEP[category_ID] : volumeLevels[category_ID]);
+          setAmpStepGain(_isFixMode ? FIX_GAIN_STEP[category_ID] : volumeLevels[category_ID], true);
         }
   #endif
         _isBtnPressed[i] = true;

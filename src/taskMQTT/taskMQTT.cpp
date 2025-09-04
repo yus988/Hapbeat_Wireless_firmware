@@ -16,6 +16,19 @@ void messageReceived(char *topic, byte *payload, unsigned int length) {
 }
 
 void MQTTcallback(char *topic, byte *payload, unsigned int length) {
+  // MQTTメッセージ受信時のデバッグ出力
+  USBSerial.println("=== MQTT Message RECEIVED ===");
+  USBSerial.print("Topic: ");
+  USBSerial.println(topic);
+  USBSerial.print("Payload length: ");
+  USBSerial.println(length);
+  USBSerial.print("Payload: ");
+  for (unsigned int i = 0; i < length; i++) {
+    USBSerial.print((char)payload[i]);
+  }
+  USBSerial.println();
+  USBSerial.println("============================");
+  
   // 各種ICをON
   digitalWrite(EN_VIBAMP_PIN, HIGH);
   audioManager::PlaySndFromMQTTcallback(topic, payload, length);

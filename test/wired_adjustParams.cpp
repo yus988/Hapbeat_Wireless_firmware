@@ -23,7 +23,8 @@
 const char *CATEGORY_ID_TXT[] = {"cat_0", "cat_1", "cat_2"};
 // 装着者番号やチャンネル名の設定
 const char *CHANNEL_ID_TXT[] = {"ch_0", "ch_1", "ch_2", "ch_3"};
-// 各 カテゴリにおける固定モード時のボリューム値。
+
+  // 各 カテゴリにおける固定モード時のボリューム値。
 // 0--23まで24段階、数値は大きいほど振動が大きくなる
 const int FIX_GAIN_STEP[] = {20, 16, 5};
 
@@ -36,15 +37,23 @@ const char *GAIN_STEP_TXT[] = {"0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",
 const int CATEGORY_TEXT_POS[2] = {0, 8};
 const int CHANNEL_TEXT_POS[2] = {54, 8};
 const int GAIN_STEP_TEXT_POS[2] = {100, 8};
-const int DISP_ROT = 0;   // ディスプレイの向き（deg）上下反転にするなら90
+
+#ifdef WIRED
+const int DISP_ROT = 90;   // ディスプレイの向き（deg）上下反転にするなら90
 const int FONT_SIZE = 1;  // テキストサイズが1のときy=8で縦方向の中心
+// ボリュームの固定/変動モード字のLEDカラー設定（r, g, b) 8bit
+const CRGB COLOR_FIX_MODE = CRGB(0, 0, 10);
+const CRGB COLOR_VOL_MODE = CRGB(10, 10, 10);
+#else       
+const int DISP_ROT = 0;   // ディスプレイの向き（deg）上下反転にするなら90
+const int FONT_SIZE = 8;  // テキストサイズが1のときy=8で縦方向の中心
 // ボリュームの固定/変動モード字のLEDカラー設定（r, g, b) 8bit
 const CRGB COLOR_FIX_MODE = CRGB(10, 10, 10);
 const CRGB COLOR_VOL_MODE = CRGB(0, 0, 10);
+#endif
+
 // 装着位置の指定
 const int DEVICE_POS = 0;  // 首
-// Wired環境でのミュート機能の有効/無効 (true: 有効, false: 無効)
-const bool ENABLE_WIRED_MUTE_FUNCTION = true;
 #endif
 
 #ifdef BAND_V2
@@ -73,8 +82,8 @@ const int DEVICE_POS = 5;  // 左腕
 
   #ifdef MQTT
 const unsigned int BATTERY_STATUS_INTERVAL = 30000;
-COLOR_FIX_MODE = CRGB(0, 0, 2);  // 無制限
-COLOR_VOL_MODE = CRGB(2, 0, 0);  // 制限
+const CRGB COLOR_FIX_MODE = CRGB(0, 0, 2);  // 無制限
+const CRGB COLOR_VOL_MODE = CRGB(2, 0, 0);  // 制限
 const CRGB COLOR_DANGER_MODE = CRGB(10, 0, 0);
 const int BAT_NOTIFY_SOC = 5;                // 残量低下を通知する閾値（％）
 const int BAT_NOTIFY_VOL = 3600;             // 残量低下を通知する閾値（mV）
@@ -98,15 +107,15 @@ const char *LIMIT_ENABLE_MSG[] = {
 // ==============================
 
 // 各配列のサイズを定義
-// ESPNOWで使用
-#ifdef ESPNOW
+// ESPNOW, WIRED, MQTT 共通で使用
 const int CATEGORY_ID_TXT_SIZE =
     sizeof(CATEGORY_ID_TXT) / sizeof(CATEGORY_ID_TXT[0]);
 const int CHANNEL_ID_TXT_SIZE =
     sizeof(CHANNEL_ID_TXT) / sizeof(CHANNEL_ID_TXT[0]);
 const int GAIN_STEP_TXT_SIZE = sizeof(GAIN_STEP_TXT) / sizeof(GAIN_STEP_TXT[0]);
-#elif MQTT
-// MQTTで使用
+
+// MQTTで追加使用
+#ifdef MQTT
 const int LIMITED_IDS_SIZE =
     sizeof(LIMITED_IDS) / sizeof(LIMITED_IDS[0]);                  // サイズ定義
 const int DISP_MSG_SIZE = sizeof(DISP_MSG) / sizeof(DISP_MSG[0]);  // サイズ定義

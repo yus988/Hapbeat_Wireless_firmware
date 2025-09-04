@@ -11,14 +11,19 @@
 #include <audioManager.h>
 #include <displayManager.h>
 
-#if defined(ESPNOW) && !defined(MQTT)
+#if defined(JUDO0806) && defined(ESPNOW) && !defined(MQTT) && !defined(WIRED)
+  #include <espnow_manager.h>
+  #include "./taskJUDO0806/taskJUDO0806.h"
+#elif defined(ESPNOW) && !defined(MQTT) && !defined(WIRED) && !defined(JUDO0806)
   #include <espnow_manager.h>
   #include "./taskESPNOW/taskESPNOW.h"
-#elif defined(MQTT) && !defined(ESPNOW)
+#elif defined(MQTT) && !defined(ESPNOW) && !defined(WIRED) && !defined(JUDO0806)
   #include <MQTT_manager.h>
   #include "./taskMQTT/taskMQTT.h"
+#elif defined(WIRED) && !defined(ESPNOW) && !defined(MQTT) && !defined(JUDO0806)
+  #include "./taskWIRED/taskWIRED.h"
 #else
-  #error "Either ESPNOW or MQTT must be defined, not both."
+  #error "Either ESPNOW, MQTT, WIRED, or JUDO0806 must be defined, not multiple or none."
 #endif
 
 #ifdef EN_MCP4018
@@ -48,6 +53,7 @@ extern const CRGB COLOR_DANGER_MODE;
 extern const char *GAIN_STEP_TXT[];
 extern const int BAT_NOTIFY_SOC;
 extern const int BAT_NOTIFY_VOL;
+extern const bool ENABLE_WIRED_MUTE_FUNCTION;
 
 #ifdef MQTT
 extern const ID_definitions ID_MSG;

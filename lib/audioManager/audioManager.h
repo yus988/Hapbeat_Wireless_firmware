@@ -10,18 +10,20 @@
 #define SOUND_FILE_NUM 60  // 読み込むファイルの最大数（＝/data 内のファイル数）
 #define DATA_NUM 25        // 各カテゴリのデータ最大数
 #define SUB_DATA_NUM 6     // sub_id の最大数
+const bool isEventMode = false;  // イベント時にカテゴリに限らず全て通すか
 
 //////////////////////////////////
 // 以下は基本固定
-#define VOLUME_MAX 23     //ボリュームの最大値
+#define VOLUME_MAX 23  // ボリュームの最大値
 
 // #define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
-#define STUB_NUM 4  // お化け屋敷の時は 6 必要（playCmd=3, oneshot_bgmのため）
+#define STUB_NUM \
+  6  // FPS/迷路デモするなら 6 必要（playCmd=3, oneshot_bgmのため）
 #define RAM_STORAGE 0
 #define FS_STORAGE 1
 #define POSITION_NUM 1
 namespace audioManager {
-const int SAMPLING_RATE = 16000; //8000 だと明確に遅くなる
+const int SAMPLING_RATE = 16000;  // 8000 だと明確に遅くなる
 void initParamsEEPROM();
 void readAllSoundFiles();
 void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN);

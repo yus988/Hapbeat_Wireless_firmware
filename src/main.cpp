@@ -18,7 +18,7 @@ void setup() {
   delay(5);
   // ボタンピン設定
   for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
-    pinMode(_SW_PIN[i], INPUT);
+    pinMode(_SW_PIN[i], INPUT_PULLUP);  // プルアップ抵抗を有効化
   };
   // Show LED
   FastLED.addLeds<NEOPIXEL, LED_PIN>(_leds, 1);
@@ -83,12 +83,23 @@ void setup() {
   _leds[0] = _currentColor;
   FastLED.show();
 
-#ifdef ESPNOW
+#ifdef JUDO0806
+  // JUDO0806用初期化
+  USBSerial.println("init Hapbeat JUDO0806 mode");
+  audioManager::setCategoryID(2);  // カテゴリを2で固定
+  setFixGain(false);  // 可変モードで開始
+  const char *judoMsg = "JUDO0806 Mode Ready";
+  displayManager::printEfont(&_display, judoMsg, 0, 8);
+  _display.display();
+  espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
+
+#elif ESPNOW
   // ここはタスク依存
   displayManager::setTitle(CATEGORY_ID_TXT, CATEGORY_ID_TXT_SIZE,
                            CHANNEL_ID_TXT, CHANNEL_ID_TXT_SIZE, GAIN_STEP_TXT,
                            GAIN_STEP_TXT_SIZE);
   setFixGain(true);  // 実行しないと VibAmpVolume = 0 のままなので必須
+  _display.display();  // ESPNOW環境でも初期表示を確実に実行
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 
 #elif MQTT
@@ -107,15 +118,30 @@ void setup() {
     USBSerial.println("waiting for WiFi connection...");
     delay(500);  // 少し待って再試行
   };
+
+#elif WIRED
+  // WIRED用初期化
+  USBSerial.println("init Hapbeat WIRED mode");
+  const char *wiredMsg = "WIRED Mode Ready";
+  displayManager::printEfont(&_display, wiredMsg, 0, 8);
+  _display.display();
+  // 振動アンプの初期化は必須
+  setFixGain(false);  // ボリューム調整モードで開始
 #endif
 
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 20, &thp[0], 1);
-#ifdef ESPNOW
+#ifdef JUDO0806
+  xTaskCreatePinnedToCore(TaskUI_JUDO0806, "TaskUI_JUDO0806", 4096, NULL, 23,
+                          &thp[1], 1);
+#elif ESPNOW
   xTaskCreatePinnedToCore(TaskUI_ESPNOW, "TaskUI_ESPNOW", 4096, NULL, 23,
                           &thp[1], 1);
 #elif MQTT
   xTaskCreatePinnedToCore(TaskUI_MQTT, "TaskUI_MQTT", 4096, NULL, 23, &thp[1],
-                          about : blank #blocked 1);
+                          1);
+#elif WIRED
+  xTaskCreatePinnedToCore(TaskUI_WIRED, "TaskUI_WIRED", 4096, NULL, 23, &thp[1],
+                          1);
 #endif
 }
 void loop() {

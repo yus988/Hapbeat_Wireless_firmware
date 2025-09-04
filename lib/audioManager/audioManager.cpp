@@ -1,4 +1,3 @@
-
 #include "audioManager.h"
 #include <LittleFS.h>
 #include <string>
@@ -91,6 +90,7 @@ AudioFileSource *_previousSources[STUB_NUM] = {nullptr};
 // [cat][pos][dataID][_subID][isRight]
 uint8_t _audioDataIndex[CATEGORY_NUM][POSITION_NUM][DATA_NUM][SUB_DATA_NUM][2];
 size_t _audioDataSize[SOUND_FILE_NUM];
+uint8_t _categoryNum[CATEGORY_NUM];
 uint8_t _dataID[STUB_NUM];
 uint8_t _subID[STUB_NUM];
 uint8_t _volume[STUB_NUM];
@@ -105,6 +105,12 @@ uint8_t _lastData[8];  // データの長さが8バイトの場合（適宜変�
 const unsigned long _ignoreDuration = 300;  // 一定時間以内の重複データを無視
 bool _ignoreLoopData = false;  // ループ再生データを無視するためのフラグ
 
+// 送信機・中継機からの重複メッセージ無視処理
+unsigned long _lastDuplicateCheckTime = 0;
+uint8_t _lastDuplicateData[8];  // 重複チェック用の前回データ
+const unsigned long _duplicateIgnoreDuration =
+    50;  // 50ms以内の重複データを無視
+
 bool isSameData(const uint8_t *data, int len) {
   for (int i = 0; i < len; i++) {
     if (data[i] != _lastData[i]) {
@@ -112,6 +118,18 @@ bool isSameData(const uint8_t *data, int len) {
     }
   }
   return true;  // 全て同じであれば重複
+}
+
+// data[2]以外が同じかどうかをチェックする関数
+bool isSameDataExceptPos2(const uint8_t *data, const uint8_t *lastData,
+                          int len) {
+  for (int i = 0; i < len; i++) {
+    if (i == 2) continue;  // data[2]はスキップ
+    if (data[i] != lastData[i]) {
+      return false;  // data[2]以外で異なるバイトがあれば別データ
+    }
+  }
+  return true;  // data[2]以外が全て同じであれば重複
 }
 
 // モード選択の対象にするIDを格納
@@ -210,7 +228,7 @@ void readAllSoundFiles() {
 
 // 引数無しの場合は全てのstubを停止
 void stopAudio(uint8_t stub) {
-  // デフォルト=99はヘッダーに記載。taskUIからの呼び出し時に必須
+  // デフォルト=99はヘッダーファイルに記載。taskUIからの呼び出し時に必須
   if (stub == 99) {
     for (int iStub = 0; iStub < STUB_NUM; iStub++) {
       _wav_gen[iStub]->stop();
@@ -227,73 +245,66 @@ void stopAudio(uint8_t stub) {
 void playAudio(uint8_t tStubNum, uint8_t tVol, bool isLoop) {
   int isLR = (tStubNum % 2 == 0) ? 0 : 1;
   uint8_t pos = 0;  // pos = 0 は仮置き
-  uint8_t idx = _audioDataIndex[_settings.categoryNum][pos][_dataID[tStubNum]]
+  uint8_t idx = _audioDataIndex[_categoryNum[tStubNum]][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
 
   _volume[tStubNum] = tVol;
   _stub[tStubNum]->SetGain((float)tVol / maxVol);
 
-  // ★ ループ再生の場合、AudioGeneratorWAVが動作中ならseekで先頭へ
-  if (isLoop && _wav_gen[tStubNum]->isRunning()) {
-    if (_previousSources[tStubNum] != nullptr) {
-      if (!_previousSources[tStubNum]->seek(0, SEEK_SET)) {
-        USBSerial.println("Failed to seek to start position for looping.");
-        return;
-      }
-    } else {
-      USBSerial.println("Previous audio source is null for looping.");
+  if (_wav_gen[tStubNum]->isRunning()) {
+    _wav_gen[tStubNum]->stop();
+  }
+  // ★ 初回または非ループ時はAudioFileSourceを新規作成
+  if (_previousSources[tStubNum] != nullptr) {
+    delete _previousSources[tStubNum];
+    _previousSources[tStubNum] = nullptr;
+  }
+
+  AudioFileSource *src = nullptr;
+  if (_audioStorageType[idx] == RAM_STORAGE) {
+    src = new AudioFileSourcePROGMEM(_audioRAM[idx], _audioDataSize[idx]);
+    if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
+      USBSerial.println("Failed to start WAV generator with RAM data");
+      delete src;
       return;
     }
   } else {
-    // ★ 初回または非ループ時はAudioFileSourceを新規作成
-    if (_previousSources[tStubNum] != nullptr) {
-      delete _previousSources[tStubNum];
-      _previousSources[tStubNum] = nullptr;
+    src = new AudioFileSourceLittleFS(_audioFileNames[idx].c_str());
+    if (!src->isOpen()) {
+      USBSerial.printf("Failed to open file: %s\n",
+                       _audioFileNames[idx].c_str());
+      delete src;
+      return;
     }
-
-    AudioFileSource *src = nullptr;
-    if (_audioStorageType[idx] == RAM_STORAGE) {
-      src = new AudioFileSourcePROGMEM(_audioRAM[idx], _audioDataSize[idx]);
-      if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
-        USBSerial.println("Failed to start WAV generator with RAM data");
-        delete src;
-        return;
-      }
-    } else {
-      src = new AudioFileSourceLittleFS(_audioFileNames[idx].c_str());
-      if (!src->isOpen()) {
-        USBSerial.printf("Failed to open file: %s\n",
-                         _audioFileNames[idx].c_str());
-        delete src;
-        return;
-      }
-      if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
-        USBSerial.println("Failed to start WAV generator with FS data");
-        delete src;
-        return;
-      }
+    if (!_wav_gen[tStubNum]->begin(src, _stub[tStubNum])) {
+      USBSerial.println("Failed to start WAV generator with FS data");
+      delete src;
+      return;
     }
-    _previousSources[tStubNum] = src;
   }
-
+  _previousSources[tStubNum] = src;
   isPlayAudio[tStubNum] = true;
-  USBSerial.printf("Succeed to play with stub: %d\n", tStubNum);
+  DEBUG_PRINTF("Succeed to play with stub: %d\n", tStubNum);
 }
 
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len) {
-  // pingpongテスト用
-  // uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-  // esp_err_t result = esp_now_send(broadcastAddress, data, data_len);
-  // if (result == ESP_OK) {
-  //   Serial.println("Ping送信成功");
-  // } else {
-  //   Serial.printf("Ping送信失敗: %d\n", result);
-  // }
-  // return;
-  // ★ 処理開始時刻の記録（μs単位）
   unsigned long recvStartTime = micros();
   unsigned long currentTime = millis();
+
+  // 送信機・中継機からの重複メッセージチェック（data[2]以外が同じ場合）
+  if (currentTime - _lastDuplicateCheckTime < _duplicateIgnoreDuration &&
+      isSameDataExceptPos2(data, _lastDuplicateData, data_len)) {
+    DEBUG_PRINTLN("Ignoring duplicate message from transmitter/relay");
+    return;
+  }
+
+  // 前回受信データを更新
+  _lastDuplicateCheckTime = currentTime;
+  for (int i = 0; i < data_len; i++) {
+    _lastDuplicateData[i] = data[i];
+  }
+
   // ループ再生（data[7] == 1）のデータで、無視期間中の場合
   if (_ignoreLoopData && currentTime - _lastReceiveTime < _ignoreDuration) {
     DEBUG_PRINTLN("Ignoring loop data during _ignoreDuration");
@@ -308,6 +319,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
 
   // ループ再生のデータ（data[7] ==
   // 1）の場合、無視フラグを立てて無視期間を設定
+  // 中継モード（data[2] != 50）の場合は干渉させない。あくまで暫定処理
   if (data[7] == 1) {
     _ignoreLoopData = true;
     _lastReceiveTime = currentTime;
@@ -315,9 +327,12 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
     _ignoreLoopData = false;
   }
 
-  // 通常の処理
+  // カテゴリーを99で通すのはNG。ファイル名と紐づいているので、
+  // data[0]とファイルのカテゴリは必ず合わないといけない。
+  // カテゴリに限らず通すなら isEventModeで通す（audioManager.h）
+  // 後日 adjustParams.h に移すこと（set isEventModeを実装する）
   uint8_t playCmd = data[7];
-  if ((data[0] == _settings.categoryNum || data[0] == 99) &&
+  if ((data[0] == _settings.categoryNum || isEventMode) &&
       (data[1] == _settings.channelId || data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
     if (playCmd == 2) {
@@ -341,6 +356,7 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       }
 
       for (int i = startIdx; i <= startIdx + 1; ++i) {
+        _categoryNum[i] = data[0];
         _dataID[i] = data[3];
         _subID[i] = data[4];
         _volume[i] = data[5 + i % 2];
@@ -364,11 +380,23 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   float processingTimeMs = (recvEndTime - recvStartTime) / 1000.0;
 
   // ★ 処理時間の出力
-  DEBUG_PRINTF("★ 受信から音声再生開始までの遅延: %.3f ms\n", processingTimeMs);
+  // DEBUG_PRINTF("★ 受信から音声再生開始までの遅延: %.3f ms\n", processingTimeMs);
 }
 
 // MQTT接続にESPNOWのコールバックを実行するためのリレー関数
 void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
+  // デバッグ出力（USBSerialで確実に出力）
+  USBSerial.println("=== PlaySndFromMQTTcallback START ===");
+  USBSerial.print("Topic: ");
+  USBSerial.println(topic);
+  USBSerial.print("Payload length: ");
+  USBSerial.println(length);
+  USBSerial.print("Payload: ");
+  for (unsigned int i = 0; i < length; i++) {
+    USBSerial.print((char)payload[i]);
+  }
+  USBSerial.println();
+  
   DEBUG_PRINTLN();
   DEBUG_PRINT("Message arrived in topic: ");
   DEBUG_PRINTLN(topic);
@@ -404,6 +432,17 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   dataPacket.lVol = values[5];
   dataPacket.rVol = values[6];
   dataPacket.playCmd = values[7];
+  
+  // 変換後のデータを出力
+  USBSerial.println("=== Converted DataPacket ===");
+  USBSerial.print("category: "); USBSerial.println(dataPacket.category);
+  USBSerial.print("channelId: "); USBSerial.println(dataPacket.channelId);
+  USBSerial.print("devicePos: "); USBSerial.println(dataPacket.devicePos);
+  USBSerial.print("dataID: "); USBSerial.println(dataPacket.dataID);
+  USBSerial.print("subID: "); USBSerial.println(dataPacket.subID);
+  USBSerial.print("lVol: "); USBSerial.println(dataPacket.lVol);
+  USBSerial.print("rVol: "); USBSerial.println(dataPacket.rVol);
+  USBSerial.print("playCmd: "); USBSerial.println(dataPacket.playCmd);
 
   // 制限されたIDがあるか確認
   for (size_t i = 0; i < _numLimitIDs; ++i) {
@@ -424,8 +463,12 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   // ダミーのMACアドレス（適宜設定）
   uint8_t dummy_mac_addr[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00};
 
+  USBSerial.println("=== Calling PlaySndOnDataRecv ===");
+  
   // ESP-NOWのコールバック関数を呼び出す
   PlaySndOnDataRecv(dummy_mac_addr, (uint8_t *)&dataPacket, sizeof(dataPacket));
+  
+  USBSerial.println("=== PlaySndFromMQTTcallback END ===");
 }
 
 void playAudioInLoop() {
@@ -433,13 +476,33 @@ void playAudioInLoop() {
     if (isPlayAudio[iStub]) {
       // DEBUG_PRINTF("playing stub: ");
       // DEBUG_PRINTLN(iStub);
-      if ((iStub == 2 && _wav_gen[2]->isRunning()) ||
-          (iStub == 3 && _wav_gen[3]->isRunning())) {  // loop _stub case
-        if (_wav_gen[iStub]->isRunning()) {
-          if (!_wav_gen[iStub]->loop()) {
-            // stopAudio(iStub); //コメントアウトの意味は不明
+      if ((iStub == 2 || iStub == 3) &&
+          _wav_gen[iStub]->isRunning()) {  // loop _stub case
+        if (!_wav_gen[iStub]->loop()) {
+          // --- ギャップレスループ再生 ---
+          // 新しい AudioGeneratorWAV を生成し、準備が整ってから置き換える。
+          bool restarted = false;
+          if (_previousSources[iStub] != nullptr &&
+              _previousSources[iStub]->seek(0, SEEK_SET)) {
+            AudioGeneratorWAV *newGen = new AudioGeneratorWAV();
+            if (newGen->begin(_previousSources[iStub], _stub[iStub])) {
+              _stub[iStub]->SetGain((float)_volume[iStub] / maxVol);
+
+              // 旧インスタンスを止めて破棄
+              _wav_gen[iStub]->stop();
+              delete _wav_gen[iStub];
+              _wav_gen[iStub] = newGen;
+
+              isPlayAudio[iStub] = true;
+              restarted = true;
+            } else {
+              delete newGen;
+            }
+          }
+
+          if (!restarted) {
+            // 失敗時のみ従来処理（AudioFileSource再生成）
             playAudio(iStub, _volume[iStub], true);
-            delay(5);
           }
         }
       } else {
