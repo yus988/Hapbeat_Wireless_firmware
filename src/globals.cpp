@@ -59,9 +59,10 @@ void setAmpStepGain(int step, bool updateOLED) {
   USBSerial.print("After Digipot wiper: ");
   USBSerial.print(_digipot.getWiperValue(), DEC);
   USBSerial.println("/127");
-#elif NECKLACE_V2
-  int volume = map(_currAIN, 0, 4095, 0, 255);
+#elif defined(NECKLACE_V2) || defined(BAND_V2)
+  int volume = map(step, 0, GAIN_STEP_TXT_SIZE - 1, 0, 255);
   analogWrite(AOUT_VIBVOL_PIN, volume);
+  USBSerial.printf("V2 Step: %d, Volume: %d\n", step, volume);
 #endif
   // ディスプレイにdB表示用のステップ数変換
   if (updateOLED) {

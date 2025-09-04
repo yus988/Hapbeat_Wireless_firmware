@@ -18,7 +18,7 @@ void setup() {
   delay(5);
   // ボタンピン設定
   for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
-    pinMode(_SW_PIN[i], INPUT);
+    pinMode(_SW_PIN[i], INPUT_PULLUP);  // プルアップ抵抗を有効化
   };
   // Show LED
   FastLED.addLeds<NEOPIXEL, LED_PIN>(_leds, 1);
