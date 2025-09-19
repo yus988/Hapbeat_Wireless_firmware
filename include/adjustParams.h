@@ -23,6 +23,7 @@ extern const unsigned int BATTERY_STATUS_INTERVAL;
 extern const int CATEGORY_TEXT_POS[2];
 extern const int CHANNEL_TEXT_POS[2];
 extern const int GAIN_STEP_TEXT_POS[2];
+extern const int BATTERY_TEXT_POS[2];
 extern const int FONT_SIZE;
 extern const int DEVICE_POS;
 

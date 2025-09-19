@@ -60,7 +60,10 @@ void setup() {
   // I2C関連 init
   // SDA_PIN と SCL_PIN を明示する。
   Wire.begin(SDA_PIN, SCL_PIN);  // Initialize I2C master
-  // BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, BATTERY_CAPACITY);
+#if defined(BAND_V3)
+  // Band_V3: BQ27220 初期化（容量設定は行わない）
+  BQ27220_Cmd::setupBQ27220(SDA_PIN, SCL_PIN, 0);
+#endif
 #ifdef EN_MCP4018
   // 以下の begin の中に Wire.begin() があるが、引数が無いので SDA_PIN と
   // SDA_PIN を明示できない。事前に Wire.begin(SDA_PIN, SDA_PIN) が必要
@@ -134,8 +137,13 @@ void setup() {
   xTaskCreatePinnedToCore(TaskUI_JUDO0806, "TaskUI_JUDO0806", 4096, NULL, 23,
                           &thp[1], 1);
 #elif ESPNOW
-  xTaskCreatePinnedToCore(TaskUI_ESPNOW, "TaskUI_ESPNOW", 4096, NULL, 23,
-                          &thp[1], 1);
+  #if defined(BAND_V3)
+    xTaskCreatePinnedToCore(TaskBandESPNOW, "TaskBandESPNOW", 4096, NULL, 23,
+                            &thp[1], 1);
+  #else
+    xTaskCreatePinnedToCore(TaskUI_ESPNOW, "TaskUI_ESPNOW", 4096, NULL, 23,
+                            &thp[1], 1);
+  #endif
 #elif MQTT
   xTaskCreatePinnedToCore(TaskUI_MQTT, "TaskUI_MQTT", 4096, NULL, 23, &thp[1],
                           1);

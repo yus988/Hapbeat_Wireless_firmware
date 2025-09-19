@@ -12,6 +12,9 @@ void updateOLED(Adafruit_SSD1306 *display, uint8_t categoryNum,
                 uint8_t channelNum, uint8_t gainStepNum);
 void setGain(uint8_t G_SEL_A, uint8_t G_SEL_B, uint8_t val);
 void printEfont(Adafruit_SSD1306 *display, const char *str, int posX, int posY);
+void drawBatteryMeter5(Adafruit_SSD1306 *display, int x, int y, int barW, int barH,
+                      int gap, int levels, bool blinkOn, bool blinkOne,
+                      bool withLabel);
 }  // namespace displayManager
 
 #endif

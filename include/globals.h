@@ -17,6 +17,9 @@
 #elif defined(ESPNOW) && !defined(MQTT) && !defined(WIRED) && !defined(JUDO0806)
   #include <espnow_manager.h>
   #include "./taskESPNOW/taskESPNOW.h"
+  #if defined(BAND_V3)
+    #include "./taskBandESPNOW/taskBandESPNOW.h"
+  #endif
 #elif defined(MQTT) && !defined(ESPNOW) && !defined(WIRED) && !defined(JUDO0806)
   #include <MQTT_manager.h>
   #include "./taskMQTT/taskMQTT.h"

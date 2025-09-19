@@ -125,3 +125,27 @@ void updateOLED(Adafruit_SSD1306 *display, uint8_t categoryNum,
              _gainStepPos[1]);
 }
 }  // namespace displayManager
+// 5段バッテリーメータ（汎用）
+namespace displayManager {
+void drawBatteryMeter5(Adafruit_SSD1306 *display, int x, int y, int barW, int barH,
+                      int gap, int levels, bool blinkOn, bool blinkOne,
+                      bool withLabel) {
+  int labelX = x - 32 < 0 ? 0 : x - 32;
+  int barsY = y;
+  if (withLabel) {
+    // ラベルはyを上端として16px高さで描画。バーの下辺をラベルの下辺に合わせる
+    printEfont(display, "BAT", labelX, y);
+    barsY = y + 16 - barH - 1;  // 最小単位で1px上に調整
+  }
+  for (int i = 0; i < 5; i++) {
+    int bx = x + i * (barW + gap);
+    // 中空時の枠は2px程度残す
+    display->drawRect(bx, barsY, barW, barH, 1);
+    display->drawRect(bx+1, barsY+1, barW-2, barH-2, 1);
+    if (i < levels) {
+      if (blinkOne && i == 0 && !blinkOn) continue;
+      display->fillRect(bx + 2, barsY + 2, barW - 4, barH - 4, 1);
+    }
+  }
+}
+}  // namespace displayManager
