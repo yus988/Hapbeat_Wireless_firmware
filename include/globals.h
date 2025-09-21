@@ -11,23 +11,7 @@
 #include <audioManager.h>
 #include <displayManager.h>
 
-#if defined(TASK_JUDO0806)
-  #include <espnow_manager.h>
-  #include "./tasks/taskJUDO0806/taskJUDO0806.h"
-#elif defined(TASK_NECK_GEN_ESPNOW)
-  #include <espnow_manager.h>
-  #include "./tasks/taskNeckGenESPNOW/taskNeckGenESPNOW.h"
-#elif defined(TASK_BAND_GEN_ESPNOW)
-  #include <espnow_manager.h>
-  #include "./tasks/taskBandGenESPNOW/taskBandGenESPNOW.h"
-#elif defined(TASK_BAND_GEN_MQTT)
-  #include <MQTT_manager.h>
-  #include "./tasks/taskBandGenMQTT/taskBandGenMQTT.h"
-#elif defined(TASK_NECK_GEN_WIRED)
-  #include "./tasks/taskNeckGenWIRED/taskNeckGenWIRED.h"
-#else
-  #error "Define one of TASK_NECK_GEN_ESPNOW, TASK_BAND_GEN_ESPNOW, TASK_BAND_GEN_MQTT, TASK_NECK_GEN_WIRED, TASK_JUDO0806"
-#endif
+#include "task_entry.h"
 
 #ifdef EN_MCP4018
   #include "MCP4018-SOLDERED.h"  // Include Soldered library for MCP4018 Digipot.

@@ -140,14 +140,16 @@ void TaskBandESPNOW(void *args) {
       static uint8_t dbgStage = 0;           // 0..5 (5=LED blink stage)
       static unsigned long dbgLast = 0;
       if (now - dbgLast >= 3000) { dbgLast = now; dbgStage = (dbgStage + 1) % 6; }
-      levels = (dbgStage < 5) ? (5 - dbgStage) : 1;
+      // 5,4,3,2,1,0 と推移するようにする（0個時は全て中空）
+      levels = (dbgStage < 5) ? (5 - dbgStage) : 0;
       newBlinkOne = (dbgStage == 5);
 #else
       uint16_t socPct = lipo.soc();
+      // USBSerial.printf("socPct: %d\n", socPct);
+      // USBSerial.printf("lipo.voltage(): %d\n", lipo.voltage());      
       if (socPct == 0) { delay(20); socPct = lipo.soc(); }
-      if (lipo.voltage() >= 4000) socPct = 100;
-      levels = (socPct >= 100) ? 5 : (socPct >= 80 ? 5 : socPct >= 60 ? 4 : socPct >= 40 ? 3 : socPct >= 20 ? 2 : socPct > 0 ? 1 : 0);
-      newBlinkOne = (socPct < 1);
+      levels = (socPct >= 100) ? 5 : (socPct >= 80 ? 5 : socPct >= 60 ? 4 : socPct >= 40 ? 3 : socPct >= 20 ? 2 : socPct >= 3 ? 1 : 0);
+      newBlinkOne = (socPct < 3);
 #endif
       if (levels != prevLevels || newBlinkOne != blinkOne) {
         bool wasBlinking = blinkOne;
@@ -181,6 +183,9 @@ void TaskBandESPNOW(void *args) {
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
+
+// 統一インターフェース
+void TaskUI_Run(void *args) { TaskBandESPNOW(args); }
 
 
 

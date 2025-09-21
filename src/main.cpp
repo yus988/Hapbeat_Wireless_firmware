@@ -86,76 +86,13 @@ void setup() {
   _leds[0] = _currentColor;
   FastLED.show();
 
-#ifdef JUDO0806
-  // JUDO0806用初期化
-  USBSerial.println("init Hapbeat JUDO0806 mode");
-  audioManager::setCategoryID(2);  // カテゴリを2で固定
-  setFixGain(false);  // 可変モードで開始
-  const char *judoMsg = "JUDO0806 Mode Ready";
-  displayManager::printEfont(&_display, judoMsg, 0, 8);
-  _display.display();
-  espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
-
-#elif defined(TASK_NECK_GEN_ESPNOW) || defined(TASK_BAND_GEN_ESPNOW)
-  // ここはタスク依存
-  displayManager::setTitle(CATEGORY_ID_TXT, CATEGORY_ID_TXT_SIZE,
-                           CHANNEL_ID_TXT, CHANNEL_ID_TXT_SIZE, GAIN_STEP_TXT,
-                           GAIN_STEP_TXT_SIZE);
-  setFixGain(true);  // 実行しないと VibAmpVolume = 0 のままなので必須
-  _display.display();  // ESPNOW環境でも初期表示を確実に実行
-  espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
-
-#elif defined(TASK_BAND_GEN_MQTT)
-  setFixGain(false);  // 実行しないと VibAmpVolume = 0 のままなので必須
-  audioManager::setLimitIds(LIMITED_IDS, LIMITED_IDS_SIZE);
-  audioManager::setStatusCallback(showStatusText);
-  // DISP_MSG 配列の内容を messages ベクターに追加
-  for (int i = 0; i < DISP_MSG_SIZE; i++) {
-    const auto &msg = DISP_MSG[i];
-    audioManager::setMessageData(msg.message, msg.id);
-    USBSerial.println(msg.message);  // メッセージの出力例
-  }
-
-  MQTT_manager::initMQTTclient(MQTTcallback, showStatusText);
-  while (!MQTT_manager::getIsWiFiConnected()) {
-    USBSerial.println("waiting for WiFi connection...");
-    delay(500);  // 少し待って再試行
-  };
-
-#elif defined(TASK_NECK_GEN_WIRED)
-  // WIRED用初期化
-  USBSerial.println("init Hapbeat WIRED mode");
-  const char *wiredMsg = "WIRED Mode Ready";
-  displayManager::printEfont(&_display, wiredMsg, 0, 8);
-  _display.display();
-  // 振動アンプの初期化は必須
-  setFixGain(false);  // ボリューム調整モードで開始
-#endif
-
+  TaskAppInit();
+  
   xTaskCreatePinnedToCore(TaskAudio, "TaskAudio", 4096, NULL, 20, &thp[0], 1);
-#ifdef JUDO0806
-  xTaskCreatePinnedToCore(TaskUI_JUDO0806, "TaskUI_JUDO0806", 4096, NULL, 23,
-                          &thp[1], 1);
-#elif defined(TASK_BAND_GEN_ESPNOW)
-  xTaskCreatePinnedToCore(TaskBandESPNOW, "TaskBandESPNOW", 4096, NULL, 23,
-                          &thp[1], 1);
-#elif defined(TASK_NECK_GEN_ESPNOW)
-  xTaskCreatePinnedToCore(TaskUI_ESPNOW, "TaskUI_ESPNOW", 4096, NULL, 23,
-                          &thp[1], 1);
-#elif defined(TASK_BAND_GEN_MQTT)
-  xTaskCreatePinnedToCore(TaskUI_MQTT, "TaskUI_MQTT", 4096, NULL, 23, &thp[1],
-                          1);
-#elif defined(TASK_NECK_GEN_WIRED)
-  xTaskCreatePinnedToCore(TaskUI_WIRED, "TaskUI_WIRED", 4096, NULL, 23, &thp[1],
-                          1);
-#endif
+  TaskAppStart();
 }
 void loop() {
-#if defined(TASK_BAND_GEN_MQTT)
-  // xTaskCreatePinnedToCore だと何故か安定しない
-  MQTT_manager::loopMQTTclient();
-  delay(200);
-#endif
+  TaskAppLoop();
 };
 
 // 優先度は 低 0-24 高

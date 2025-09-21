@@ -104,6 +104,9 @@ void TaskUI_WIRED(void *args) {
 #endif
 }
 
+// 統一インターフェース
+void TaskUI_Run(void *args) { TaskUI_WIRED(args); }
+
 
 
 

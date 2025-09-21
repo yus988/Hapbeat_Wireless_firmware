@@ -166,6 +166,9 @@ void TaskUI_ESPNOW(void *args) {
 #endif
 }
 
+// 統一インターフェース
+void TaskUI_Run(void *args) { TaskUI_ESPNOW(args); }
+
 
 
 
