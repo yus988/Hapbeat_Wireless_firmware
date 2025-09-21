@@ -1,4 +1,4 @@
-// Parameters for TASK_BAND_ESPNOW (Band V2/V3)
+// Parameters for TASK_BAND_GEN_ESPNOW (Band V2/V3)
 
 const int FIX_GAIN_STEP[] = {16, 0, 23};
 const char *CATEGORY_ID_TXT[] = {"Cat_0", "Cat_1", "Cat_2"};
@@ -23,5 +23,8 @@ const int DEVICE_POS = 5;
 const int CATEGORY_ID_TXT_SIZE = sizeof(CATEGORY_ID_TXT) / sizeof(CATEGORY_ID_TXT[0]);
 const int CHANNEL_ID_TXT_SIZE = sizeof(CHANNEL_ID_TXT) / sizeof(CHANNEL_ID_TXT[0]);
 const int GAIN_STEP_TXT_SIZE = sizeof(GAIN_STEP_TXT) / sizeof(GAIN_STEP_TXT[0]);
+
+
+
 
 

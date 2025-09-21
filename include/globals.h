@@ -14,19 +14,19 @@
 #if defined(TASK_JUDO0806)
   #include <espnow_manager.h>
   #include "./tasks/taskJUDO0806/taskJUDO0806.h"
-#elif defined(TASK_ESPNOW)
+#elif defined(TASK_NECK_GEN_ESPNOW)
   #include <espnow_manager.h>
-  #include "./tasks/taskESPNOW/taskESPNOW.h"
-#elif defined(TASK_BAND_ESPNOW)
+  #include "./tasks/taskNeckGenESPNOW/taskNeckGenESPNOW.h"
+#elif defined(TASK_BAND_GEN_ESPNOW)
   #include <espnow_manager.h>
-  #include "./tasks/taskBandESPNOW/taskBandESPNOW.h"
-#elif defined(TASK_MQTT)
+  #include "./tasks/taskBandGenESPNOW/taskBandGenESPNOW.h"
+#elif defined(TASK_BAND_GEN_MQTT)
   #include <MQTT_manager.h>
-  #include "./tasks/taskMQTT/taskMQTT.h"
-#elif defined(TASK_WIRED)
-  #include "./tasks/taskWIRED/taskWIRED.h"
+  #include "./tasks/taskBandGenMQTT/taskBandGenMQTT.h"
+#elif defined(TASK_NECK_GEN_WIRED)
+  #include "./tasks/taskNeckGenWIRED/taskNeckGenWIRED.h"
 #else
-  #error "Define one of TASK_ESPNOW, TASK_BAND_ESPNOW, TASK_MQTT, TASK_WIRED, TASK_JUDO0806"
+  #error "Define one of TASK_NECK_GEN_ESPNOW, TASK_BAND_GEN_ESPNOW, TASK_BAND_GEN_MQTT, TASK_NECK_GEN_WIRED, TASK_JUDO0806"
 #endif
 
 #ifdef EN_MCP4018

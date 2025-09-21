@@ -1,4 +1,4 @@
-// Parameters for TASK_WIRED (Necklace)
+// Parameters for TASK_NECK_GEN_WIRED (Necklace)
 
 const char *CATEGORY_ID_TXT[] = {"cat_0", "cat_1", "cat_2"};
 const char *CHANNEL_ID_TXT[] = {"ch_0", "ch_1", "ch_2", "ch_3"};
@@ -25,5 +25,8 @@ const int DEVICE_POS = 0;  // neck
 const int CATEGORY_ID_TXT_SIZE = sizeof(CATEGORY_ID_TXT) / sizeof(CATEGORY_ID_TXT[0]);
 const int CHANNEL_ID_TXT_SIZE = sizeof(CHANNEL_ID_TXT) / sizeof(CHANNEL_ID_TXT[0]);
 const int GAIN_STEP_TXT_SIZE = sizeof(GAIN_STEP_TXT) / sizeof(GAIN_STEP_TXT[0]);
+
+
+
 
 

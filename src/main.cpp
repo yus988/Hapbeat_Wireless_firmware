@@ -96,7 +96,7 @@ void setup() {
   _display.display();
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 
-#elif ESPNOW
+#elif defined(TASK_NECK_GEN_ESPNOW) || defined(TASK_BAND_GEN_ESPNOW)
   // ここはタスク依存
   displayManager::setTitle(CATEGORY_ID_TXT, CATEGORY_ID_TXT_SIZE,
                            CHANNEL_ID_TXT, CHANNEL_ID_TXT_SIZE, GAIN_STEP_TXT,
@@ -105,7 +105,7 @@ void setup() {
   _display.display();  // ESPNOW環境でも初期表示を確実に実行
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 
-#elif MQTT
+#elif defined(TASK_BAND_GEN_MQTT)
   setFixGain(false);  // 実行しないと VibAmpVolume = 0 のままなので必須
   audioManager::setLimitIds(LIMITED_IDS, LIMITED_IDS_SIZE);
   audioManager::setStatusCallback(showStatusText);
@@ -122,7 +122,7 @@ void setup() {
     delay(500);  // 少し待って再試行
   };
 
-#elif WIRED
+#elif defined(TASK_NECK_GEN_WIRED)
   // WIRED用初期化
   USBSerial.println("init Hapbeat WIRED mode");
   const char *wiredMsg = "WIRED Mode Ready";
@@ -136,24 +136,22 @@ void setup() {
 #ifdef JUDO0806
   xTaskCreatePinnedToCore(TaskUI_JUDO0806, "TaskUI_JUDO0806", 4096, NULL, 23,
                           &thp[1], 1);
-#elif ESPNOW
-  #if defined(BAND_V3)
-    xTaskCreatePinnedToCore(TaskBandESPNOW, "TaskBandESPNOW", 4096, NULL, 23,
-                            &thp[1], 1);
-  #else
-    xTaskCreatePinnedToCore(TaskUI_ESPNOW, "TaskUI_ESPNOW", 4096, NULL, 23,
-                            &thp[1], 1);
-  #endif
-#elif MQTT
+#elif defined(TASK_BAND_GEN_ESPNOW)
+  xTaskCreatePinnedToCore(TaskBandESPNOW, "TaskBandESPNOW", 4096, NULL, 23,
+                          &thp[1], 1);
+#elif defined(TASK_NECK_GEN_ESPNOW)
+  xTaskCreatePinnedToCore(TaskUI_ESPNOW, "TaskUI_ESPNOW", 4096, NULL, 23,
+                          &thp[1], 1);
+#elif defined(TASK_BAND_GEN_MQTT)
   xTaskCreatePinnedToCore(TaskUI_MQTT, "TaskUI_MQTT", 4096, NULL, 23, &thp[1],
                           1);
-#elif WIRED
+#elif defined(TASK_NECK_GEN_WIRED)
   xTaskCreatePinnedToCore(TaskUI_WIRED, "TaskUI_WIRED", 4096, NULL, 23, &thp[1],
                           1);
 #endif
 }
 void loop() {
-#ifdef MQTT
+#if defined(TASK_BAND_GEN_MQTT)
   // xTaskCreatePinnedToCore だと何故か安定しない
   MQTT_manager::loopMQTTclient();
   delay(200);

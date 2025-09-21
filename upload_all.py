@@ -8,10 +8,7 @@ import time
 # VSCodeのUIで選択中の環境を取得（デフォルトは "DuoWL_V3-ESPNOW"）
 # TARGET_ENV = os.getenv('PIOENV', 'DuoWL_V3-ESPNOW_JUDO0806')
 # TARGET_ENV = os.getenv('PIOENV', 'DuoWL_V2-ESPNOW_JUDO0806')
-# TARGET_ENV = os.getenv('PIOENV', 'DuoWL_V3-Wired')
-
-TARGET_ENV = os.getenv('PIOENV', 'DuoWL_V3-ESPNOW')
-# TARGET_ENV = os.getenv('PIOENV', 'DuoWL_V2-ESPNOW')
+TARGET_ENV = os.getenv('PIOENV', 'BandWL_V3_GEN_ESPNOW')
 
 
 # ESP32のポートを検出する関数

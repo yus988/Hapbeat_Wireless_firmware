@@ -1,4 +1,4 @@
-// Parameters for TASK_MQTT (Band)
+// Parameters for TASK_BAND_GEN_MQTT (Band)
 
 const int FIX_GAIN_STEP[] = {16, 0, 23};
 #ifdef BAND_V3
@@ -53,5 +53,8 @@ const int CHANNEL_ID_TXT_SIZE = sizeof(CHANNEL_ID_TXT) / sizeof(CHANNEL_ID_TXT[0
 const int GAIN_STEP_TXT_SIZE = sizeof(GAIN_STEP_TXT) / sizeof(GAIN_STEP_TXT[0]);
 const int LIMITED_IDS_SIZE = sizeof(LIMITED_IDS) / sizeof(LIMITED_IDS[0]);
 const int DISP_MSG_SIZE = sizeof(DISP_MSG) / sizeof(DISP_MSG[0]);
+
+
+
 
 
