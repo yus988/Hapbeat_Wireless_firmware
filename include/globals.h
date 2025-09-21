@@ -11,22 +11,22 @@
 #include <audioManager.h>
 #include <displayManager.h>
 
-#if defined(JUDO0806) && defined(ESPNOW) && !defined(MQTT) && !defined(WIRED)
+#if defined(TASK_JUDO0806)
   #include <espnow_manager.h>
-  #include "./taskJUDO0806/taskJUDO0806.h"
-#elif defined(ESPNOW) && !defined(MQTT) && !defined(WIRED) && !defined(JUDO0806)
+  #include "./tasks/taskJUDO0806/taskJUDO0806.h"
+#elif defined(TASK_ESPNOW)
   #include <espnow_manager.h>
-  #include "./taskESPNOW/taskESPNOW.h"
-  #if defined(BAND_V3)
-    #include "./taskBandESPNOW/taskBandESPNOW.h"
-  #endif
-#elif defined(MQTT) && !defined(ESPNOW) && !defined(WIRED) && !defined(JUDO0806)
+  #include "./tasks/taskESPNOW/taskESPNOW.h"
+#elif defined(TASK_BAND_ESPNOW)
+  #include <espnow_manager.h>
+  #include "./tasks/taskBandESPNOW/taskBandESPNOW.h"
+#elif defined(TASK_MQTT)
   #include <MQTT_manager.h>
-  #include "./taskMQTT/taskMQTT.h"
-#elif defined(WIRED) && !defined(ESPNOW) && !defined(MQTT) && !defined(JUDO0806)
-  #include "./taskWIRED/taskWIRED.h"
+  #include "./tasks/taskMQTT/taskMQTT.h"
+#elif defined(TASK_WIRED)
+  #include "./tasks/taskWIRED/taskWIRED.h"
 #else
-  #error "Either ESPNOW, MQTT, WIRED, or JUDO0806 must be defined, not multiple or none."
+  #error "Define one of TASK_ESPNOW, TASK_BAND_ESPNOW, TASK_MQTT, TASK_WIRED, TASK_JUDO0806"
 #endif
 
 #ifdef EN_MCP4018

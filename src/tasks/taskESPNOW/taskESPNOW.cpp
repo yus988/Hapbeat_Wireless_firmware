@@ -11,26 +11,18 @@ void TaskNeckESPNOW() {
   }
   uint8_t prevAmpVolStep = 0;
   while (1) {
-    // USBSerial.print("Digipot wiper: ");
-    // USBSerial.print(_digipot.getWiperValue(), DEC);
-    // USBSerial.println('%');
-    // BQ27220_Cmd::printBatteryStats();
-    // control pam8003 volume
     _currAIN = analogRead(AIN_VIBVOL_PIN);
     _ampVolStep = map(_currAIN, 0, 4095, 0, GAIN_STEP_TXT_SIZE - 1);
-    // uint8_t _ampVolStep = 0;
     if (!_isFixMode && _ampVolStep != prevAmpVolStep) {
       setAmpStepGain(_ampVolStep, true);
     }
     prevAmpVolStep = _ampVolStep;
 
-    // ボタン操作
     for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
       if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
         uint8_t category_ID = audioManager::getCategoryID();
         uint8_t channel_ID = audioManager::getChannelID();
         audioManager::stopAudio();
-        // 各ボタン毎の操作 0,1 = 上下, 2,3 = 左右, 4 = 右下
         if (i == 1 && channel_ID < CHANNEL_ID_TXT_SIZE - 1) {
           channel_ID += 1;
         } else if (i == 0 && channel_ID > 0) {
@@ -60,12 +52,10 @@ void TaskNeckESPNOW() {
           audioManager::setChannelID(channel_ID);
           setAmpStepGain(tstep, true);
         }
-        // vTaskDelay(1 / portTICK_PERIOD_MS);
       }
       if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
     };
 
-    // loop delay
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
@@ -73,76 +63,55 @@ void TaskNeckESPNOW() {
 
 #if defined(BAND_V2)
 void TaskBandESPNOW() {
-  // カテゴリごとのボリューム設定
   uint8_t volumeLevels[CATEGORY_ID_TXT_SIZE] = {0};
   uint8_t category_ID = audioManager::getCategoryID();
   uint8_t channel_ID = audioManager::getChannelID();
-
-  // EEPROMからボリューム設定を読み込み
   audioManager::loadVolumeLevels(volumeLevels, CATEGORY_ID_TXT_SIZE);
 
   while (1) {
-    // デバッグ用、電池残量表示
-    // BQ27220_Cmd::printBatteryStats();
-    // ボタン操作
     for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
       int pinState = digitalRead(_SW_PIN[i]);
-      // デバッグ出力（必要に応じてコメントアウト）
-      // USBSerial.printf("SW[%d] pin=%d state=%d pressed=%d\n", i, _SW_PIN[i], pinState, _isBtnPressed[i]);
-      
       if (!pinState && !_isBtnPressed[i]) {
   #if defined(BAND_V3)
-        // SW番号は上から、0, 2, 1 の並びであることに注意
         if (i == 0) {
           if (!_isFixMode) {
-            // 音量増加
-
-            if (volumeLevels[category_ID] <
-                GAIN_STEP_TXT_SIZE - 1 - ADJ_VOL_STEP) {
+            if (volumeLevels[category_ID] < GAIN_STEP_TXT_SIZE - 1 - ADJ_VOL_STEP) {
               volumeLevels[category_ID] += ADJ_VOL_STEP;
             } else {
               volumeLevels[category_ID] = GAIN_STEP_TXT_SIZE - 1;
             }
-            // EEPROMに保存
             audioManager::saveVolumeLevels(volumeLevels, CATEGORY_ID_TXT_SIZE);
             setAmpStepGain(volumeLevels[category_ID], true);
           } else {
-            // 通常モード: カテゴリ切り替え
             if (category_ID < CATEGORY_ID_TXT_SIZE - 1) {
               category_ID += 1;
             } else {
               category_ID = 0;
             }
             audioManager::setCategoryID(category_ID);
-            displayManager::updateOLED(&_display, category_ID, channel_ID,
-                                       FIX_GAIN_STEP[category_ID]);
+            displayManager::updateOLED(&_display, category_ID, channel_ID, FIX_GAIN_STEP[category_ID]);
             setAmpStepGain(FIX_GAIN_STEP[category_ID], true);
           }
         }
         if (i == 2) {
           if (!_isFixMode) {
-            // 音量減少
-            if (volumeLevels[category_ID] == GAIN_STEP_TXT_SIZE - 1 &&
-                ADJ_VOL_STEP != 1) {
+            if (volumeLevels[category_ID] == GAIN_STEP_TXT_SIZE - 1 && ADJ_VOL_STEP != 1) {
               volumeLevels[category_ID] -= ADJ_VOL_STEP - 1;
             } else if (volumeLevels[category_ID] > ADJ_VOL_STEP - 1) {
               volumeLevels[category_ID] -= ADJ_VOL_STEP;
             } else {
               volumeLevels[category_ID] = 0;
             }
-            // EEPROMに保存
             audioManager::saveVolumeLevels(volumeLevels, CATEGORY_ID_TXT_SIZE);
             setAmpStepGain(volumeLevels[category_ID], true);
           } else {
-            // 通常モード: チャンネル切り替え
             if (channel_ID < CHANNEL_ID_TXT_SIZE - 1) {
               channel_ID += 1;
             } else {
               channel_ID = 0;
             }
             audioManager::setChannelID(channel_ID);
-            displayManager::updateOLED(&_display, category_ID, channel_ID,
-                                       FIX_GAIN_STEP[category_ID]);
+            displayManager::updateOLED(&_display, category_ID, channel_ID, FIX_GAIN_STEP[category_ID]);
           }
         }
         if (i == 1) {
@@ -150,7 +119,6 @@ void TaskBandESPNOW() {
             _isFixMode = false;
             _leds[0] = COLOR_VOL_MODE;
             setAmpStepGain(volumeLevels[category_ID], true);
-
           } else {
             _isFixMode = true;
             _leds[0] = COLOR_FIX_MODE;
@@ -158,20 +126,9 @@ void TaskBandESPNOW() {
           }
           FastLED.show();
           audioManager::setIsFixMode(_isFixMode);
-          // // 音量調整モードの切り替え
-          // _isFixMode = !_isFixMode;
-          // audioManager::setIsFixMode(_isFixMode);  // EEPROMに保存
-
-          // // LED色の変更
-          // _currentColor = _isFixMode ? COLOR_VOL_MODE : COLOR_FIX_MODE;
-          // _leds[0] = _currentColor;
-          // FastLED.show();
         }
-
-  #else  // BAND_V2保持
-        // Band_V2には2つのスイッチしかない（SW0_PIN, SW1_PIN）
-        if (i == 0) {  // SW0_PIN (14)
-          // チャンネル切り替え
+  #else
+        if (i == 0) {
           if (channel_ID < CHANNEL_ID_TXT_SIZE - 1) {
             channel_ID += 1;
           } else {
@@ -180,8 +137,7 @@ void TaskBandESPNOW() {
           audioManager::setChannelID(channel_ID);
           displayManager::updateOLED(&_display, category_ID, channel_ID,
                                      _isFixMode ? FIX_GAIN_STEP[category_ID] : volumeLevels[category_ID]);
-        } else if (i == 1) {  // SW1_PIN (13)
-          // カテゴリ切り替え
+        } else if (i == 1) {
           if (category_ID < CATEGORY_ID_TXT_SIZE - 1) {
             category_ID += 1;
           } else {
@@ -197,13 +153,11 @@ void TaskBandESPNOW() {
       }
       if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
     };
-    // loop delay
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
 #endif
 
-// main.cpp に出力する。用途に応じて適応するものを選択。
 void TaskUI_ESPNOW(void *args) {
 #if defined(NECKLACE_V2)
   TaskNeckESPNOW();
@@ -211,3 +165,6 @@ void TaskUI_ESPNOW(void *args) {
   TaskBandESPNOW();
 #endif
 }
+
+
+
