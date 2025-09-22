@@ -1,6 +1,7 @@
 #include "globals.h"
 #include "task_entry.h"
 #include <espnow_manager.h>
+#include "taskJUDO0806.h"
 
 void TaskAppInit() {
   USBSerial.println("init Hapbeat JUDO0806 mode");

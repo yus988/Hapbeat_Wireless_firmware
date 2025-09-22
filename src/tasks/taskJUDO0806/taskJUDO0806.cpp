@@ -1,7 +1,5 @@
 #include "globals.h"
 
-#if defined(NECKLACE_V2) && defined(JUDO0806)
-
 static char volumeText[8];
 static const int displayY = 10;
 static const int barX = 10;
@@ -78,13 +76,7 @@ void TaskJudoNeck() {
   }
 }
 
-#endif
-
 void TaskUI_JUDO0806(void *args) {
-#if defined(NECKLACE_V2) && defined(JUDO0806)
   TaskJudoNeck();
-#endif
 }
-
-
 

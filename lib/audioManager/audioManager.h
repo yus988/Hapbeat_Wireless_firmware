@@ -5,23 +5,46 @@
 #include <vector>
 #include "driver/i2s.h"
 
+// タスク固有の音声関連マクロのみ取得する
+// 各 env の build_flags に対象 task ディレクトリを -I 追加してください
+#include "audioManagerSettings.hpp"
+
 // 調整項目（値を大きくするほどRAMを圧迫するので、適切なサイズに設定してください）
-#define CATEGORY_NUM 3     // カテゴリの最大数
-#define SOUND_FILE_NUM 60  // 読み込むファイルの最大数（＝/data 内のファイル数）
-#define DATA_NUM 25        // 各カテゴリのデータ最大数
-#define SUB_DATA_NUM 6     // sub_id の最大数
-const bool isEventMode = false;  // イベント時にカテゴリに限らず全て通すか
+// audioManagerSettings.hpp 側で必ず定義される想定。未定義ならコンパイルエラーにする
+#ifndef CATEGORY_NUM
+  #error "CATEGORY_NUM must be defined in adjustParams.hpp"
+#endif
+#ifndef SOUND_FILE_NUM
+  #error "SOUND_FILE_NUM must be defined in adjustParams.hpp"
+#endif
+#ifndef DATA_NUM
+  #error "DATA_NUM must be defined in adjustParams.hpp"
+#endif
+#ifndef SUB_DATA_NUM
+  #error "SUB_DATA_NUM must be defined in adjustParams.hpp"
+#endif
+#ifndef IS_EVENT_MODE
+  #error "IS_EVENT_MODE must be defined in adjustParams.hpp"
+#endif
+static const bool isEventMode = IS_EVENT_MODE;  // イベント時にカテゴリに限らず全て通すか
 
 //////////////////////////////////
 // 以下は基本固定
-#define VOLUME_MAX 23  // ボリュームの最大値
+#ifndef VOLUME_MAX
+  #error "VOLUME_MAX must be defined in adjustParams.hpp"
+#endif
 
 // #define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
-#define STUB_NUM \
-  6  // FPS/迷路デモするなら 6 必要（playCmd=3, oneshot_bgmのため）
+#ifndef STUB_NUM
+  #error "STUB_NUM must be defined in adjustParams.hpp"
+#endif
+#ifndef POSITION_NUM
+  #error "POSITION_NUM must be defined in adjustParams.hpp"
+#endif
+
+//////////////////////////////////
 #define RAM_STORAGE 0
 #define FS_STORAGE 1
-#define POSITION_NUM 1
 namespace audioManager {
 const int SAMPLING_RATE = 16000;  // 8000 だと明確に遅くなる
 void initParamsEEPROM();
