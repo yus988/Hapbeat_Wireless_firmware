@@ -1,20 +1,28 @@
 #ifndef AUDIO_MANAGER_H
 #define AUDIO_MANAGER_H
+
 #include <Arduino.h>
 #include <vector>
 #include "driver/i2s.h"
-#define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
-#define SOUND_FILE_NUM 60
+
+// 調整項目（値を大きくするほどRAMを圧迫するので、適切なサイズに設定してください）
+#define SOUND_FILE_NUM 60  // 読み込むファイルの最大数（＝/data 内のファイル数）
+#define CATEGORY_NUM 3     // カテゴリの最大数
+#define DATA_NUM 25        // 各カテゴリのデータ最大数
+#define SUB_DATA_NUM 6     // sub_id の最大数
+
+
+//////////////////////////////////
+// 以下は基本固定
+
+// #define STUB_NUM 4  // 同時に再生するファイルの最大数。LRで2つ必要
+#define STUB_NUM 6  // お化け屋敷の時は 6 必要（playCmd=3, oneshot_bgmのため）
 #define RAM_STORAGE 0
 #define FS_STORAGE 1
-// 再生するカテゴリなどの最大数を定義（RAMは限られるので大きくしすぎないように）
-#define CATEGORY_NUM 2
 #define POSITION_NUM 1
-#define DATA_NUM 20
-#define SUB_DATA_NUM 6
 namespace audioManager {
-// int SAMPLING_RATE = 8000;
-const int SAMPLING_RATE = 16000;
+const int SAMPLING_RATE = 8000;
+// const int SAMPLING_RATE = 16000;
 void initParamsEEPROM();
 void readAllSoundFiles();
 void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN);

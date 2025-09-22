@@ -33,7 +33,7 @@ void (*statusCallback)(const char *);
 
 struct DataPacket {
   uint8_t category;
-  uint8_t wearerId;
+  uint8_t channelId;
   uint8_t devicePos;
   uint8_t dataID;
   uint8_t subID;
@@ -51,8 +51,8 @@ uint8_t _devicePos;  // 装着場所の指定
 uint8_t _gainNum;    //
 // EEPROM内に保存するデバイスコンフィグを格納
 struct ConfigData {
-  uint8_t playCategory;
-  uint8_t wearerId;  // 装着者のID。99でブロードキャスト
+  uint8_t categoryNum;
+  uint8_t channelId;  // 装着者のID。99でブロードキャスト
   bool isFixMode;
   bool isLimitEnable;
 };
@@ -65,7 +65,7 @@ uint8_t sel_B_pin;
 AudioGeneratorWAV *_wav_gen[STUB_NUM];
 AudioFileSourceLittleFS *_audioFileSrc[SOUND_FILE_NUM];
 String _audioFileNames[SOUND_FILE_NUM];
-int16_t *_audioRAM[SOUND_FILE_NUM];  // RAMに格納するデータのポインタ
+int16_t *_audioRAM[SOUND_FILE_NUM];         // RAMに格納するデータのポインタ
 uint8_t _audioStorageType[SOUND_FILE_NUM];  // データの格納場所を示すフラグ
 AudioOutputI2S *_i2s_out;
 AudioOutputMixer *_mixer;
@@ -81,6 +81,21 @@ uint8_t _dataID[STUB_NUM];
 uint8_t _subID[STUB_NUM];
 uint8_t _volume[STUB_NUM];
 
+// 再送無視処理（ループの時だけ）
+unsigned long _lastReceiveTime = 0;
+uint8_t _lastData[8];  // データの長さが8バイトの場合（適宜変更）
+const unsigned long _ignoreDuration = 300;  // 一定時間以内の重複データを無視
+bool _ignoreLoopData = false;  // ループ再生データを無視するためのフラグ
+
+bool isSameData(const uint8_t *data, int len) {
+  for (int i = 0; i < len; i++) {
+    if (data[i] != _lastData[i]) {
+      return false;  // 一つでも異なるバイトがあれば別データ
+    }
+  }
+  return true;  // 全て同じであれば重複
+}
+
 // モード選択の対象にするIDを格納
 int _limitIDs[10];        // 最大10個のIDを格納する配列
 size_t _numLimitIDs = 0;  // 現在格納されているIDの数
@@ -89,10 +104,10 @@ void initParamsEEPROM() {
   size_t eepromSize = sizeof(ConfigData);
   EEPROM.begin(eepromSize);
   EEPROM.get(0, _settings);
-  if (_settings.wearerId == 0xFF || _settings.playCategory == 0xFF ||
+  if (_settings.channelId == 0xFF || _settings.categoryNum == 0xFF ||
       _settings.isFixMode == 0xFF) {
-    _settings.playCategory = 0;
-    _settings.wearerId = 0;
+    _settings.categoryNum = 0;
+    _settings.channelId = 0;
     _settings.isFixMode = true;
     _settings.isLimitEnable = false;
   }
@@ -107,36 +122,30 @@ void readAllSoundFiles() {
   }
   uint8_t isRight;
   uint8_t cat;
-  uint8_t pos;
   uint8_t dataID;
   uint8_t subID;
   File root = LittleFS.open("/");
   File _file = root.openNextFile();
-
   uint8_t fileIdx = 0;
 
   while (_file) {
     // ファイル名から種別を取得
     String fileName = _file.name();
-    int underscorePos1 = fileName.indexOf('_');
-    int underscorePos2 = fileName.indexOf('_', underscorePos1 + 1);
-    int hyphenPos1 = fileName.indexOf('-', underscorePos2 + 1);
-    int underscorePos3 = fileName.indexOf('_', hyphenPos1 + 1);
-    int underscorePos4 = fileName.indexOf('_', underscorePos3 + 1);
-    int underscorePos5 = fileName.indexOf('_', underscorePos4 + 1);
+    int hyphenPos1 = fileName.indexOf('-');
+    int underscorePos1 = fileName.indexOf('_', hyphenPos1 + 1);
+    int hyphenPos2 = fileName.indexOf('-', underscorePos1 + 1);
+    int hyphenPos3 = fileName.indexOf('-', hyphenPos2 + 1);
 
-    cat = fileName.substring(0, underscorePos1).toInt();
-    pos = fileName.substring(underscorePos1 + 1, underscorePos2).toInt();
-    dataID = fileName.substring(underscorePos2 + 1, hyphenPos1).toInt();
-    subID = fileName.substring(hyphenPos1 + 1, underscorePos3).toInt();
-    isRight = fileName[underscorePos3 + 1] == 'R' ? 1 : 0;
-    String storageType = fileName.substring(underscorePos4 + 1, underscorePos5);
+    cat = fileName.substring(0, hyphenPos1).toInt();
+    dataID = fileName.substring(hyphenPos1 + 1, underscorePos1).toInt();
+    subID = fileName.substring(underscorePos1 + 1, hyphenPos2).toInt();
+    isRight = fileName[hyphenPos2 + 1] == 'R' ? 1 : 0;
+    String storageType = fileName.substring(hyphenPos3 + 1);
 
-    USBSerial.printf("FILE: %s, %d, %d, %d, %c, isRight: %d, Storage: %s\n",
-                     fileName.c_str(), cat, pos, dataID,
-                     fileName[underscorePos3 + 1], isRight,
-                     storageType.c_str());
-
+    USBSerial.printf("FILE: %s, cat = %d, id = %d, sub id = %c, isRight: %d, Storage: %s\n",
+                     fileName.c_str(), cat, dataID, fileName[hyphenPos2 + 1],
+                     isRight, storageType.c_str());
+    USBSerial.println(fileIdx);
     _audioDataSize[fileIdx] = _file.size();
 
     // データの格納場所を決定
@@ -153,7 +162,7 @@ void readAllSoundFiles() {
       _audioStorageType[fileIdx] = FS_STORAGE;
     }
 
-    _audioDataIndex[cat][pos][dataID][subID][isRight] = fileIdx;
+    _audioDataIndex[cat][0][dataID][subID][isRight] = fileIdx;
     fileIdx++;
     _file = root.openNextFile();
   }
@@ -177,8 +186,11 @@ void stopAudio(uint8_t stub) {
 void playAudio(uint8_t tStubNum, uint8_t tVol) {
   int isLR = (tStubNum % 2 == 0) ? 0 : 1;
   uint8_t pos = 0;  // pos = 0 は仮置き
-  uint8_t idx = _audioDataIndex[_settings.playCategory][pos][_dataID[tStubNum]]
+  uint8_t idx = _audioDataIndex[_settings.categoryNum][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
+  // USBSerial.printf("audio IDX = ");
+  // USBSerial.println(idx);
+
   _volume[tStubNum] = tVol;
 
   _stub[tStubNum]->SetGain((float)tVol / maxVol);
@@ -222,27 +234,44 @@ void playAudio(uint8_t tStubNum, uint8_t tVol) {
 
 void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
                        int data_len) {
+  unsigned long currentTime = millis();
+  // ループ再生（data[7] == 1）のデータで、無視期間中の場合
+  if (_ignoreLoopData && currentTime - _lastReceiveTime < _ignoreDuration) {
+    USBSerial.println("Ignoring loop data during _ignoreDuration");
+    return;
+  }
+  // ループ再生のデータ（data[7] ==
+  // 1）の場合、無視フラグを立てて無視期間を設定
+  if (data[7] == 1) {
+    _ignoreLoopData = true;
+    _lastReceiveTime = currentTime;
+  } else {
+    _ignoreLoopData = false;  // 他のデータの場合は無視フラグをリセット
+  }
+
+  // 通常の処理
   USBSerial.printf(
-      "received: _category %d, _wearerId %d, _devPos %d, _dataID %d, _subID "
+      "received: _category %d, _channel_Id %d, _devPos %d, _dataID %d, "
+      "_subID "
       "%d, Vol %d:%d, playtype %d\n",
       data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
   // USBSerial.print("Free heap: ");
   // USBSerial.println(ESP.getFreeHeap());
-  // data = [_category, _wearerId, _devicePos, data_id, _subID, _L_Vol,
+  // data = [_category, _channel_Id, _devicePos, data_id, _subID, _L_Vol,
   // _R_Vol, playCmd] 各種条件が合致した時のみ値を保持
-  if ((data[0] == _settings.playCategory || data[0] == 99) &&
-      (data[1] == _settings.wearerId || data[1] == 99) &&
+  if ((data[0] == _settings.categoryNum || data[0] == 99) &&
+      (_settings.channelId == 0 || data[1] == _settings.channelId ||
+       data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
-    USBSerial.println("prepare to playAudio");
-    // 0 = oneshot(0,1), 1=loopStart(2,3), 2=stopAudio, 3=2ndline(4,5)
+    // USBSerial.println("prepare to playAudio");
+    // 0 = oneshot(0,1), 1=loopStart(2,3), 2=stopAudio, 3=oneShot 2ndline(4,5)
     // 括弧内はstub番号
     uint8_t playCmd = data[7];
-
     if (playCmd == 2) {
       for (int iStub = 2; iStub <= 3; ++iStub) {
         while (_wav_gen[iStub]->isRunning()) {
           stopAudio(iStub);
-          delay(10);
+          // delay(10);
         }
       }
       return;
@@ -307,7 +336,7 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
   // データをESP-NOW形式に変換
   DataPacket dataPacket;
   dataPacket.category = values[0];
-  dataPacket.wearerId = values[1];
+  dataPacket.channelId = values[1];
   dataPacket.devicePos = values[2];
   dataPacket.dataID = values[3];
   dataPacket.subID = values[4];
@@ -347,8 +376,9 @@ void playAudioInLoop() {
           (iStub == 3 && _wav_gen[3]->isRunning())) {  // loop _stub case
         if (_wav_gen[iStub]->isRunning()) {
           if (!_wav_gen[iStub]->loop()) {
-            // stopAudio(iStub);
+            // stopAudio(iStub); //コメントアウトの意味は不明
             playAudio(iStub, _volume[iStub]);
+            delay(5);
           }
         }
       } else {
@@ -382,8 +412,8 @@ void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN) {
 
 // get
 uint8_t getGain() { return _gainNum; }
-uint8_t getPlayCategory() { return _settings.playCategory; }
-uint8_t getWearerId() { return _settings.wearerId; }
+uint8_t getPlayCategory() { return _settings.categoryNum; }
+uint8_t getWearerId() { return _settings.channelId; }
 uint8_t getDevicePos() { return _devicePos; }
 bool getIsFixMode() { return _settings.isFixMode; }
 bool getIsLimitEnable() { return _settings.isLimitEnable; }
@@ -404,13 +434,13 @@ void setDataID(uint8_t stubNum, uint8_t dataID, uint8_t subID) {
 }
 
 void setPlayCategory(uint8_t value) {
-  _settings.playCategory = value;
-  EEPROM.put(offsetof(ConfigData, playCategory), _settings.playCategory);
+  _settings.categoryNum = value;
+  EEPROM.put(offsetof(ConfigData, categoryNum), _settings.categoryNum);
   EEPROM.commit();
 }
 void setWearerId(uint8_t value) {
-  _settings.wearerId = value;
-  EEPROM.put(offsetof(ConfigData, wearerId), _settings.wearerId);
+  _settings.channelId = value;
+  EEPROM.put(offsetof(ConfigData, channelId), _settings.channelId);
   EEPROM.commit();
 };
 void setGain(uint8_t val, uint8_t G_SEL_A = 99, uint8_t G_SEL_B = 99) {
