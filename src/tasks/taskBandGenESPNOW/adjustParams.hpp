@@ -23,7 +23,7 @@ const int BATTERY_TEXT_POS[2] = {0, 16};
 const int FONT_SIZE = 1;
 const int DEVICE_POS = 5;
 
-const int CATEGORY_ID_TXT_SIZE = HAPBEAT_CATEGORY_NUM;
+const int CATEGORY_ID_TXT_SIZE = sizeof(CATEGORY_ID_TXT) / sizeof(CATEGORY_ID_TXT[0]);
 const int CHANNEL_ID_TXT_SIZE = sizeof(CHANNEL_ID_TXT) / sizeof(CHANNEL_ID_TXT[0]);
 const int GAIN_STEP_TXT_SIZE = sizeof(GAIN_STEP_TXT) / sizeof(GAIN_STEP_TXT[0]);
 

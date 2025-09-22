@@ -153,6 +153,49 @@ build_flags =
 
 新規構成の雛形は [`src/adjustParams.cpp.tpl`](src/adjustParams.cpp.tpl) にあります。内容を参考に、各タスクの `adjustParams.hpp` で必要な実体（配列/色/座標など）を調整してください。
 
+## 複数台への一括書き込み（upload_all.py）
+
+複数の ESP32 を自動検出して、各デバイスに対し「フラッシュ消去 → ファームウェア書き込み → ファイルシステム書き込み（LittleFS/SPIFFS）」を順番に実行します。
+
+- 前提
+
+  - PlatformIO CLI（`pio`）がインストールされ、PATH に通っていること
+  - Python 3 が使えること（`pyserial` が必要。エラー時は `pip install pyserial`）
+  - Windows では PowerShell ではなく、cmd.exe または Git Bash での実行を推奨
+
+- 環境の指定（どちらか）
+
+  1. 実行時に環境変数 `PIOENV` を指定する
+
+  ```bat
+  rem 例: BandWL_V3_GEN_ESPNOW を指定して実行（cmd.exe）
+  set PIOENV=BandWL_V3_GEN_ESPNOW
+  python upload_all.py
+  ```
+
+  2. もしくは `upload_all.py` 内の `TARGET_ENV` を編集して固定する
+
+- 実行コマンド
+（PowerShell 等のターミナルではなく PlatformIO CLI から実行する必要があります）
+```bat
+python upload_all.py
+```
+
+
+- 動作概要
+
+  - ポート自動検出: デバイス記述に「USB / CP210 / CH910」を含むシリアルポートを対象
+  - 各デバイスごとに以下を実行
+    - フラッシュ消去: `pio run -e <ENV> -t erase --upload-port <PORT>`
+    - ファーム書き込み: `pio run -e <ENV> -t upload --upload-port <PORT>`
+    - FS 書き込み: `pio run -e <ENV> -t uploadfs --upload-port <PORT>`
+
+- トラブルシューティング
+  - デバイスが見つからない: ドライバ（CP210/CH910）導入、Device Manager で COM ポート確認、BOOT モード確認
+  - `serial` モジュールが無い: `pip install pyserial`
+  - `pio` が見つからない: PlatformIO CLI をインストールし PATH を設定
+
+
 ## 振動用音声データの差し替え
 
 [`data/`]フォルダ内の wav データを差し替えてください。ファイル名規則は次項を確認してください。
@@ -163,6 +206,7 @@ build_flags =
   - 8 kHz だと明確に遅延が大きくなるので注意。恐らく esp 側で最適化されていない。
 - 極力ファイルサイズを小さくするようにしてください。
   - 可能であればモノラル・1 ファイルにつき数百ミリ秒が目安です。
+
 
 ### ファイル名規則
 
