@@ -32,11 +32,23 @@
 
 # 各種パラメータ調整
 
-## 画面 UI の変更
+## パラメータの変更範囲（tasks/ 以下のみで完結）
 
-[`src/adjustParams.cpp`](https://github.com/yus988/Hapbeat_Wireless_firmware/blob/main/src/adjustParams.cpp.template)（初回ビルド時に`src/adjustParams.cpp.template`から自動で複製）内の変数の値を用途に応じて調整してください。
+今回の構成変更により、第三者が調整すべきファイルはすべて `src/tasks/<task>/` ディレクトリ配下に限定されます。共通部（`main.cpp` / `globals.h` / `lib/` 配下）を編集する必要はありません。
 
-- もし自動で複製されなかった場合は手動で複製してください。.template を削除すれば OK です。
+- UI 表示・色・文言・レイアウトを変える: `src/tasks/<task>/adjustParams.hpp`
+  - 例: テキスト配列（`CATEGORY_ID_TXT` / `CHANNEL_ID_TXT` / `GAIN_STEP_TXT`）、表示座標（`*_TEXT_POS`）、色（`COLOR_*`）、ディスプレイ設定（`DISP_ROT` / `FONT_SIZE`）など
+- 音声処理の上限・動作パラメータを変える: `src/tasks/<task>/audioManagerSettings.hpp`
+  - 例: `CATEGORY_NUM` / `SOUND_FILE_NUM` / `DATA_NUM` / `SUB_DATA_NUM` / `VOLUME_MAX` / `STUB_NUM` / `POSITION_NUM` / `IS_EVENT_MODE`
+  - 個別タスクにファイルが無い場合でも、共通デフォルト（`lib/audioManager/audioManagerSettings_default.hpp`）でビルド可能です
+
+補足:
+
+- JUDO0806 のように UI 実体が不要なタスクでは、`adjustParams.hpp` を用意しなくてもビルドできるよう弱デフォルトを用意しています（`src/adjustParams_defaults.cpp`）。
+
+## 画面 UI の変更（テンプレート）
+
+新規構成の雛形は [`src/adjustParams.cpp.tpl`](src/adjustParams.cpp.tpl) にあります。内容を参考に、各タスクの `adjustParams.hpp` で必要な実体（配列/色/座標など）を調整してください。
 
 ## 振動用音声データの差し替え
 
@@ -72,9 +84,9 @@
 - audio_channel = C
 - data_storage = RAM
 
-### 最大データ数
+### 最大データ数・音声処理の設定
 
-[`lib/audioManager/audioManager.h`](https://github.com/yus988/Hapbeat_Wireless_firmware/blob/main/lib/audioManager/audioManager.h)の調整項目を参照してください（将来的に adjustmentParams.cpp にまとめます）
+各タスクの [`audioManagerSettings.hpp`](src/tasks) を編集してください（タスクごとに上書き可、未定義時は `lib/audioManager/audioManagerSettings_default.hpp` が使用されます）。
 
 ## 送受信データ形式説明
 
@@ -131,10 +143,11 @@
 1. ディレクトリ作成
 
 - `src/tasks/task<Device><Gen|Feature><PROTOCOL>/` を作成（例: `taskNeckNewESPNOW/`）
-- 中に最低限、以下の 2 ファイルを用意:
+- 中に最低限、以下のファイルを用意:
   - `task_entry.cpp`（必須: Init/Start/Loop の共通エントリ）
   - `<任意の名前>.cpp` に UI 本体（最後に `TaskUI_Run(void*)` を実装）
-- パラメータは同ディレクトリに `adjustParams.hpp` を置く（既存タスクを参考）
+  - `audioManagerSettings.hpp`（音声設定マクロ）
+  - `adjustParams.hpp`（UI 実体定義）
 
 2. task_entry.cpp を実装
 
@@ -192,6 +205,11 @@ build_flags =
 lib_ignore = MQTT_manager
 build_src_filter =
     +<*> -<tasks/*> +<tasks/taskNeckNewESPNOW/>
+
+; audioManagerSettings.hpp を解決するためのヘッダ検索パス（タスク配下を追加）
+build_flags =
+    ${env.build_flags}
+    -I src/tasks/taskNeckNewESPNOW
 ```
 
 補足

@@ -7,7 +7,11 @@
 
 // タスク固有の音声関連マクロのみ取得する
 // 各 env の build_flags に対象 task ディレクトリを -I 追加してください
-#include "audioManagerSettings.hpp"
+#if __has_include("audioManagerSettings.hpp")
+  #include "audioManagerSettings.hpp"
+#else
+  #include "audioManagerSettings_default.hpp"
+#endif
 
 // 調整項目（値を大きくするほどRAMを圧迫するので、適切なサイズに設定してください）
 // audioManagerSettings.hpp 側で必ず定義される想定。未定義ならコンパイルエラーにする
