@@ -75,11 +75,16 @@ void TaskBandESPNOW(void *args) {
   bool needRedrawBat = true;
   unsigned long lastBlinkLed = 0;
   unsigned long lastBatSample = 0;
+  // 起動後に一度だけLED色を再設定するための非ブロッキング処理
+  unsigned long postInitColorDeadline = millis() + 1000; // 起動1秒後
+  bool postInitColorDone = false;
 
   while (1) {
     for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
       int pinState = digitalRead(_SW_PIN[i]);
       if (!pinState && !_isBtnPressed[i]) {
+        // 任意のボタン押下時に現在の音声を停止（Neck 実装と同様の挙動）
+        audioManager::stopAudio();
         if (i == 0) {
           if (!_isFixMode) {
             if (volumeLevels[category_ID] < GAIN_STEP_TXT_SIZE - 1 - ADJ_VOL_STEP) {
@@ -132,6 +137,13 @@ void TaskBandESPNOW(void *args) {
     }
 
     unsigned long now = millis();
+
+    // 起動後1秒経過したら、現在のモード色を強制再適用（非ブロッキング）
+    if (!postInitColorDone && now >= postInitColorDeadline) {
+      _leds[0] = _isFixMode ? COLOR_FIX_MODE : COLOR_VOL_MODE;
+      FastLED.show();
+      postInitColorDone = true;
+    }
     if (now - lastBatSample >= 1000) {
       lastBatSample = now;
       int levels;

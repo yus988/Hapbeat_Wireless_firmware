@@ -1,7 +1,8 @@
 #include "globals.h"
 #include <Fonts/FreeSansBold9pt7b.h>
 
-#if defined(NECKLACE_V2) && defined(WIRED)
+#if defined(NECKLACE_V2) || defined(NECKLACE_V3)
+#if defined(WIRED)
 
 static char percentText[8];
 static const int barX = 2;
@@ -97,10 +98,13 @@ void TaskWiredNeck() {
 }
 
 #endif
+#endif
 
 void TaskUI_WIRED(void *args) {
-#if defined(NECKLACE_V2) && defined(WIRED)
+#if defined(NECKLACE_V2) || defined(NECKLACE_V3)
+#if defined(WIRED)
   TaskWiredNeck();
+#endif
 #endif
 }
 

@@ -1,6 +1,6 @@
 #include "globals.h"
 
-#if defined(NECKLACE_V2)
+#if defined(NECKLACE_V2) || defined(NECKLACE_V3)
 void TaskNeckESPNOW() {
   if (_isFixMode) {
     setFixGain();
@@ -159,9 +159,9 @@ void TaskBandESPNOW() {
 #endif
 
 void TaskUI_ESPNOW(void *args) {
-#if defined(NECKLACE_V2)
+#if defined(NECKLACE_V2) || defined(NECKLACE_V3)
   TaskNeckESPNOW();
-#elif defined(BAND_V2)
+#elif defined(BAND_V2) || defined(BAND_V3)
   TaskBandESPNOW();
 #endif
 }

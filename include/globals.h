@@ -65,7 +65,7 @@ extern const int SCREEN_HEIGHT;  // OLED _display height
 extern Adafruit_SSD1306 _display;
 
 // バージョンごとのスイッチとボタンの状態
-#if defined(NECKLACE_V2)
+#if defined(NECKLACE_V2) || defined(NECKLACE_V3)
 extern int _SW_PIN[5];
 extern bool _isBtnPressed[5];
 
@@ -78,7 +78,7 @@ extern uint8_t _ampVolStep;
 #if defined(BAND_V3)
 extern int _SW_PIN[3];
 extern bool _isBtnPressed[3];
-#elif defined(BAND_V2)
+#elif defined(BAND_V2) || defined(BAND_V3)
 extern int _SW_PIN[2];
 extern bool _isBtnPressed[2];
 #endif

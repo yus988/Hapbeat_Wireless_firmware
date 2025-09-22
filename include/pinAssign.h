@@ -2,7 +2,7 @@
 #ifndef PIN_ASSIGNMENT_H
 #define PIN_ASSIGNMENT_H
 
-#if defined(NECKLACE_V2)
+#if defined(NECKLACE_V2) || defined(NECKLACE_V3)
   // Audio pins
   #define BCLK_PIN 39
   #define LRCK_PIN 38
@@ -41,7 +41,7 @@
   #define DETECT_ANALOG_IN_PIN 45
 #endif
 
-#if defined(BAND_V2)
+#if defined(BAND_V2) || defined(BAND_V3)
   // Audio pins
   #define BCLK_PIN 39
   #define LRCK_PIN 38

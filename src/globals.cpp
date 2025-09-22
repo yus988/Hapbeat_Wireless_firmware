@@ -83,7 +83,7 @@ void showTextWithParams(const char *text, uint8_t posX, uint8_t posY,
   _lastDisplayUpdate = millis();  // 画面更新時刻をリセット
 }
 
-#if defined(NECKLACE_V2)
+#if defined(NECKLACE_V2) || defined(NECKLACE_V3)
 // see pam8003 datasheet p.7
 int _SW_PIN[] = {SW0_PIN, SW1_PIN, SW2_PIN, SW3_PIN, SW4_PIN};
 bool _isBtnPressed[] = {false, false, false, false, false};
@@ -101,7 +101,7 @@ MCP4018_SOLDERED _digipot;  // オブジェクトの定義
 #if defined(BAND_V3)
 int _SW_PIN[] = {SW0_PIN, SW1_PIN, SW2_PIN};
 bool _isBtnPressed[] = {false, false, false};
-#elif defined(BAND_V2)
+#elif defined(BAND_V2) || defined(BAND_V3)
 // see pam8003 datasheet p.7
 int _SW_PIN[] = {SW0_PIN, SW1_PIN};
 bool _isBtnPressed[] = {false, false};

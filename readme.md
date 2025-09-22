@@ -176,11 +176,11 @@ build_flags =
   2. もしくは `upload_all.py` 内の `TARGET_ENV` を編集して固定する
 
 - 実行コマンド
-（PowerShell 等のターミナルではなく PlatformIO CLI から実行する必要があります）
+  （PowerShell 等のターミナルではなく PlatformIO CLI から実行する必要があります）
+
 ```bat
 python upload_all.py
 ```
-
 
 - 動作概要
 
@@ -195,7 +195,6 @@ python upload_all.py
   - `serial` モジュールが無い: `pip install pyserial`
   - `pio` が見つからない: PlatformIO CLI をインストールし PATH を設定
 
-
 ## 振動用音声データの差し替え
 
 [`data/`]フォルダ内の wav データを差し替えてください。ファイル名規則は次項を確認してください。
@@ -206,7 +205,6 @@ python upload_all.py
   - 8 kHz だと明確に遅延が大きくなるので注意。恐らく esp 側で最適化されていない。
 - 極力ファイルサイズを小さくするようにしてください。
   - 可能であればモノラル・1 ファイルにつき数百ミリ秒が目安です。
-
 
 ### ファイル名規則
 

@@ -42,7 +42,7 @@ void setup() {
   pinMode(BQ27x_PIN, INPUT);
   audioManager::setDevicePos(DEVICE_POS);
 
-#if defined(NECKLACE_V2)
+#if defined(NECKLACE_V2) || defined(NECKLACE_V3)
   // battery current sensing pins
   pinMode(BAT_CURRENT_PIN, INPUT);
   pinMode(DETECT_ANALOG_IN_PIN, INPUT);
