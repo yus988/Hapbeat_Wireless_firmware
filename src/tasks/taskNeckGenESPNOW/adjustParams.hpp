@@ -1,5 +1,7 @@
 // Parameters for TASK_NECK_GEN_ESPNOW (Necklace)
 
+// 注意: この配列の要素数を変更した場合、同じディレクトリの
+// audioManagerSettings.hpp 内の CATEGORY_NUM も同じ値に更新してください。
 const char *CATEGORY_ID_TXT[] = {"cat_0", "cat_1", "cat_2"};
 const char *CHANNEL_ID_TXT[] = {"ch_0", "ch_1", "ch_2", "ch_3"};
 const int FIX_GAIN_STEP[] = {20, 16, 5};

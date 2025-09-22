@@ -32,19 +32,122 @@
 
 # 各種パラメータ調整
 
-## パラメータの変更範囲（tasks/ 以下のみで完結）
+## パラメータ・UI の変更範囲（tasks/ 以下のみで完結）
 
-今回の構成変更により、第三者が調整すべきファイルはすべて `src/tasks/<task>/` ディレクトリ配下に限定されます。共通部（`main.cpp` / `globals.h` / `lib/` 配下）を編集する必要はありません。
+調整すべきファイルはすべて `src/tasks/<task>/` ディレクトリ配下に限定されます。共通部（`main.cpp` / `globals.h` / `lib/` 配下）を編集する必要はありません。
 
 - UI 表示・色・文言・レイアウトを変える: `src/tasks/<task>/adjustParams.hpp`
-  - 例: テキスト配列（`CATEGORY_ID_TXT` / `CHANNEL_ID_TXT` / `GAIN_STEP_TXT`）、表示座標（`*_TEXT_POS`）、色（`COLOR_*`）、ディスプレイ設定（`DISP_ROT` / `FONT_SIZE`）など
+
+  - 例: テキスト配列（`CATEGORY_ID_TXT` / `CHANNEL_ID_TXT` / `GAIN_STEP_TXT`）、表示座標（`*_TEXT_POS`）、LED の色（`COLOR_*`）、ディスプレイ設定（`DISP_ROT` / `FONT_SIZE`）など
+
+  調整項目一覧（例: `taskBandGenESPNOW` の既定値。タスクにより異なる場合があります）
+
+  | 変数名               | 内容説明                                  | デフォルト例                         |
+  | -------------------- | ----------------------------------------- | ------------------------------------ |
+  | `CATEGORY_ID_TXT`    | カテゴリ名の配列                          | `{ "Cat_0", "Cat_1", "Cat_2" }`      |
+  | `CHANNEL_ID_TXT`     | チャンネル/装着者識別名の配列             | `{ "CH_0", "CH_1", "CH_2", "CH_3" }` |
+  | `FIX_GAIN_STEP`      | 固定モード時のゲイン（カテゴリ別、0..23） | `{ 16, 0, 23 }`                      |
+  | `GAIN_STEP_TXT`      | ゲイン段階表示の文字列（0..23）           | `{ "v 0", "v 1", …, "v23" }`         |
+  | `CATEGORY_TEXT_POS`  | カテゴリ表示位置 [x,y]                    | `{ 0, 0 }`                           |
+  | `CHANNEL_TEXT_POS`   | チャンネル表示位置 [x,y]                  | `{ 40, 0 }`                          |
+  | `GAIN_STEP_TEXT_POS` | ゲイン表示位置 [x,y]                      | `{ 84, 0 }`                          |
+  | `BATTERY_TEXT_POS`   | バッテリー表示位置 [x,y]                  | `{ 0, 16 }`                          |
+  | `DISP_ROT`           | 画面回転（0 or 90）                       | `90`                                 |
+  | `FONT_SIZE`          | フォントサイズ（Adafruit_GFX）            | `1`                                  |
+  | `COLOR_FIX_MODE`     | 固定モード時の LED 色                     | `CRGB(5, 5, 5)`                      |
+  | `COLOR_VOL_MODE`     | 可変モード時の LED 色                     | `CRGB(0, 0, 5)`                      |
+  | `COLOR_DANGER_MODE`  | 警告時の LED 色（使用タスクのみ）         | 例: `CRGB(10, 0, 0)`                 |
+  | `ADJ_VOL_STEP`       | 可変モードのボリューム調整ステップ        | `4`                                  |
+  | `DEVICE_POS`         | 装着位置番号（アプリ運用値）              | `5`（例: Band 左腕）                 |
+
+  注意:
+
+  - `CATEGORY_ID_TXT` の要素数を変更した場合、同じタスク配下の `audioManagerSettings.hpp` にある `CATEGORY_NUM` も同じ値に更新してください（未更新だとメモリ確保や配列境界の前提がズレます）。
+
 - 音声処理の上限・動作パラメータを変える: `src/tasks/<task>/audioManagerSettings.hpp`
   - 例: `CATEGORY_NUM` / `SOUND_FILE_NUM` / `DATA_NUM` / `SUB_DATA_NUM` / `VOLUME_MAX` / `STUB_NUM` / `POSITION_NUM` / `IS_EVENT_MODE`
   - 個別タスクにファイルが無い場合でも、共通デフォルト（`lib/audioManager/audioManagerSettings_default.hpp`）でビルド可能です
+  - 注意: `CATEGORY_ID_TXT` の要素数を変更した場合は、ここにある `CATEGORY_NUM` を必ず同じ値に更新してください。
 
-補足:
+## 新しい task を追加する手順
 
-- JUDO0806 のように UI 実体が不要なタスクでは、`adjustParams.hpp` を用意しなくてもビルドできるよう弱デフォルトを用意しています（`src/adjustParams_defaults.cpp`）。
+共通部（main.cpp / globals.h）は編集不要です。以下の手順のみで追加できます。
+
+1. ディレクトリ作成
+
+- `src/tasks/task<Device><Gen|Feature><PROTOCOL>/` を作成（例: `taskNeckNewESPNOW/`）
+- 中に最低限、以下のファイルを用意:
+  - `task_entry.cpp`（必須: Init/Start/Loop の共通エントリ）
+  - `<任意の名前>.cpp` に UI 本体（最後に `TaskUI_Run(void*)` を実装）
+  - `audioManagerSettings.hpp`（音声設定マクロ）
+  - `adjustParams.hpp`（UI 実体定義）
+
+2. task_entry.cpp を実装
+
+- 必須 3 関数: `TaskAppInit()`, `TaskAppStart()`, `TaskAppLoop()`
+- `TaskAppStart()` では共通の UI エントリ `TaskUI_Run` を起動します
+
+```cpp
+#include "globals.h"
+#include "task_entry.h"
+#include <espnow_manager.h>  // ESPNOW の場合。MQTT の場合は <MQTT_manager.h>
+
+void TaskAppInit() {
+  // 例: ESPNOW の初期化
+  displayManager::setTitle(CATEGORY_ID_TXT, CATEGORY_ID_TXT_SIZE,
+                           CHANNEL_ID_TXT, CHANNEL_ID_TXT_SIZE,
+                           GAIN_STEP_TXT, GAIN_STEP_TXT_SIZE);
+  setFixGain(true);
+  _display.display();
+  espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
+}
+
+void TaskAppStart() {
+  xTaskCreatePinnedToCore(TaskUI_Run, "TaskUI", 4096, NULL, 23, &thp[1], 1);
+}
+
+void TaskAppLoop() {
+  // MQTT の場合はここで MQTT_manager::loopMQTTclient(); を回す
+}
+```
+
+3. UI 本体に共通エントリ `TaskUI_Run` を用意
+
+- 既存のループ関数がある場合はラップするだけで OK
+
+```cpp
+// 任意ファイル（例: MyTask.cpp）
+// 既存の UI 関数
+void MyTaskMain(void *args) { /* ... */ }
+
+// 共通エントリ
+void TaskUI_Run(void *args) { MyTaskMain(args); }
+```
+
+4. platformio.ini へ env を追加
+
+- 対象タスクだけがビルドされるよう `build_src_filter` を指定
+- `adjustParams.cpp` の切替に使う `-D TASK_*` マクロも合わせて定義
+
+```ini
+[env:NeckWL_V3_NEW_ESPNOW]
+build_flags =
+    -D NECKLACE_V3
+    -D ESPNOW
+    -D TASK_NECK_NEW_ESPNOW
+lib_ignore = MQTT_manager
+build_src_filter =
+    +<*> -<tasks/*> +<tasks/taskNeckNewESPNOW/>
+
+; audioManagerSettings.hpp を解決するためのヘッダ検索パス（タスク配下を追加）
+build_flags =
+    ${env.build_flags}
+    -I src/tasks/taskNeckNewESPNOW
+```
+
+補足
+
+- 既存タスク（`taskNeckGenESPNOW/`, `taskBandGenESPNOW/`, `taskBandGenMQTT/`, `taskNeckGenWIRED/`）を雛形として流用できます。
 
 ## 画面 UI の変更（テンプレート）
 
@@ -135,84 +238,3 @@
 ### ライセンス情報
 
 このプロジェクトで使用されるライブラリのライセンス情報は `LICENSES` フォルダに含まれています。詳細は各ライセンスファイルを参照してください。
-
-## 新しい task を追加する手順（build_src_filter 方式）
-
-共通部（main.cpp / globals.h）は編集不要です。以下の手順のみで追加できます。
-
-1. ディレクトリ作成
-
-- `src/tasks/task<Device><Gen|Feature><PROTOCOL>/` を作成（例: `taskNeckNewESPNOW/`）
-- 中に最低限、以下のファイルを用意:
-  - `task_entry.cpp`（必須: Init/Start/Loop の共通エントリ）
-  - `<任意の名前>.cpp` に UI 本体（最後に `TaskUI_Run(void*)` を実装）
-  - `audioManagerSettings.hpp`（音声設定マクロ）
-  - `adjustParams.hpp`（UI 実体定義）
-
-2. task_entry.cpp を実装
-
-- 必須 3 関数: `TaskAppInit()`, `TaskAppStart()`, `TaskAppLoop()`
-- `TaskAppStart()` では共通の UI エントリ `TaskUI_Run` を起動します
-
-```cpp
-#include "globals.h"
-#include "task_entry.h"
-#include <espnow_manager.h>  // ESPNOW の場合。MQTT の場合は <MQTT_manager.h>
-
-void TaskAppInit() {
-  // 例: ESPNOW の初期化
-  displayManager::setTitle(CATEGORY_ID_TXT, CATEGORY_ID_TXT_SIZE,
-                           CHANNEL_ID_TXT, CHANNEL_ID_TXT_SIZE,
-                           GAIN_STEP_TXT, GAIN_STEP_TXT_SIZE);
-  setFixGain(true);
-  _display.display();
-  espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
-}
-
-void TaskAppStart() {
-  xTaskCreatePinnedToCore(TaskUI_Run, "TaskUI", 4096, NULL, 23, &thp[1], 1);
-}
-
-void TaskAppLoop() {
-  // MQTT の場合はここで MQTT_manager::loopMQTTclient(); を回す
-}
-```
-
-3. UI 本体に共通エントリ `TaskUI_Run` を用意
-
-- 既存のループ関数がある場合はラップするだけで OK
-
-```cpp
-// 任意ファイル（例: MyTask.cpp）
-// 既存の UI 関数
-void MyTaskMain(void *args) { /* ... */ }
-
-// 共通エントリ
-void TaskUI_Run(void *args) { MyTaskMain(args); }
-```
-
-4. platformio.ini へ env を追加
-
-- 対象タスクだけがビルドされるよう `build_src_filter` を指定
-- `adjustParams.cpp` の切替に使う `-D TASK_*` マクロも合わせて定義
-
-```ini
-[env:NeckWL_V3_NEW_ESPNOW]
-build_flags =
-    -D NECKLACE_V3
-    -D ESPNOW
-    -D TASK_NECK_NEW_ESPNOW
-lib_ignore = MQTT_manager
-build_src_filter =
-    +<*> -<tasks/*> +<tasks/taskNeckNewESPNOW/>
-
-; audioManagerSettings.hpp を解決するためのヘッダ検索パス（タスク配下を追加）
-build_flags =
-    ${env.build_flags}
-    -I src/tasks/taskNeckNewESPNOW
-```
-
-補足
-
-- ヘッダは極力不要（前方宣言で代替）。新規作成は `.cpp` 中心で OK。
-- 既存タスク（`taskNeckGenESPNOW/`, `taskBandGenESPNOW/`, `taskBandGenMQTT/`, `taskNeckGenWIRED/`, `taskJUDO0806/`）を雛形として流用できます。

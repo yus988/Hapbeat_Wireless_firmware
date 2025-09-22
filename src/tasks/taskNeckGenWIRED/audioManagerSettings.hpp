@@ -15,16 +15,17 @@
 // Max sub variations per data (sub_id range)
 #define SUB_DATA_NUM 6
 
-// Event mode: if true, ignore category filter and allow all
+// Whether to bypass category filter (event/demo use)
 #define IS_EVENT_MODE false
 
-// Max volume step for amp (0..VOLUME_MAX)
+// Max volume step (0..VOLUME_MAX)
 #define VOLUME_MAX 23
 
-// Max concurrent stubs (mixers) (e.g., need 6 for demo use cases)
+// Number of concurrent playback stubs/mixers
 #define STUB_NUM 6
 
-// Device position slots (keep 1 unless multi-position addressing is required)
+// Number of device position slots
 #define POSITION_NUM 1
 
 #endif
+

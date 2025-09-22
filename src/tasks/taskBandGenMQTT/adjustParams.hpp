@@ -2,9 +2,13 @@
 
 const int FIX_GAIN_STEP[] = {16, 0, 23};
 #ifdef BAND_V3
+// 注意: この配列の要素数を変更した場合、同じディレクトリの
+// audioManagerSettings.hpp 内の CATEGORY_NUM も同じ値に更新してください。
 const char *CATEGORY_ID_TXT[] = {"C0", "C1", "C2"};
 const char *CHANNEL_ID_TXT[] = {"CH0", "CH1", "CH2", "CH3"};
 #else
+// 注意: この配列の要素数を変更した場合、同じディレクトリの
+// audioManagerSettings.hpp 内の CATEGORY_NUM も同じ値に更新してください。
 const char *CATEGORY_ID_TXT[] = {"cat_0", "cat_1", "cat_2"};
 const char *CHANNEL_ID_TXT[] = {"ch_0", "ch_1", "ch_2", "ch_3"};
 #endif
