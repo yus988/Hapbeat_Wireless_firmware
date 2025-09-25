@@ -4,7 +4,7 @@ const int FIX_GAIN_STEP[] = {16, 0,
                              23}; // 各カテゴリごとの固定ボリューム値(0--23)
 // 注意: この配列の要素数を変更した場合、同じディレクトリの
 // audioManagerSettings.hpp 内の CATEGORY_NUM も同じ値に更新してください。
-const char *CATEGORY_ID_TXT[] = {"Cat_0", "Cat_1", "Cat_2"};
+const char *CATEGORY_ID_TXT[] = {"Cat_0"};
 const char *CHANNEL_ID_TXT[] = {"CH_0", "CH_1", "CH_2", "CH_3"};
 const CRGB COLOR_FIX_MODE = CRGB(5, 5, 5); //固定モード時のLEDカラー
 const CRGB COLOR_VOL_MODE = CRGB(0, 0, 5); //ボリュームモード時のLEDカラー
