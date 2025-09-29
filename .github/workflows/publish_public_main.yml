@@ -8,13 +8,14 @@ on:
       - "lib/**"
       - "licenses/**"
       - "LICENSE"
+      - "src/private_tasks/README.md"
       - "platformio.ini"
       - "readme.md"
       - "src/adjustParams_defaults.cpp"
       - "src/adjustParams.cpp"
       - "src/globals.cpp"
       - "src/main.cpp"
-      - "src/public_tasks/**"
+      - "src/sample_tasks/**"
 
 permissions:
   contents: write
@@ -35,13 +36,13 @@ jobs:
         run: |
           set -eux
           rm -rf public
-          mkdir -p public/src/public_tasks
+          mkdir -p public/src/sample_tasks
           rsync -a --delete --prune-empty-dirs include/ public/include/
           rsync -a --delete --prune-empty-dirs lib/ public/lib/
           rsync -a --delete --prune-empty-dirs licenses/ public/licenses/
           rsync -a --delete platformio.ini readme.md LICENSE public/
           rsync -a --delete src/adjustParams_defaults.cpp src/adjustParams.cpp src/globals.cpp src/main.cpp public/src/
-          rsync -a --delete src/public_tasks/ public/src/public_tasks/
+          rsync -a --delete src/sample_tasks/ public/src/sample_tasks/
 
       - name: Prepare and push to main
         env:
