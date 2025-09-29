@@ -18,6 +18,31 @@
 #include "AudioOutputMixer.h"
 
 namespace audioManager {
+// ログを一括で出力し、分割出力の取りこぼしを防ぐ
+static inline void logNoAudioMapped(uint8_t currentCategory,
+                                    uint8_t dataId,
+                                    uint8_t subId,
+                                    int isRight,
+                                    uint8_t stub,
+                                    const uint8_t *lastPacket,
+                                    int lastLen) {
+  char buf[256];
+  int pos = snprintf(buf, sizeof(buf),
+                     "No audio mapped. cat=%u, dataID=%u, subID=%u, isR=%d, stub=%u, packet=(",
+                     currentCategory, dataId, subId, isRight, stub);
+  for (int i = 0; i < lastLen && i < 8; ++i) {
+    if (pos < (int)sizeof(buf)) {
+      pos += snprintf(buf + pos, sizeof(buf) - pos, "%u%s",
+                      lastPacket[i], (i == 7 || i == lastLen - 1) ? ")" : ",");
+    }
+  }
+  if (pos >= (int)sizeof(buf)) {
+    // 末尾が切れた場合でも行として成立させる
+    buf[sizeof(buf) - 2] = ')';
+    buf[sizeof(buf) - 1] = '\0';
+  }
+  USBSerial.println(buf);
+}
 
 #ifdef DEBUG_WL
   #define DEBUG_PRINT(x) USBSerial.print(x)
@@ -269,7 +294,8 @@ void playAudio(uint8_t tStubNum, uint8_t tVol, bool isLoop) {
   uint8_t idx = _audioDataIndex[_currentCategory][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
   if (idx == 0xFF || idx >= SOUND_FILE_NUM || _audioStorageType[idx] == 0xFF) {
-    DEBUG_PRINTLN("No audio mapped for currentCategory/dataID/subID");
+    logNoAudioMapped(_currentCategory, _dataID[tStubNum], _subID[tStubNum], isLR,
+                     tStubNum, _lastDuplicateData, 8);
     return;
   }
 
