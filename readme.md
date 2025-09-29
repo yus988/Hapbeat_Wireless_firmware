@@ -75,7 +75,7 @@
 
 1. ディレクトリ作成
 
-- `src/sample_tasks/task<Device><Gen|Feature><PROTOCOL>/` を作成（例: `taskNeckNewESPNOW/`）
+- `src/private_tasks/task<Device><Gen|Feature><PROTOCOL>/` を作成（例: `taskNeckNewESPNOW/`）
 - 中に最低限、以下のファイルを用意:
   - `task_entry.cpp`（必須: Init/Start/Loop の共通エントリ）
   - `<任意の名前>.cpp` に UI 本体（最後に `TaskUI_Run(void*)` を実装）
@@ -137,12 +137,12 @@ build_flags =
     -D TASK_NECK_NEW_ESPNOW
 lib_ignore = MQTT_manager
 build_src_filter =
-    +<*> -<sample_tasks/*> -<private_tasks/*> +<sample_tasks/taskNeckNewESPNOW/>
+    +<*> -<sample_tasks/*> -<private_tasks/*> +<private_tasks/taskNeckNewESPNOW/>
 
 ; audioManagerSettings.hpp を解決するためのヘッダ検索パス（タスク配下を追加）
 build_flags =
     ${env.build_flags}
-    -I src/sample_tasks/taskNeckNewESPNOW
+    -I src/private_tasks/taskNeckNewESPNOW
 ```
 
 ### 独自タスクを private_tasks に作る手順（推奨）
