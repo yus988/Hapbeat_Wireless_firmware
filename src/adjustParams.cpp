@@ -13,9 +13,9 @@
 #elif defined(TASK_NECK_DEMO_ESPNOW)
   #include "private_tasks/taskNeckDemoESPNOW/adjustParams.hpp"
 #elif defined(TASK_BAND_GEN_MQTT)
-  #include "public_tasks/taskBandGenMQTT/adjustParams.hpp"
+  #include "private_tasks/taskBandGenMQTT/adjustParams.hpp"
 #elif defined(TASK_NECK_GEN_WIRED)
-  #include "public_tasks/taskNeckGenWIRED/adjustParams.hpp"
+  #include "private_tasks/taskNeckGenWIRED/adjustParams.hpp"
 #elif defined(TASK_JUDO0806)
   // JUDO0806 は UI 実体を個別に持たず、弱シンボルのデフォルトを使用します
 #else
