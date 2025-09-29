@@ -2,9 +2,9 @@
 
 // 注意: この配列の要素数を変更した場合、同じディレクトリの
 // audioManagerSettings.hpp 内の CATEGORY_NUM も同じ値に更新してください。
-const char *CATEGORY_ID_TXT[] = {"cat_0", "cat_1", "cat_2"};
-const char *CHANNEL_ID_TXT[] = {"ch_0", "ch_1", "ch_2", "ch_3"};
-const int FIX_GAIN_STEP[] = {20, 16, 5};
+const char *CATEGORY_ID_TXT[] = {"None", "Video", "RealTime"};
+const char *CHANNEL_ID_TXT[] = {""};
+const int FIX_GAIN_STEP[] = {20, 14, 14};
 const char *GAIN_STEP_TXT[] = {"0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",
                                       "8",  "9",  "10", "11", "12", "13", "14", "15",
                                       "16", "17", "18", "19", "20", "21", "22", "23"};

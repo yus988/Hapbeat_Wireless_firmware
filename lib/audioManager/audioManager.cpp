@@ -90,7 +90,7 @@ AudioFileSource *_previousSources[STUB_NUM] = {nullptr};
 // [cat][pos][dataID][_subID][isRight]
 uint8_t _audioDataIndex[CATEGORY_NUM][POSITION_NUM][DATA_NUM][SUB_DATA_NUM][2];
 size_t _audioDataSize[SOUND_FILE_NUM];
-uint8_t _categoryNum[CATEGORY_NUM];
+uint8_t _currentCategory = 0;  // 受信コマンドで指定されたカテゴリ（stub 非依存）
 uint8_t _dataID[STUB_NUM];
 uint8_t _subID[STUB_NUM];
 uint8_t _volume[STUB_NUM];
@@ -171,6 +171,14 @@ void readAllSoundFiles() {
     DEBUG_PRINTLN("LittleFS Mount Failed");
     return;
   }
+  // インデックス類を未設定値で初期化
+  memset(_audioDataIndex, 0xFF, sizeof(_audioDataIndex));
+  for (int i = 0; i < SOUND_FILE_NUM; ++i) {
+    _audioStorageType[i] = 0xFF;
+    _audioDataSize[i] = 0;
+    _audioRAM[i] = nullptr;
+    _audioFileNames[i] = String();
+  }
   uint8_t isRight;
   uint8_t cat;
   uint8_t dataID;
@@ -202,26 +210,35 @@ void readAllSoundFiles() {
         "Storage: %s\n",
         fileName.c_str(), cat, dataID, subID, isRight, storageType.c_str());
 
-    _audioDataSize[fileIdx] = _file.size();
-    // データの格納場所を決定
-    if (storageType == "RAM") {
-      // 16ビット（2バイト）ごとのデータ
-      _audioRAM[fileIdx] = new int16_t[_audioDataSize[fileIdx] / 2];
-      _file.read(reinterpret_cast<uint8_t *>(_audioRAM[fileIdx]),
-                 _audioDataSize[fileIdx]);
-      _audioStorageType[fileIdx] = RAM_STORAGE;
+    // 範囲チェック
+    bool inRange = true;
+    if (cat >= CATEGORY_NUM) { inRange = false; DEBUG_PRINTF("Skip (cat): %s\n", fileName.c_str()); }
+    if (dataID >= DATA_NUM) { inRange = false; DEBUG_PRINTF("Skip (dataID): %s\n", fileName.c_str()); }
+    if (subID >= SUB_DATA_NUM) { inRange = false; DEBUG_PRINTF("Skip (subID): %s\n", fileName.c_str()); }
+    if (fileIdx >= SOUND_FILE_NUM) { inRange = false; DEBUG_PRINTF("Skip (fileIdx overflow): %s\n", fileName.c_str()); }
 
-      DEBUG_PRINTLN("Stored in RAM_STORAGE");
-    } else {
-      // ファイル名のみ格納
-      String fullPath = "/" + fileName;
-      _audioFileNames[fileIdx] = fullPath;
-      _audioStorageType[fileIdx] = FS_STORAGE;
-      DEBUG_PRINTLN("Stored in FS_STORAGE");
+    if (inRange) {
+      _audioDataSize[fileIdx] = _file.size();
+      // データの格納場所を決定
+      if (storageType == "RAM") {
+        // 16ビット（2バイト）ごとのデータ
+        _audioRAM[fileIdx] = new int16_t[_audioDataSize[fileIdx] / 2];
+        _file.read(reinterpret_cast<uint8_t *>(_audioRAM[fileIdx]),
+                   _audioDataSize[fileIdx]);
+        _audioStorageType[fileIdx] = RAM_STORAGE;
+
+        DEBUG_PRINTLN("Stored in RAM_STORAGE");
+      } else {
+        // ファイル名のみ格納
+        String fullPath = "/" + fileName;
+        _audioFileNames[fileIdx] = fullPath;
+        _audioStorageType[fileIdx] = FS_STORAGE;
+        DEBUG_PRINTLN("Stored in FS_STORAGE");
+      }
+
+      _audioDataIndex[cat][0][dataID][subID][isRight] = fileIdx;
+      fileIdx++;
     }
-
-    _audioDataIndex[cat][0][dataID][subID][isRight] = fileIdx;
-    fileIdx++;
     _file = root.openNextFile();
   }
 }
@@ -245,8 +262,16 @@ void stopAudio(uint8_t stub) {
 void playAudio(uint8_t tStubNum, uint8_t tVol, bool isLoop) {
   int isLR = (tStubNum % 2 == 0) ? 0 : 1;
   uint8_t pos = 0;  // pos = 0 は仮置き
-  uint8_t idx = _audioDataIndex[_categoryNum[tStubNum]][pos][_dataID[tStubNum]]
+  if (_currentCategory >= CATEGORY_NUM) {
+    DEBUG_PRINTLN("Invalid current category");
+    return;
+  }
+  uint8_t idx = _audioDataIndex[_currentCategory][pos][_dataID[tStubNum]]
                                [_subID[tStubNum]][isLR];
+  if (idx == 0xFF || idx >= SOUND_FILE_NUM || _audioStorageType[idx] == 0xFF) {
+    DEBUG_PRINTLN("No audio mapped for currentCategory/dataID/subID");
+    return;
+  }
 
   _volume[tStubNum] = tVol;
   _stub[tStubNum]->SetGain((float)tVol / maxVol);
@@ -355,8 +380,9 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
           break;
       }
 
+      // カテゴリは stub に依存させず単一で保持
+      _currentCategory = data[0];
       for (int i = startIdx; i <= startIdx + 1; ++i) {
-        _categoryNum[i] = data[0];
         _dataID[i] = data[3];
         _subID[i] = data[4];
         _volume[i] = data[5 + i % 2];
