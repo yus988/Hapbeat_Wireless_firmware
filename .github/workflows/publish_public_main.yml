@@ -2,22 +2,19 @@ name: Publish public branch (from hapbeat_dev)
 
 on:
   push:
-    branches: [ hapbeat_dev ]
+    branches: [hapbeat_dev]
     paths:
-      - 'include/**'
-      - 'lib/**'
-      - 'licenses/**'
-      - 'LICENSE'
-      - 'platformio.ini'
-      - 'readme.md'
-      - 'src/adjustParams_defaults.cpp'
-      - 'src/adjustParams.cpp'
-      - 'src/globals.cpp'
-      - 'src/main.cpp'
-      - 'src/tasks/taskBandGenESPNOW/**'
-      - 'src/tasks/taskBandGenMQTT/**'
-      - 'src/tasks/taskNeckGenESPNOW/**'
-      - 'src/tasks/taskNeckGenWIRED/**'
+      - "include/**"
+      - "lib/**"
+      - "licenses/**"
+      - "LICENSE"
+      - "platformio.ini"
+      - "readme.md"
+      - "src/adjustParams_defaults.cpp"
+      - "src/adjustParams.cpp"
+      - "src/globals.cpp"
+      - "src/main.cpp"
+      - "src/public_tasks/**"
 
 permissions:
   contents: write
@@ -38,16 +35,13 @@ jobs:
         run: |
           set -eux
           rm -rf public
-          mkdir -p public/src/tasks
+          mkdir -p public/src/public_tasks
           rsync -a --delete --prune-empty-dirs include/ public/include/
           rsync -a --delete --prune-empty-dirs lib/ public/lib/
           rsync -a --delete --prune-empty-dirs licenses/ public/licenses/
           rsync -a --delete platformio.ini readme.md LICENSE public/
           rsync -a --delete src/adjustParams_defaults.cpp src/adjustParams.cpp src/globals.cpp src/main.cpp public/src/
-          rsync -a --delete src/tasks/taskBandGenESPNOW/ public/src/tasks/taskBandGenESPNOW/
-          rsync -a --delete src/tasks/taskBandGenMQTT/ public/src/tasks/taskBandGenMQTT/
-          rsync -a --delete src/tasks/taskNeckGenESPNOW/ public/src/tasks/taskNeckGenESPNOW/
-          rsync -a --delete src/tasks/taskNeckGenWIRED/ public/src/tasks/taskNeckGenWIRED/
+          rsync -a --delete src/public_tasks/ public/src/public_tasks/
 
       - name: Prepare and push to main
         env:
@@ -76,5 +70,3 @@ jobs:
           fi
           git commit -m "chore: publish public snapshot from ${{ github.ref_name }} @ ${{ github.sha }}"
           git push origin main
-
-

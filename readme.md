@@ -32,11 +32,11 @@
 
 # 各種パラメータ調整
 
-## パラメータ・UI の変更範囲（tasks/ 以下のみで完結）
+## パラメータ・UI の変更範囲（public_tasks/ 以下のみで完結）
 
-調整すべきファイルはすべて `src/tasks/<task>/` ディレクトリ配下に限定されます。共通部（`main.cpp` / `globals.h` / `lib/` 配下）を編集する必要はありません。
+調整すべきファイルはすべて `src/public_tasks/<task>/` ディレクトリ配下に限定されます。共通部（`main.cpp` / `globals.h` / `lib/` 配下）を編集する必要はありません。
 
-- UI 表示・色・文言・レイアウトを変える: `src/tasks/<task>/adjustParams.hpp`
+- UI 表示・色・文言・レイアウトを変える: `src/public_tasks/<task>/adjustParams.hpp`
 
   - 例: テキスト配列（`CATEGORY_ID_TXT` / `CHANNEL_ID_TXT` / `GAIN_STEP_TXT`）、表示座標（`*_TEXT_POS`）、LED の色（`COLOR_*`）、ディスプレイ設定（`DISP_ROT` / `FONT_SIZE`）など
 
@@ -64,7 +64,7 @@
 
   - `CATEGORY_ID_TXT` の要素数を変更した場合、同じタスク配下の `audioManagerSettings.hpp` にある `CATEGORY_NUM` も同じ値に更新してください（未更新だとメモリ確保や配列境界の前提がズレます）。
 
-- 音声処理の上限・動作パラメータを変える: `src/tasks/<task>/audioManagerSettings.hpp`
+- 音声処理の上限・動作パラメータを変える: `src/public_tasks/<task>/audioManagerSettings.hpp`
   - 例: `CATEGORY_NUM` / `SOUND_FILE_NUM` / `DATA_NUM` / `SUB_DATA_NUM` / `VOLUME_MAX` / `STUB_NUM` / `POSITION_NUM` / `IS_EVENT_MODE`
   - 個別タスクにファイルが無い場合でも、共通デフォルト（`lib/audioManager/audioManagerSettings_default.hpp`）でビルド可能です
   - 注意: `CATEGORY_ID_TXT` の要素数を変更した場合は、ここにある `CATEGORY_NUM` を必ず同じ値に更新してください。
@@ -75,7 +75,7 @@
 
 1. ディレクトリ作成
 
-- `src/tasks/task<Device><Gen|Feature><PROTOCOL>/` を作成（例: `taskNeckNewESPNOW/`）
+- `src/public_tasks/task<Device><Gen|Feature><PROTOCOL>/` を作成（例: `taskNeckNewESPNOW/`）
 - 中に最低限、以下のファイルを用意:
   - `task_entry.cpp`（必須: Init/Start/Loop の共通エントリ）
   - `<任意の名前>.cpp` に UI 本体（最後に `TaskUI_Run(void*)` を実装）
@@ -137,12 +137,12 @@ build_flags =
     -D TASK_NECK_NEW_ESPNOW
 lib_ignore = MQTT_manager
 build_src_filter =
-    +<*> -<tasks/*> +<tasks/taskNeckNewESPNOW/>
+    +<*> -<public_tasks/*> -<private_tasks/*> +<public_tasks/taskNeckNewESPNOW/>
 
 ; audioManagerSettings.hpp を解決するためのヘッダ検索パス（タスク配下を追加）
 build_flags =
     ${env.build_flags}
-    -I src/tasks/taskNeckNewESPNOW
+    -I src/public_tasks/taskNeckNewESPNOW
 ```
 
 補足
@@ -231,7 +231,7 @@ python upload_all.py
 
 ### 最大データ数・音声処理の設定
 
-各タスクの [`audioManagerSettings.hpp`](src/tasks) を編集してください（タスクごとに上書き可、未定義時は `lib/audioManager/audioManagerSettings_default.hpp` が使用されます）。
+各タスクの [`audioManagerSettings.hpp`](src/public_tasks) を編集してください（タスクごとに上書き可、未定義時は `lib/audioManager/audioManagerSettings_default.hpp` が使用されます）。
 
 ## 送受信データ形式説明
 

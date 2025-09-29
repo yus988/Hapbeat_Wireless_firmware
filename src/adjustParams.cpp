@@ -7,15 +7,15 @@
 
 // TASK_* に応じて一意の .hpp を取り込む
 #if defined(TASK_BAND_GEN_ESPNOW)
-  #include "tasks/taskBandGenESPNOW/adjustParams.hpp"
+  #include "public_tasks/taskBandGenESPNOW/adjustParams.hpp"
 #elif defined(TASK_NECK_GEN_ESPNOW)
-  #include "tasks/taskNeckGenESPNOW/adjustParams.hpp"
+  #include "public_tasks/taskNeckGenESPNOW/adjustParams.hpp"
 #elif defined(TASK_NECK_DEMO_ESPNOW)
-  #include "tasks/taskNeckDemoESPNOW/adjustParams.hpp"
+  #include "private_tasks/taskNeckDemoESPNOW/adjustParams.hpp"
 #elif defined(TASK_BAND_GEN_MQTT)
-  #include "tasks/taskBandGenMQTT/adjustParams.hpp"
+  #include "public_tasks/taskBandGenMQTT/adjustParams.hpp"
 #elif defined(TASK_NECK_GEN_WIRED)
-  #include "tasks/taskNeckGenWIRED/adjustParams.hpp"
+  #include "public_tasks/taskNeckGenWIRED/adjustParams.hpp"
 #elif defined(TASK_JUDO0806)
   // JUDO0806 は UI 実体を個別に持たず、弱シンボルのデフォルトを使用します
 #else
