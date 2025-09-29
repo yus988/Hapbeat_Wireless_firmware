@@ -10,6 +10,8 @@
   #include "tasks/taskBandGenESPNOW/adjustParams.hpp"
 #elif defined(TASK_NECK_GEN_ESPNOW)
   #include "tasks/taskNeckGenESPNOW/adjustParams.hpp"
+#elif defined(TASK_NECK_DEMO_ESPNOW)
+  #include "tasks/taskNeckDemoESPNOW/adjustParams.hpp"
 #elif defined(TASK_BAND_GEN_MQTT)
   #include "tasks/taskBandGenMQTT/adjustParams.hpp"
 #elif defined(TASK_NECK_GEN_WIRED)
