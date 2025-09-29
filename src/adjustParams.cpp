@@ -5,8 +5,11 @@
 // - lib/ 以下から参照される可能性があるため、extern 宣言は include/adjustParams.h に集約
 // - 実体定義はビルド環境ごとにここで取り込む .inc 側に寄せる
 
+// まず private override があればそれを採用
+#if __has_include("private_tasks/adjustParams.hpp")
+  #include "private_tasks/adjustParams.hpp"
 // TASK_* に応じて一意の .hpp を取り込む
-#if defined(TASK_BAND_GEN_ESPNOW)
+#elif defined(TASK_BAND_GEN_ESPNOW)
   #include "sample_tasks/taskBandGenESPNOW/adjustParams.hpp"
 #elif defined(TASK_NECK_GEN_ESPNOW)
   #include "sample_tasks/taskNeckGenESPNOW/adjustParams.hpp"

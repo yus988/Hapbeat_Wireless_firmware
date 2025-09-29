@@ -160,9 +160,9 @@ build_flags =
    build_src_filter =
        +<*> -<sample_tasks/*> -<private_tasks/*> +<private_tasks/<新タスク名>/>
    ```
-3. 切替マクロを合わせる
-   - `src/adjustParams.cpp` は `TASK_*` マクロにより自動で `private_tasks/<新タスク名>/adjustParams.hpp` を取り込みます
-   - 既存の `TASK_*` を流用する場合は、当該タスクの include/設定と整合をとってください
+3. 切替（オーバーライド）
+   - `src/private_tasks/adjustParams.hpp` を置くと、`src/adjustParams.cpp` が最優先で取り込みます（`__has_include`）。
+   - 個別タスクフォルダ（`src/private_tasks/<新タスク名>`）を使う場合は、従来どおり `TASK_*` を利用し、`-I` と `build_src_filter` を設定してください。
 4. 実装を編集
    - `adjustParams.hpp` と `audioManagerSettings.hpp` を要件に合わせて編集
    - 必要に応じて `.cpp` を追加/変更
