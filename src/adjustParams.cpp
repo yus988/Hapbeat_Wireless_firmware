@@ -7,9 +7,9 @@
 
 // TASK_* に応じて一意の .hpp を取り込む
 #if defined(TASK_BAND_GEN_ESPNOW)
-  #include "public_tasks/taskBandGenESPNOW/adjustParams.hpp"
+  #include "sample_tasks/taskBandGenESPNOW/adjustParams.hpp"
 #elif defined(TASK_NECK_GEN_ESPNOW)
-  #include "public_tasks/taskNeckGenESPNOW/adjustParams.hpp"
+  #include "sample_tasks/taskNeckGenESPNOW/adjustParams.hpp"
 #elif defined(TASK_NECK_DEMO_ESPNOW)
   #include "private_tasks/taskNeckDemoESPNOW/adjustParams.hpp"
 #elif defined(TASK_BAND_GEN_MQTT)
