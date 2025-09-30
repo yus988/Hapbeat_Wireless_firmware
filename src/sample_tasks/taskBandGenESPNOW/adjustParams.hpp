@@ -1,7 +1,7 @@
 // Parameters for TASK_BAND_GEN_ESPNOW (Band V2/V3)
 
-const int FIX_GAIN_STEP[] = {16, 0,
-                             23}; // 各カテゴリごとの固定ボリューム値(0--23)
+const int FIX_GAIN_STEP[] = {14, 14,
+                             14}; // 各カテゴリごとの固定ボリューム値(0--23)
 // 注意: この配列の要素数を変更した場合、同じディレクトリの
 // audioManagerSettings.hpp 内の CATEGORY_NUM も同じ値に更新してください。
 const char *CATEGORY_ID_TXT[] = {"Cat_0", "Cat_1", "Cat_2"};
