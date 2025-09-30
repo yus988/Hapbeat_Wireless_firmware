@@ -32,9 +32,9 @@
 
 # 各種パラメータ調整
 
-## パラメータ・UI の変更範囲（public_tasks/ 以下のみで完結）
+## パラメータ・UI の変更範囲（各 task ディレクトリ内で完結）
 
-調整すべきファイルはすべて `src/public_tasks/<task>/` ディレクトリ配下に限定されます。共通部（`main.cpp` / `globals.h` / `lib/` 配下）を編集する必要はありません。
+調整すべきファイルはすべて `src/sample_tasks/<task>/` または `src/private_tasks/<task>/` ディレクトリ配下に限定されます。共通部（`main.cpp` / `globals.h` / `lib/` 配下）を編集する必要はありません。
 
 - UI 表示・色・文言・レイアウトを変える: `src/public_tasks/<task>/adjustParams.hpp`
 
@@ -69,45 +69,35 @@
   - 個別タスクにファイルが無い場合でも、共通デフォルト（`lib/audioManager/audioManagerSettings_default.hpp`）でビルド可能です
   - 注意: `CATEGORY_ID_TXT` の要素数を変更した場合は、ここにある `CATEGORY_NUM` を必ず同じ値に更新してください。
 
-## Quick Start（sample_tasks をコピペして private_tasks に作る）
+## 新しい task（UI 操作・GUI 関連）の追加方法
 
-1. 雛形をコピー
+### スクリプトによる半自動追加（推奨）
 
-- 例: `src/sample_tasks/taskNeckGenESPNOW/` を丸ごと `src/private_tasks/taskNeckNewESPNOW/` にコピー
+1. 実行（ルートディレクトリ）
 
-2. 環境を追加（`src/private_tasks/platformio.private.ini`）
-
-```ini
-[env:NeckWL_V3_NEW_ESPNOW]
-build_flags =
-    -D NECKLACE_V3
-    -D ESPNOW
-    -D TASK_NECK_NEW_ESPNOW
-lib_ignore = MQTT_manager
-build_src_filter =
-    +<*> -<sample_tasks/*> -<private_tasks/*> +<private_tasks/taskNeckNewESPNOW/>
-
-; ヘッダ検索パス
-build_flags =
-    ${env.build_flags}
-    -I src/private_tasks/taskNeckNewESPNOW
+```powershell
+pwsh -NoProfile -File new_private_task.ps1
 ```
 
-3. ディスパッチを 1 行追加（`src/private_tasks/adjustParams.hpp`）
+2. 対話手順
 
-```cpp
-// 新しい TASK_* に合わせて 1 行追加（例: TASK_NECK_NEW_ESPNOW）
-#elif defined(TASK_NECK_NEW_ESPNOW)
-  #include "taskNeckNewESPNOW/adjustParams.hpp"
-```
+- 表示された `src/sample_tasks/` の一覧からコピー元を選択
+- 「新しい private タスク名の末尾のみ」を入力（先頭の `task` は自動付与。例: `NeckNewESPNOW` → `taskNeckNewESPNOW`）
+- 環境名は自動生成（例: `DuoWL_V3_NECKNEWESPNOW`/`BandWL_V3_...`）。必要ならスクリプト実行後に `src/private_tasks/platformio.private.ini` を手動調整
 
-4. 必要なら `adjustParams.hpp`（配列/色/座標）と `audioManagerSettings.hpp`（CATEGORY_NUM 等）を調整
+3. 生成内容（自動）
 
-5. VSCode の PlatformIO で上記 env を選んでビルド/書き込み
+- `src/private_tasks/<新タスク名>/` へ丸ごとコピー
+- `src/private_tasks/platformio.private.ini` に [env:...] を追記（コピー元の build*flags を継承、`-I` を private に置換と `-D TASK*<新タスク>` を補完）
+- `src/private_tasks/adjustParams.hpp` に TASK\_\* 分岐を 1 行追加
+
+4. 反映
+
+- PlatformIO の環境一覧は即時には更新されません。VSCode の「Reload Window」または「PlatformIO: Rebuild IntelliSense Index」を実行してください。
 
 ---
 
-## 新しい task（UI 操作・GUI 関連）を 1 から作る手順
+### 手動で追加する方法
 
 共通部（main.cpp / globals.h）は編集不要です。以下の手順のみで追加できます。
 
@@ -183,10 +173,6 @@ build_flags =
     ${env.build_flags}
     -I src/private_tasks/taskNeckNewESPNOW
 ```
-
-補足
-
-- 既存タスク（`taskNeckGenESPNOW/`, `taskBandGenESPNOW/`）を雛形として流用できます。
 
 ## 画面 UI の変更（テンプレート）
 

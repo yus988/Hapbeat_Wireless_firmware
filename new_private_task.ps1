@@ -146,7 +146,7 @@ Write-Host "完了:" -ForegroundColor Cyan
 Write-Host ("  コピー元: src/sample_tasks/{0}" -f $SampleTaskName)
 Write-Host ("  作成先:   src/private_tasks/{0}" -f $NewTaskName)
 Write-Host ("  追加env:  [env:{0}] ({1}, {2})" -f $EnvName, $Device, $Protocol)
-Write-Host "PlatformIO の環境一覧を更新してビルドしてください。" -ForegroundColor Cyan
-Write-Host "表示されない場合は VSCode のウィンドウ再読み込み (Ctrl+Shift+P → Reload Window) または 'PlatformIO: Rebuild IntelliSense Index' を実行してください。" -ForegroundColor Yellow
+Write-Host "PlatformIO の環境一覧は即時には更新されません。" -ForegroundColor Yellow
+Write-Host "VSCode のウィンドウ再読み込み (Ctrl+Shift+P → Reload Window) または 'PlatformIO: Rebuild IntelliSense Index' を実行してください。" -ForegroundColor Cyan
 
 
