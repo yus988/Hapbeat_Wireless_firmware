@@ -3,7 +3,7 @@
 // Audio categories count.
 // 注意: `adjustParams.hpp` の CATEGORY_ID_TXT の要素数を変更した場合、
 //       ここも同じ値に更新してください。
-#define CATEGORY_NUM 1
+#define CATEGORY_NUM 3
 // Max number of sound files to index and load metadata for (data/ files)
 #define SOUND_FILE_NUM 60
 // Max data entries per category (sound_id range per category)
