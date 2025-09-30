@@ -69,13 +69,51 @@
   - 個別タスクにファイルが無い場合でも、共通デフォルト（`lib/audioManager/audioManagerSettings_default.hpp`）でビルド可能です
   - 注意: `CATEGORY_ID_TXT` の要素数を変更した場合は、ここにある `CATEGORY_NUM` を必ず同じ値に更新してください。
 
-## 新しい task を追加する手順
+## Quick Start（sample_tasks をコピペして private_tasks に作る）
+
+1. 雛形をコピー
+
+- 例: `src/sample_tasks/taskNeckGenESPNOW/` を丸ごと `src/private_tasks/taskNeckNewESPNOW/` にコピー
+
+2. 環境を追加（`src/private_tasks/platformio.private.ini`）
+
+```ini
+[env:NeckWL_V3_NEW_ESPNOW]
+build_flags =
+    -D NECKLACE_V3
+    -D ESPNOW
+    -D TASK_NECK_NEW_ESPNOW
+lib_ignore = MQTT_manager
+build_src_filter =
+    +<*> -<sample_tasks/*> -<private_tasks/*> +<private_tasks/taskNeckNewESPNOW/>
+
+; ヘッダ検索パス
+build_flags =
+    ${env.build_flags}
+    -I src/private_tasks/taskNeckNewESPNOW
+```
+
+3. ディスパッチを 1 行追加（`src/private_tasks/adjustParams.hpp`）
+
+```cpp
+// 新しい TASK_* に合わせて 1 行追加（例: TASK_NECK_NEW_ESPNOW）
+#elif defined(TASK_NECK_NEW_ESPNOW)
+  #include "taskNeckNewESPNOW/adjustParams.hpp"
+```
+
+4. 必要なら `adjustParams.hpp`（配列/色/座標）と `audioManagerSettings.hpp`（CATEGORY_NUM 等）を調整
+
+5. VSCode の PlatformIO で上記 env を選んでビルド/書き込み
+
+---
+
+## 新しい task（UI 操作・GUI 関連）を 1 から作る手順
 
 共通部（main.cpp / globals.h）は編集不要です。以下の手順のみで追加できます。
 
 1. ディレクトリ作成
 
-- `src/public_tasks/task<Device><Gen|Feature><PROTOCOL>/` を作成（例: `taskNeckNewESPNOW/`）
+- `src/private_tasks/task<Device><Gen|Feature><PROTOCOL>/` を作成（例: `taskNeckNewESPNOW/`）
 - 中に最低限、以下のファイルを用意:
   - `task_entry.cpp`（必須: Init/Start/Loop の共通エントリ）
   - `<任意の名前>.cpp` に UI 本体（最後に `TaskUI_Run(void*)` を実装）
@@ -108,6 +146,7 @@ void TaskAppStart() {
 
 void TaskAppLoop() {
   // MQTT の場合はここで MQTT_manager::loopMQTTclient(); を回す
+  // ESPNOW の場合は空のままでOK
 }
 ```
 
@@ -124,7 +163,7 @@ void MyTaskMain(void *args) { /* ... */ }
 void TaskUI_Run(void *args) { MyTaskMain(args); }
 ```
 
-4. platformio.ini へ env を追加
+4. src/private_tasks/platformio.private.ini へ env を追加（private_tasks のタスクをビルド対象にする）
 
 - 対象タスクだけがビルドされるよう `build_src_filter` を指定
 - `adjustParams.cpp` の切替に使う `-D TASK_*` マクロも合わせて定義
@@ -137,17 +176,17 @@ build_flags =
     -D TASK_NECK_NEW_ESPNOW
 lib_ignore = MQTT_manager
 build_src_filter =
-    +<*> -<public_tasks/*> -<private_tasks/*> +<public_tasks/taskNeckNewESPNOW/>
+    +<*> -<sample_tasks/*> -<private_tasks/*> +<private_tasks/taskNeckNewESPNOW/>
 
 ; audioManagerSettings.hpp を解決するためのヘッダ検索パス（タスク配下を追加）
 build_flags =
     ${env.build_flags}
-    -I src/public_tasks/taskNeckNewESPNOW
+    -I src/private_tasks/taskNeckNewESPNOW
 ```
 
 補足
 
-- 既存タスク（`taskNeckGenESPNOW/`, `taskBandGenESPNOW/`, `taskBandGenMQTT/`, `taskNeckGenWIRED/`）を雛形として流用できます。
+- 既存タスク（`taskNeckGenESPNOW/`, `taskBandGenESPNOW/`）を雛形として流用できます。
 
 ## 画面 UI の変更（テンプレート）
 
