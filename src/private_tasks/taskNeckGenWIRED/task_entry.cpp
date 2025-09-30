@@ -14,7 +14,6 @@ void TaskAppStart() {
 }
 
 void TaskAppLoop() {
-  // 特にループ処理はなし
+  // ESPNOW はループで特別処理不要}
 }
-
 

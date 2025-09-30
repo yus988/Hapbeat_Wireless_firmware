@@ -28,7 +28,3 @@ const int CATEGORY_ID_TXT_SIZE = sizeof(CATEGORY_ID_TXT) / sizeof(CATEGORY_ID_TX
 const int CHANNEL_ID_TXT_SIZE = sizeof(CHANNEL_ID_TXT) / sizeof(CHANNEL_ID_TXT[0]);
 const int GAIN_STEP_TXT_SIZE = sizeof(GAIN_STEP_TXT) / sizeof(GAIN_STEP_TXT[0]);
 // 音声設定マクロは audioManagerSettings.hpp に分離
-
-
-
-

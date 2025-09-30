@@ -3,7 +3,7 @@
 #include <espnow_manager.h>
 
 void TaskAppInit() {
-  // ESPNOW 蜈ｱ騾壼・譛溷喧
+  // ESPNOW
   displayManager::setTitle(CATEGORY_ID_TXT, CATEGORY_ID_TXT_SIZE,
                            CHANNEL_ID_TXT, CHANNEL_ID_TXT_SIZE, GAIN_STEP_TXT,
                            GAIN_STEP_TXT_SIZE);
@@ -17,6 +17,5 @@ void TaskAppStart() {
 }
 
 void TaskAppLoop() {
-  // ESPNOW 縺ｯ繝ｫ繝ｼ繝励〒迚ｹ蛻･蜃ｦ逅・ｸ崎ｦ・}
-
-
+    // ESPNOW はループで特別処理不要
+}

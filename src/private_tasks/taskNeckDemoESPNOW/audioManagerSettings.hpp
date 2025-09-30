@@ -2,7 +2,7 @@
 #define AUDIO_MANAGER_SETTINGS_NECK_DEMO_ESPNOW_HPP
 
 // Audio categories count.
-// 豕ｨ諢・ `adjustParams.hpp` 縺ｮ CATEGORY_ID_TXT 縺ｮ隕∫ｴ謨ｰ繧貞､画峩縺励◆蝣ｴ蜷医・//       縺薙％繧ょ酔縺伜､縺ｫ譖ｴ譁ｰ縺励※縺上□縺輔＞縲・#define CATEGORY_NUM 3
+#define CATEGORY_NUM 3
 
 // Max number of sound files to index and load metadata for (data/ files)
 #define SOUND_FILE_NUM 60

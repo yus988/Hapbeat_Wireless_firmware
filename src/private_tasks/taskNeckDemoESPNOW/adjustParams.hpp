@@ -1,8 +1,6 @@
 ﻿// Parameters for TASK_NECK_DEMO_ESPNOW (Necklace)
 
-// 豕ｨ諢・ 縺薙・驟榊・縺ｮ隕∫ｴ謨ｰ繧貞､画峩縺励◆蝣ｴ蜷医∝酔縺倥ョ繧｣繝ｬ繧ｯ繝医Μ縺ｮ
-// audioManagerSettings.hpp 蜀・・ 
-// CATEGORY_NUM 繧ょ酔縺伜､縺ｫ譖ｴ譁ｰ縺励※縺上□縺輔＞縲・const char *CATEGORY_ID_TXT[] = {"None", "Video", "RealTime"};
+const char *CATEGORY_ID_TXT[] = {"None", "Video", "RealTime"};
 const char *CHANNEL_ID_TXT[] = {""};
 const int FIX_GAIN_STEP[] = {20, 14, 14};
 const char *GAIN_STEP_TXT[] = {"0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",
@@ -21,8 +19,3 @@ const int DEVICE_POS = 0;  // neck
 const int CATEGORY_ID_TXT_SIZE = sizeof(CATEGORY_ID_TXT) / sizeof(CATEGORY_ID_TXT[0]);
 const int CHANNEL_ID_TXT_SIZE = sizeof(CHANNEL_ID_TXT) / sizeof(CHANNEL_ID_TXT[0]);
 const int GAIN_STEP_TXT_SIZE = sizeof(GAIN_STEP_TXT) / sizeof(GAIN_STEP_TXT[0]);
-// 髻ｳ螢ｰ險ｭ螳壹・繧ｯ繝ｭ縺ｯ audioManagerSettings.hpp 縺ｫ蛻・屬
-
-
-
-
