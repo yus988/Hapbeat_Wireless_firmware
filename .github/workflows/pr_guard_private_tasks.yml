@@ -1,0 +1,41 @@
+name: PR Guard - block private_tasks changes
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  guard-private:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect private changes
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          LABELS: ${{ toJson(github.event.pull_request.labels) }}
+        run: |
+          set -eux
+          echo "Base: $BASE"
+          echo "Head: $HEAD"
+          git diff --name-only "$BASE".."$HEAD" > changed_files.txt
+          cat changed_files.txt
+
+          # Allow override if PR has a specific label
+          echo "$LABELS" | grep -qi 'allow-private-changes' && {
+            echo "override label present; skipping guard"
+            exit 0
+          } || true
+
+          if grep -E '^(src/private_tasks/)' changed_files.txt; then
+            echo "Error: Changes under src/private_tasks/ are not allowed in PRs to main." 1>&2
+            echo "Add label 'allow-private-changes' to override (maintainers only)." 1>&2
+            exit 1
+          fi
+          echo "No private changes detected."
+
+
