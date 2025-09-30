@@ -1,4 +1,4 @@
-#include "globals.h"
+﻿#include "globals.h"
 #include "task_entry.h"
 #include <espnow_manager.h>
 
@@ -19,5 +19,3 @@ void TaskAppStart() {
 void TaskAppLoop() {
   // ESPNOW はループで特別処理不要
 }
-
-

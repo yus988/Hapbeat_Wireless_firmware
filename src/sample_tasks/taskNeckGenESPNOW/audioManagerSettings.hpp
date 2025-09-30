@@ -1,6 +1,5 @@
 #ifndef AUDIO_MANAGER_SETTINGS_HPP
 #define AUDIO_MANAGER_SETTINGS_HPP
-
 // Audio categories count.
 // 注意: `adjustParams.hpp` の CATEGORY_ID_TXT の要素数を変更した場合、
 //       ここも同じ値に更新してください。
