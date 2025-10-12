@@ -36,14 +36,17 @@ const char *MENU_ARENA_EN = "Arena sound only";
 const char *TEST_ID_LABEL_JA[6] = {"すり足", "軽打", "重打", "拍手", "歓声", "ブザー"};
 const char *TEST_ID_LABEL_EN[6] = {"Slide", "Tap", "Hit", "Clap", "Cheer", "Beep"};
 
-// ボリュームUI設定（JUDO風）
+// ボリュームUI設定（@taskJUDO0806 と同一）
 const int VOL_UI_BAR_X = 10;
-const int VOL_UI_BAR_Y = 24;
-const int VOL_UI_BAR_W = 100;
+const int VOL_UI_BAR_Y = 10;  // @taskJUDO0806 と同じ位置
+const int VOL_UI_BAR_W = 80;  // @taskJUDO0806 と同じ幅
 const int VOL_UI_BAR_H = 12;
 const int VOL_UI_TEXT_SIZE = 2;
-// 24段をこの分割数で粗く区切る（8=約3段ごと）
-const int VOL_UI_DIVISIONS = 8;
+
+// ちらつき防止：この値以上の変化があった時のみ画面更新
+// 例: 1なら毎回更新、2なら2段階変化で更新、3以上推奨
+const int VOL_UI_CHANGE_THRESHOLD = 2;  // ±20前後の窓枠（調整可能）
+
 // 無操作でUIを消してメニューへ戻る時間
-const unsigned long VOL_UI_TIMEOUT_MS = 3000UL;
+const unsigned long VOL_UI_TIMEOUT_MS = 1000UL;
 
