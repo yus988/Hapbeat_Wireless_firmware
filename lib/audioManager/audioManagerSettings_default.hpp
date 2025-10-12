@@ -44,5 +44,11 @@
   #define POSITION_NUM 1
 #endif
 
+// Keep-alive timeout for loop playback. If the device does not receive
+// a continue(playCmd=9) signal within this period, it will stop loop playback.
+#ifndef LOOP_CONTINUE_TIMEOUT_MS
+  #define LOOP_CONTINUE_TIMEOUT_MS 3000
+#endif
+
 #endif
 

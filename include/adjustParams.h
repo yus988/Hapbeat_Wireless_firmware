@@ -27,6 +27,15 @@ extern const int BATTERY_TEXT_POS[2];
 extern const int FONT_SIZE;
 extern const int DEVICE_POS;
 
+// DuoWL 共通のボタンインデックス（プロジェクト全体で固定）
+#define DUOWL_BTN_IDX_TOP_LEFT 2
+#define DUOWL_BTN_IDX_TOP_RIGHT 1
+#define DUOWL_BTN_IDX_CENTER 4
+#define DUOWL_BTN_IDX_BOTTOM_LEFT 3
+#define DUOWL_BTN_IDX_BOTTOM_RIGHT 0
+
+// Deaflympic専用のUIパラメータはタスク配下で完結させるため、ここでは宣言しない
+
 // Wired環境用設定
 extern const bool ENABLE_WIRED_MUTE_FUNCTION;
 

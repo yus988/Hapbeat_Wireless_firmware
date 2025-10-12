@@ -51,6 +51,10 @@ static const bool isEventMode = IS_EVENT_MODE;  // イベント時にカテゴ�
 #define FS_STORAGE 1
 namespace audioManager {
 const int SAMPLING_RATE = 16000;  // 8000 だと明確に遅くなる
+// playCmd (data[7]) の定義
+// 0 = oneshot (stub0), 1 = loopStart (stub2,3), 2 = loopStop (stub2,3停止)
+// 3 = oneshot(2ndline) (stub4,5), 9 = continue (ループ継続 keep-alive)
+// keep-aliveのタイムアウトは LOOP_CONTINUE_TIMEOUT_MS で設定可能
 void initParamsEEPROM();
 void readAllSoundFiles();
 void initAudioOut(int I2S_BCLK_PIN, int I2S_LRCK_PIN, int I2S_DOUT_PIN);

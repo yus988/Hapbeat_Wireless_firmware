@@ -136,6 +136,10 @@ uint8_t _lastDuplicateData[8];  // 重複チェック用の前回データ
 const unsigned long _duplicateIgnoreDuration =
     50;  // 50ms以内の重複データを無視
 
+// ループ継続のkeep-alive管理
+static bool _loopKeepAliveActive = false;
+static unsigned long _loopKeepAliveDeadlineMs = 0;
+
 bool isSameData(const uint8_t *data, int len) {
   for (int i = 0; i < len; i++) {
     if (data[i] != _lastData[i]) {
@@ -368,6 +372,18 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       "%d, Vol %d:%d, playtype %d\n",
       data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
 
+  // 受信IDの制限（UIモードで指定された場合）
+  if (_settings.isLimitEnable) {
+    bool allowed = false;
+    for (size_t i = 0; i < _numLimitIDs; ++i) {
+      if ((int)data[3] == _limitIDs[i]) { allowed = true; break; }
+    }
+    if (!allowed) {
+      DEBUG_PRINTLN("Blocked by limit IDs");
+      return;
+    }
+  }
+
   // ループ再生のデータ（data[7] ==
   // 1）の場合、無視フラグを立てて無視期間を設定
   // 中継モード（data[2] != 50）の場合は干渉させない。あくまで暫定処理
@@ -392,6 +408,8 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
           stopAudio(iStub);
         }
       }
+      // 停止時はkeep-aliveを無効化
+      _loopKeepAliveActive = false;
     } else {
       int startIdx;
       switch (playCmd) {
@@ -400,7 +418,16 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
           break;
         case 1:
           startIdx = 2;
+          // ループ開始時にkeep-aliveを有効化し期限を更新
+          _loopKeepAliveActive = true;
+          _loopKeepAliveDeadlineMs = currentTime + LOOP_CONTINUE_TIMEOUT_MS;
           break;
+        case 9:
+          // continue: 期限を延長して以降の処理は行わない
+          if (_loopKeepAliveActive) {
+            _loopKeepAliveDeadlineMs = currentTime + LOOP_CONTINUE_TIMEOUT_MS;
+          }
+          return;
         case 3:
           startIdx = 4;
           break;
@@ -524,6 +551,13 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
 }
 
 void playAudioInLoop() {
+  // keep-alive期限切れチェック（ループ用stubのみ対象）
+  if (_loopKeepAliveActive && millis() > _loopKeepAliveDeadlineMs) {
+    stopAudio(2);
+    stopAudio(3);
+    _loopKeepAliveActive = false;
+  }
+
   for (int iStub = 0; iStub < STUB_NUM; iStub++) {
     if (isPlayAudio[iStub]) {
       // DEBUG_PRINTF("playing stub: ");

@@ -273,12 +273,18 @@ python upload_all.py
 - sound_id: **0--設定最大値**の整数値。音声ファイルの種類、カテゴリごとに独立
 - sub_id: **0--設定最大値** 同じ soundID の差分データ。歩行音などの繰り返し再生する音声データにランダム性を付与したい場合に活用推奨。
 - volume_L, R: **0--255** の整数値。左右の再生音量を指定。L=R の場合、モノラル、L≠R の場合ステレオと認識。ステレオの場合、左右それぞれの音声ファイルが必要であることに注意。
-- playtype: **0--3** の整数値。各トラックで同時に再生できる音声は 1 種類のみ。
-  - 0 = oneshot: 対象を 1 回のみ再生（トラック０）
-  - 1 = loopStart: 対象をループ再生（トラック１）
-  - 2 = loopStop: ループ再生を停止（トラック１）
-  - 3 = oneshot(2ndline): 対象を 1 回のみ再生（トラック２）
-    - oneshot を同時に複数出したい場合にご利用ください。
+- playtype: **0/1/2/3/9** の整数値。各トラックで同時に再生できる音声は 1 種類のみ。
+  - 0 = oneshot: 対象を 1 回のみ再生（トラック 0）
+  - 1 = loopStart: 対象をループ再生（トラック 1=stub2/3）
+  - 2 = loopStop: ループ再生を停止（stub2/3）
+  - 3 = oneshot(2ndline): 対象を 1 回のみ再生（トラック 2=stub4/5）
+  - 9 = continue: ループ継続の keep-alive。一定間隔で送信し、未受信が続くと自動停止
+
+#### ループ継続の keep-alive について
+
+- 送信側（ホスト）は概ね 1000ms 間隔で `playtype=9` を送信してください。
+- 受信側（本ファーム）は `LOOP_CONTINUE_TIMEOUT_MS`（既定 3000ms）を超えて continue を受け取らない場合、ループ再生を停止します。
+- `LOOP_CONTINUE_TIMEOUT_MS` は各タスクの `audioManagerSettings.hpp` で上書きできます。未定義時は `lib/audioManager/audioManagerSettings_default.hpp` の既定値が適用されます。
 
 ## 装着位置早見表
 

@@ -13,6 +13,9 @@
   #include "taskNeckGenWIRED/adjustParams.hpp"
 #elif defined(TASK_MY_PRIVATE)
   #include "MyPrivateTask/adjustParams.hpp"
+#elif defined(TASK_NECKDEAFLYMPICESPNOW)
+  #include "taskNeckDeaflympicESPNOW/adjustParams.hpp"
 #else
   // 必要に応じてここに他の private タスク分岐を追加してください。
 #endif
+
