@@ -7,7 +7,11 @@ void TaskAppInit() {
   displayManager::setTitle(CATEGORY_ID_TXT, CATEGORY_ID_TXT_SIZE,
                            CHANNEL_ID_TXT, CHANNEL_ID_TXT_SIZE, GAIN_STEP_TXT,
                            GAIN_STEP_TXT_SIZE);
-  setFixGain(true);
+  setFixGain(false);
+  
+  // カテゴリIDを2に固定（Deaflympic専用）
+  audioManager::setCategoryID(0);
+  
   _display.display();
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
 }

@@ -1,7 +1,7 @@
 ## Git Commit Messages
 When generating git commit messages:
 - **ALWAYS use a prefix** (feat, fix, docs, style, refactor, perf, test, chore)
-- Keep the main message under 50 characters INCLUDING the prefix
+- Keep the main message under 300 characters INCLUDING the prefix
 - Use imperative mood after the prefix
 - Be specific but concise
 - No periods at the end

@@ -45,12 +45,12 @@ void setFixGain(bool updateOLED) {
 void setAmpStepGain(int step, bool updateOLED) {
 #ifdef EN_MCP4018
   int volume = 0;
-  // 表示0～23に基づいてワイパー値を計算
+  // VOLUME_MAXに基づいてワイパー値を計算
   if (step == 0) {
     volume = 0;
-  } else if (step >= 1 && step <= 22) {
-    volume = map(step, 1, 22, 20, 110);  // 表示1～22に対応するワイパー値を計算
-  } else if (step == 23) {
+  } else if (step >= 1 && step <= (VOLUME_MAX - 1)) {
+    volume = map(step, 1, VOLUME_MAX - 1, 20, 110);  // 表示1～(VOLUME_MAX-1)に対応するワイパー値を計算
+  } else if (step == VOLUME_MAX) {
     volume = 127;
   }
   USBSerial.printf("Step: %d, Volume: %d\n", step, volume);

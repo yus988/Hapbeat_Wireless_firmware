@@ -98,8 +98,12 @@ void TaskNeckESPNOW() {
   // 本タスクでは FixMode は使用しない
   _isFixMode = false;
   audioManager::setIsFixMode(false);
+  
+  // ランダム関数のシードを初期化（拍手のランダム再生用）
+  randomSeed(analogRead(AIN_VIBVOL_PIN));
+  
   _currAIN = analogRead(AIN_VIBVOL_PIN);
-  _ampVolStep = map(_currAIN, 0, 4095, 23, 0);  // 逆向き（高電圧=低ボリューム→低ステップ）
+  _ampVolStep = map(_currAIN, 0, 4095, 10, 0);  // 逆向き（高電圧=低ボリューム→低ステップ）
   setAmpStepGain(_ampVolStep, true);
   
   // ボリューム表示制御用
@@ -114,7 +118,7 @@ void TaskNeckESPNOW() {
 
   while (1) {
     _currAIN = analogRead(AIN_VIBVOL_PIN);
-    int newVolStep = map(_currAIN, 0, 4095, 23, 0);  // 逆向き（高電圧=低ボリューム→低ステップ）
+    int newVolStep = map(_currAIN, 0, 4095, 10, 0);  // 逆向き（高電圧=低ボリューム→低ステップ）
     
     // モード判定：表示モードでない場合、窓枠を超えたらモードに入る
     if (!volUiShown) {
@@ -142,7 +146,7 @@ void TaskNeckESPNOW() {
       _display.setCursor(VOL_UI_BAR_X + VOL_UI_BAR_W + 8, VOL_UI_BAR_Y - 1);
       _display.print(volTxt);
       _display.drawRect(VOL_UI_BAR_X, VOL_UI_BAR_Y, VOL_UI_BAR_W, VOL_UI_BAR_H, SSD1306_WHITE);
-      int fillWidth = map(_ampVolStep, 0, 23, 0, VOL_UI_BAR_W - 2);
+      int fillWidth = map(_ampVolStep, 0, 10, 0, VOL_UI_BAR_W - 2);
       if (fillWidth > 0) { 
         _display.fillRect(VOL_UI_BAR_X + 1, VOL_UI_BAR_Y + 1, fillWidth, VOL_UI_BAR_H - 2, SSD1306_WHITE); 
       }

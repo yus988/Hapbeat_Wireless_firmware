@@ -188,7 +188,7 @@ void initParamsEEPROM() {
   // EEPROMから読み込んだボリュームレベルの範囲チェック
   for (uint8_t i = 0; i < CATEGORY_NUM; i++) {
     if (_settings.volumeLevels[i] > VOLUME_MAX) {
-      _settings.volumeLevels[i] = 16;  // 範囲外の値をリセット
+      _settings.volumeLevels[i] = 0;  // 範囲外の値をリセット
     }
   }
 }
@@ -226,6 +226,16 @@ void readAllSoundFiles() {
     int hyphenPos2 = fileName.indexOf('-', underscorePos1 + 1);
     int hyphenPos3 = fileName.indexOf('-', hyphenPos2 + 1);
     int hyphenPos4 = fileName.indexOf('-', hyphenPos3 + 1);
+
+    // 形式チェック（不足・順序不正はスキップ）
+    if (hyphenPos1 < 0 || underscorePos1 < 0 || hyphenPos2 < 0 ||
+        hyphenPos3 < 0 || hyphenPos4 < 0 ||
+        !(hyphenPos1 < underscorePos1 && underscorePos1 < hyphenPos2 &&
+          hyphenPos2 < hyphenPos3 && hyphenPos3 < hyphenPos4)) {
+      DEBUG_PRINTF("Skip (filename format): %s\n", fileName.c_str());
+      _file = root.openNextFile();
+      continue;
+    }
 
     // 各要素の抽出
     cat = fileName.substring(0, hyphenPos1).toInt();
@@ -443,11 +453,20 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
         _volume[i] = data[5 + i % 2];
       }
 
+      // L-とR-のファイルが両方存在するかチェック
+      uint8_t pos = 0;
+      uint8_t idxL = _audioDataIndex[_currentCategory][pos][data[3]][data[4]][0];
+      uint8_t idxR = _audioDataIndex[_currentCategory][pos][data[3]][data[4]][1];
+      bool hasStereoFiles = (idxL != 0xFF && idxL < SOUND_FILE_NUM && _audioStorageType[idxL] != 0xFF) &&
+                            (idxR != 0xFF && idxR < SOUND_FILE_NUM && _audioStorageType[idxR] != 0xFF);
+
       uint8_t stub = startIdx;
       stopAudio(stub);
       playAudio(stub, _volume[stub]);
 
-      if (_volume[stub] != _volume[stub + 1]) {
+      // ステレオファイル（L-とR-のペア）が存在する場合のみ、両方再生
+      // モノラル（C-ファイルのみ）の場合は、左右のボリュームに関わらず左のみ再生
+      if (hasStereoFiles) {
         stopAudio(stub + 1);
         playAudio(stub + 1, _volume[stub + 1]);
       }
