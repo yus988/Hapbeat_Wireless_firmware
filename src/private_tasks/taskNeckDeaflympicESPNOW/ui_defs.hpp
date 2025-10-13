@@ -60,3 +60,8 @@ extern const int TEST_CLAP_MAX_COUNT;  // 最大再生回数
 extern const int TEST_CLAP_MIN_INTERVAL_MS;  // 最小間隔（ミリ秒）
 extern const int TEST_CLAP_MAX_INTERVAL_MS;  // 最大間隔（ミリ秒）
 
+// 低バッテリー警告設定
+extern const CRGB COLOR_LOW_BATTERY;  // 赤色LED
+extern const char *LOW_BATTERY_MSG_JA;
+extern const char *LOW_BATTERY_MSG_EN;
+

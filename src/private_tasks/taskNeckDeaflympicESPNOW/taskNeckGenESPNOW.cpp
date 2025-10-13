@@ -11,10 +11,29 @@ static uint8_t _testSelId = 0;  // 0..5（電源ON中は保持）
 static unsigned long _buzzerStopTime = 0;  // ブザー自動停止用タイマー
 static bool _buzzerPlaying = false;  // ブザー再生中フラグ
 
+// バッテリー監視用変数
+static bool _isLowBattery = false;  // 低バッテリー状態フラグ
+static bool _wasLowBattery = false;  // 前回の低バッテリー状態
+static unsigned long _lastBatteryCheck = 0;  // 最後のバッテリーチェック時刻
+
 // 拍手（ID=3）のランダム再生用
 static bool _clapPlaying = false;  // 拍手再生中フラグ
 static int _clapRemainingCount = 0;  // 残り再生回数
 static unsigned long _clapNextTime = 0;  // 次の再生時刻
+
+// 低バッテリー警告表示
+static void showLowBatteryWarning() {
+  _display.clearDisplay();
+  
+  // 日本語: "充電してください" = 7文字 × 16px = 112px
+  // 英語: "Please charge" = 13文字 × 8px = 104px
+  // 日本語の方が長いので、日本語を基準に中央寄せ
+  const int centerX = (128 - 112) / 2;  // 8px
+  
+  displayManager::printEfont(&_display, LOW_BATTERY_MSG_JA, centerX, 0);
+  displayManager::printEfont(&_display, LOW_BATTERY_MSG_EN, 12, 16);  // 英語は少し左寄せ
+  _display.display();
+}
 
 // UI表示のヘルパ
 static void showModeTitle() {
@@ -168,6 +187,12 @@ void TaskNeckESPNOW() {
 
     for (int i = 0; i < sizeof(_SW_PIN) / sizeof(_SW_PIN[0]); i++) {
       if (!digitalRead(_SW_PIN[i]) && !_isBtnPressed[i]) {
+        // 低バッテリー状態の時はボタン操作を無効化
+        if (_isLowBattery) {
+          _isBtnPressed[i] = true;
+          continue;
+        }
+        
         _lastUserOpMs = millis();
         uint8_t category_ID = audioManager::getCategoryID();
         uint8_t channel_ID = audioManager::getChannelID();
@@ -321,6 +346,49 @@ void TaskNeckESPNOW() {
       applyLimitIds();
       showModeTitle();
       _lastUserOpMs = millis();
+    }
+
+    // バッテリー監視（1秒間隔）
+    unsigned long now = millis();
+    if (now - _lastBatteryCheck >= 1000) {
+      _lastBatteryCheck = now;
+      
+      uint16_t socPct;
+      bool newBlinkOne;
+#ifdef BAT_DEBUG
+      static bool dbgLowBattery = false;
+      static unsigned long dbgLast = 0;
+      if (now - dbgLast >= 5000) { 
+        dbgLast = now; 
+        dbgLowBattery = !dbgLowBattery;  // 5秒ごとに通常/低バッテリーを切り替え
+      }
+      socPct = dbgLowBattery ? 0 : 50;  // 低バッテリー: 0%, 通常: 50%
+      newBlinkOne = dbgLowBattery;
+#else
+      socPct = lipo.soc();
+      if (socPct == 0) { 
+        delay(20); 
+        socPct = lipo.soc(); 
+      }
+      newBlinkOne = (socPct < 3);
+#endif
+      
+      _isLowBattery = (socPct < 1);  // 1%未満を低バッテリーとする
+      
+      // 低バッテリー状態が変化した場合の処理
+      if (_isLowBattery && !_wasLowBattery) {
+        // 低バッテリー状態になった
+        _leds[0] = COLOR_LOW_BATTERY;
+        FastLED.show();
+        showLowBatteryWarning();
+      } else if (!_isLowBattery && _wasLowBattery) {
+        // 低バッテリー状態から復帰した
+        _leds[0] = COLOR_VOL_MODE;  // 通常のボリュームモード色に戻す
+        FastLED.show();
+        showModeTitle();  // 通常のメニュー表示に戻す
+      }
+      
+      _wasLowBattery = _isLowBattery;
     }
 
     vTaskDelay(50 / portTICK_PERIOD_MS);
