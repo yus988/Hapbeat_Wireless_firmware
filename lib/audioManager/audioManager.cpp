@@ -372,14 +372,17 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
       "%d, Vol %d:%d, playtype %d\n",
       data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
 
+  uint8_t playCmd = data[7];
+  
   // 受信IDの制限（UIモードで指定された場合）
-  if (_settings.isLimitEnable) {
+  // 新しい再生開始コマンド(0,1,3)のみを制限。制御コマンド(2=stop, 9=continue)は制限しない
+  if (_settings.isLimitEnable && (playCmd == 0 || playCmd == 1 || playCmd == 3)) {
     bool allowed = false;
     for (size_t i = 0; i < _numLimitIDs; ++i) {
       if ((int)data[3] == _limitIDs[i]) { allowed = true; break; }
     }
     if (!allowed) {
-      DEBUG_PRINTLN("Blocked by limit IDs");
+      DEBUG_PRINTF("Blocked by limit IDs (dataID=%d, playCmd=%d)\n", data[3], playCmd);
       return;
     }
   }
@@ -398,7 +401,6 @@ void PlaySndOnDataRecv(const uint8_t *mac_addr, const uint8_t *data,
   // data[0]とファイルのカテゴリは必ず合わないといけない。
   // カテゴリに限らず通すなら isEventModeで通す（audioManager.h）
   // 後日 adjustParams.h に移すこと（set isEventModeを実装する）
-  uint8_t playCmd = data[7];
   if ((data[0] == _settings.categoryNum || isEventMode) &&
       (data[1] == _settings.channelId || data[1] == 99) &&
       (data[2] == _devicePos || data[2] == 99)) {
@@ -553,8 +555,7 @@ void PlaySndFromMQTTcallback(char *topic, byte *payload, unsigned int length) {
 void playAudioInLoop() {
   // keep-alive期限切れチェック（ループ用stubのみ対象）
   if (_loopKeepAliveActive && millis() > _loopKeepAliveDeadlineMs) {
-    stopAudio(2);
-    stopAudio(3);
+    stopAudio();
     _loopKeepAliveActive = false;
   }
 
