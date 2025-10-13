@@ -13,14 +13,22 @@ static uint8_t _testSelId = 0;  // 0..5（電源ON中は保持）
 static void showModeTitle() {
   // 画面全体をクリアしてから描画（前画面の残像を防止）
   _display.clearDisplay();
+  
+  // 日本語を中央寄せにするためのX座標
+  // 最長の "競技所の音のみ" (7文字 × 16px = 112px) を基準
+  // 中央: (128 - 112) / 2 = 8px
+  const int centerX = 8;
+  
   switch (_mode) {
     case DeafMode::PlayAll:
-      displayManager::printEfont(&_display, MENU_PLAYALL_JA, 0, 0);
-      displayManager::printEfont(&_display, MENU_PLAYALL_EN, 0, 16);
+      // "全て再生" = 4文字 × 16px = 64px
+      displayManager::printEfont(&_display, MENU_PLAYALL_JA, centerX + 24, 0);  // 8 + (112-64)/2 = 32
+      displayManager::printEfont(&_display, MENU_PLAYALL_EN, centerX + 24, 16);
       break;
     case DeafMode::NoScrape:
-      displayManager::printEfont(&_display, MENU_NOSCRAPE_JA, 0, 0);
-      displayManager::printEfont(&_display, MENU_NOSCRAPE_EN, 0, 16);
+      // "すり足 無し" = 6文字 × 16px = 96px
+      displayManager::printEfont(&_display, MENU_NOSCRAPE_JA, centerX + 8, 0);  // 8 + (112-96)/2 = 16
+      displayManager::printEfont(&_display, MENU_NOSCRAPE_EN, centerX + 8, 16);
       break;
     case DeafMode::VenueOnly:
       displayManager::printEfont(&_display, MENU_VENUE_JA, 0, 0);
@@ -87,8 +95,9 @@ void TaskNeckESPNOW() {
   _ampVolStep = map(_currAIN, 0, 4095, 23, 0);  // 逆向き（高電圧=低ボリューム→低ステップ）
   setAmpStepGain(_ampVolStep, true);
   
-  // ちらつき防止用：前回表示した値と窓枠（ヒステリシス）
-  static int lastDisplayedVolStep = _ampVolStep;
+  // ボリューム表示制御用
+  static int lastDisplayedVolStep = _ampVolStep;  // 最後に表示した値
+  static int volModeEntryStep = _ampVolStep;      // モードに入った時の値
   static unsigned long volUiLastShown = 0;
   static bool volUiShown = false;
   
@@ -100,9 +109,18 @@ void TaskNeckESPNOW() {
     _currAIN = analogRead(AIN_VIBVOL_PIN);
     int newVolStep = map(_currAIN, 0, 4095, 23, 0);  // 逆向き（高電圧=低ボリューム→低ステップ）
     
-    // ちらつき防止：窓枠を超えた変化のみ画面更新
-    int delta = abs(newVolStep - lastDisplayedVolStep);
-    if (delta >= VOL_UI_CHANGE_THRESHOLD) {
+    // モード判定：表示モードでない場合、窓枠を超えたらモードに入る
+    if (!volUiShown) {
+      int delta = abs(newVolStep - lastDisplayedVolStep);
+      if (delta >= VOL_UI_CHANGE_THRESHOLD) {
+        // ボリューム変更モードに入る
+        volUiShown = true;
+        volModeEntryStep = lastDisplayedVolStep;  // モード開始時の値を記録
+      }
+    }
+    
+    // ボリューム変更モード中は1ステップずつ滑らかに更新
+    if (volUiShown && newVolStep != lastDisplayedVolStep) {
       _ampVolStep = newVolStep;
       lastDisplayedVolStep = newVolStep;
       setAmpStepGain(_ampVolStep, false);
@@ -123,9 +141,8 @@ void TaskNeckESPNOW() {
       }
       _display.display();
       volUiLastShown = millis();
-      volUiShown = true;
-    } else {
-      // 窓枠内の変化でもゲインは更新（音量は細かく追従）
+    } else if (!volUiShown) {
+      // 表示モードでない時もゲインは更新（音量は常に追従）
       if (newVolStep != _ampVolStep) {
         _ampVolStep = newVolStep;
         setAmpStepGain(_ampVolStep, false);
@@ -160,6 +177,7 @@ void TaskNeckESPNOW() {
             _prevModeBeforeTest = _mode;
             _mode = DeafMode::Test; 
             // _testSelId は保持（電源ON中は記憶）
+            applyLimitIds();  // テストモード用のID制限解除を適用
             showModeTitle(); 
           }
           else if (i == LOGICAL_BTN_IDX_BOTTOM_LEFT) { 
