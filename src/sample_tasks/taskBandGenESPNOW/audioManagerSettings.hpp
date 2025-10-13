@@ -18,5 +18,7 @@
 #define STUB_NUM 6
 // Device position slots (keep 1 unless multi-position addressing is required)
 #define POSITION_NUM 1
+#define LOOP_CONTINUE_TIMEOUT_MS 3000
+
 #endif
 

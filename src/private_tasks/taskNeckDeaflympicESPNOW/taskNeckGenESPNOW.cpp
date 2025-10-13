@@ -8,6 +8,13 @@ static DeafMode _mode = DeafMode::PlayAll;
 static DeafMode _prevModeBeforeTest = DeafMode::PlayAll;  // テスト前のモードを記憶
 static uint32_t _lastUserOpMs = 0;
 static uint8_t _testSelId = 0;  // 0..5（電源ON中は保持）
+static unsigned long _buzzerStopTime = 0;  // ブザー自動停止用タイマー
+static bool _buzzerPlaying = false;  // ブザー再生中フラグ
+
+// 拍手（ID=3）のランダム再生用
+static bool _clapPlaying = false;  // 拍手再生中フラグ
+static int _clapRemainingCount = 0;  // 残り再生回数
+static unsigned long _clapNextTime = 0;  // 次の再生時刻
 
 // UI表示のヘルパ
 static void showModeTitle() {
@@ -223,16 +230,86 @@ void TaskNeckESPNOW() {
             packet[2] = audioManager::getDevicePos();
             packet[3] = _testSelId; // dataID
             packet[4] = 0; // sub
-            packet[5] = 200; // L
-            packet[6] = 200; // R
-            packet[7] = 0; // oneshot (テストは常に1ショット)
-            audioManager::PlaySndOnDataRecv(dummy_mac_addr, packet, 8);
+            
+            // 各IDの振動の大きさを設定から取得
+            uint8_t vol = TEST_MODE_VOLUME[_testSelId];
+            packet[5] = vol; // L
+            packet[6] = vol; // R
+            
+            // 拍手（ID=3）: ランダム回数再生
+            if (_testSelId == 3) {
+              packet[7] = 0; // oneshot
+              audioManager::PlaySndOnDataRecv(dummy_mac_addr, packet, 8);
+              
+              // ランダム回数を決定（MIN～MAX）
+              _clapRemainingCount = random(TEST_CLAP_MIN_COUNT, TEST_CLAP_MAX_COUNT + 1) - 1; // 既に1回再生したので-1
+              _clapPlaying = true;
+              // 次の再生時刻をランダムに設定
+              int interval = random(TEST_CLAP_MIN_INTERVAL_MS, TEST_CLAP_MAX_INTERVAL_MS + 1);
+              _clapNextTime = millis() + interval;
+            }
+            // ブザー(ID=5): 1秒ループ再生
+            else if (_testSelId == 5) {
+              packet[7] = 1; // loopStart
+              _buzzerPlaying = true;
+              _buzzerStopTime = millis() + 1000; // 1秒後に停止
+              audioManager::PlaySndOnDataRecv(dummy_mac_addr, packet, 8);
+            }
+            // その他: 通常のoneshot
+            else {
+              packet[7] = 0; // oneshot
+              audioManager::PlaySndOnDataRecv(dummy_mac_addr, packet, 8);
+            }
           }
         }
         _isBtnPressed[i] = true;
       }
       if (digitalRead(_SW_PIN[i]) && _isBtnPressed[i]) _isBtnPressed[i] = false;
     };
+
+    // 拍手の連続再生処理
+    if (_clapPlaying && millis() >= _clapNextTime) {
+      if (_clapRemainingCount > 0) {
+        // 次の拍手を再生
+        uint8_t dummy_mac_addr[6] = {0};
+        uint8_t packet[8];
+        packet[0] = audioManager::getCategoryID();
+        packet[1] = audioManager::getChannelID();
+        packet[2] = audioManager::getDevicePos();
+        packet[3] = 3; // 拍手のID
+        packet[4] = 0;
+        uint8_t vol = TEST_MODE_VOLUME[3];
+        packet[5] = vol;
+        packet[6] = vol;
+        packet[7] = 0; // oneshot
+        audioManager::PlaySndOnDataRecv(dummy_mac_addr, packet, 8);
+        
+        _clapRemainingCount--;
+        // 次の再生時刻をランダムに設定
+        int interval = random(TEST_CLAP_MIN_INTERVAL_MS, TEST_CLAP_MAX_INTERVAL_MS + 1);
+        _clapNextTime = millis() + interval;
+      } else {
+        // 全ての再生が完了
+        _clapPlaying = false;
+      }
+    }
+
+    // ブザー自動停止（1秒経過したら停止）
+    if (_buzzerPlaying && millis() >= _buzzerStopTime) {
+      uint8_t dummy_mac_addr[6] = {0};
+      uint8_t packet[8];
+      packet[0] = audioManager::getCategoryID();
+      packet[1] = audioManager::getChannelID();
+      packet[2] = audioManager::getDevicePos();
+      packet[3] = 5; // ブザーのID
+      packet[4] = 0;
+      uint8_t vol = TEST_MODE_VOLUME[5];
+      packet[5] = vol;
+      packet[6] = vol;
+      packet[7] = 2; // loopStop
+      audioManager::PlaySndOnDataRecv(dummy_mac_addr, packet, 8);
+      _buzzerPlaying = false;
+    }
 
     // テストモードの自動復帰（60秒無操作でPlayAll）
     if (_mode == DeafMode::Test && millis() - _lastUserOpMs > MODE_TEST_IDLE_TIMEOUT_MS) {

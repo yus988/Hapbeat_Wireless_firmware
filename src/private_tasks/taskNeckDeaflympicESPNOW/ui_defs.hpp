@@ -50,3 +50,13 @@ const int VOL_UI_CHANGE_THRESHOLD = 2;  // ±20前後の窓枠（調整可能）
 // 無操作でUIを消してメニューへ戻る時間
 const unsigned long VOL_UI_TIMEOUT_MS = 1000UL;
 
+// テストモード専用設定
+// 各IDの振動の大きさ（0-255）
+const uint8_t TEST_MODE_VOLUME[6] = {100, 100, 100, 100, 100, 100};  // すり足, 軽打, 重打, 拍手, 歓声, ブザー
+
+// 拍手（ID=3）のランダム再生設定
+const int TEST_CLAP_MIN_COUNT = 4;  // 最小再生回数
+const int TEST_CLAP_MAX_COUNT = 6;  // 最大再生回数
+const int TEST_CLAP_MIN_INTERVAL_MS = 200;  // 最小間隔（ミリ秒）
+const int TEST_CLAP_MAX_INTERVAL_MS = 600;  // 最大間隔（ミリ秒）
+
