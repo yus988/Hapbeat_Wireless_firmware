@@ -1,8 +1,8 @@
 ﻿// Parameters for TASK_NECK_DEMO_ESPNOW (Necklace)
 
-const char *CATEGORY_ID_TXT[] = {"None", "Video", "RealTime"};
+const char *CATEGORY_ID_TXT[] = {"RealTime", "Video"};
 const char *CHANNEL_ID_TXT[] = {""};
-const int FIX_GAIN_STEP[] = {20, 14, 14};
+const int FIX_GAIN_STEP[] = {14, 14};
 const char *GAIN_STEP_TXT[] = {"0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",
                                       "8",  "9",  "10", "11", "12", "13", "14", "15",
                                       "16", "17", "18", "19", "20", "21", "22", "23"};

@@ -6,7 +6,7 @@
 #define CATEGORY_NUM 1
 
 // Max number of sound files to index and load metadata for (data/ files)
-#define SOUND_FILE_NUM 60
+#define SOUND_FILE_NUM 50
 
 // Max data entries per category (sound_id range per category)
 #define DATA_NUM 6
@@ -21,7 +21,7 @@
 #define VOLUME_MAX 10
 
 // Max concurrent stubs (mixers) (e.g., need 6 for demo use cases)
-#define STUB_NUM 4
+#define STUB_NUM 6
 
 // Device position slots (keep 1 unless multi-position addressing is required)
 #define POSITION_NUM 1
