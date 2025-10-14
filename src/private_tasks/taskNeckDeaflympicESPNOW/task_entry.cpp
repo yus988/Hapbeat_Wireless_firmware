@@ -14,6 +14,10 @@ void TaskAppInit() {
   
   _display.display();
   espnowManager::init_esp_now(audioManager::PlaySndOnDataRecv);
+
+  // 初期化完了後にLEDをUI通常色に設定
+  _leds[0] = COLOR_VOL_MODE;
+  FastLED.show();
 }
 
 void TaskAppStart() {

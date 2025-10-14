@@ -80,10 +80,10 @@ extern const unsigned long VOL_UI_TIMEOUT_MS = 1500UL;
 extern const uint8_t TEST_MODE_VOLUME[6] = {100, 100, 100, 100, 100, 100};  // すり足, 軽打, 重打, 拍手, 歓声, ブザー
 
 // 拍手（ID=3）のランダム再生設定
-extern const int TEST_CLAP_MIN_COUNT = 4;  // 最小再生回数
+extern const int TEST_CLAP_MIN_COUNT = 6;  // 最小再生回数
 extern const int TEST_CLAP_MAX_COUNT = 6;  // 最大再生回数
-extern const int TEST_CLAP_MIN_INTERVAL_MS = 50;  // 最小間隔（ミリ秒）
-extern const int TEST_CLAP_MAX_INTERVAL_MS = 300;  // 最大間隔（ミリ秒）
+extern const int TEST_CLAP_MIN_INTERVAL_MS = 50;  // 最小間隔（ミリ秒）- 短いインターバル対応
+extern const int TEST_CLAP_MAX_INTERVAL_MS = 200;  // 最大間隔（ミリ秒）- 短いインターバル対応
 
 // 低バッテリー警告設定
 extern const CRGB COLOR_LOW_BATTERY = CRGB(10, 0, 0);  // 赤色LED
